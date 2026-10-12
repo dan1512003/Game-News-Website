@@ -1,0 +1,626 @@
+<div class="register-page">
+
+  <!-- ======================================
+       LEFT BRANDING
+  ======================================= -->
+
+  <div class="branding-panel">
+
+    <div class="branding-glow"></div>
+
+    <!-- LOGO -->
+
+    <a
+      routerLink="/"
+      class="logo-link">
+
+      <div class="logo-box">
+        <span class="logo-g">
+          G
+        </span>
+      </div>
+
+      <span class="logo-text">
+        GAME<span>ZONE</span>
+      </span>
+
+    </a>
+
+    <!-- HERO -->
+
+    <div class="hero-content">
+
+      <h1 class="hero-title">
+
+        THAM GIA<br>
+
+        <span>CỘNG ĐỒNG</span><br>
+
+        GAME THỦ
+
+      </h1>
+
+      <p class="hero-description">
+
+        Tạo tài khoản miễn phí để bình luận,
+        theo dõi giải đấu và nhận thông báo
+        kết quả trận đấu.
+
+      </p>
+
+      <!-- FEATURES -->
+
+      <div class="features">
+
+        <div class="feature-item">
+
+          <span class="feature-icon">
+            🏆
+          </span>
+
+          <span class="feature-text">
+            Theo dõi kết quả live
+          </span>
+
+        </div>
+
+        <div class="feature-item">
+
+          <span class="feature-icon">
+            💬
+          </span>
+
+          <span class="feature-text">
+            Bình luận bài viết
+          </span>
+
+        </div>
+
+        <div class="feature-item">
+
+          <span class="feature-icon">
+            🔔
+          </span>
+
+          <span class="feature-text">
+            Nhận thông báo giải đấu
+          </span>
+
+        </div>
+
+        <div class="feature-item">
+
+          <span class="feature-icon">
+            ⭐
+          </span>
+
+          <span class="feature-text">
+            Lưu bài viết yêu thích
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- COPYRIGHT -->
+
+    <p class="copyright">
+      © 2026 GameZone · Tất cả quyền được bảo lưu
+    </p>
+
+  </div>
+
+
+  <!-- ======================================
+       RIGHT FORM
+  ======================================= -->
+
+  <div class="form-panel">
+
+    <!-- MOBILE LOGO -->
+
+    <a
+      routerLink="/"
+      class="mobile-logo">
+
+      <div class="mobile-logo-box">
+
+        <span>
+          G
+        </span>
+
+      </div>
+
+      <span class="mobile-logo-text">
+
+        GAME<span>ZONE</span>
+
+      </span>
+
+    </a>
+
+
+    <div class="form-container">
+
+      <!-- TITLE -->
+
+      <h2 class="form-title">
+        Tạo tài khoản
+      </h2>
+
+
+      <p class="login-text">
+
+        Đã có tài khoản?
+
+        <a
+          routerLink="/login"
+          class="orange-link">
+
+          Đăng nhập
+
+        </a>
+
+      </p>
+
+
+      <!-- ==================================
+           FORM
+      =================================== -->
+
+      <form
+        class="register-form"
+        (ngSubmit)="handleSubmit()"
+        novalidate>
+
+
+        <!-- =================================
+             USERNAME
+        ================================== -->
+
+        <div class="form-group">
+
+          <label
+            for="register-username">
+
+            Tên hiển thị *
+
+          </label>
+
+
+          <input
+            id="register-username"
+            type="text"
+            name="username"
+            [(ngModel)]="form.username"
+            (ngModelChange)="setField('username', $event)"
+            placeholder="GameThủViệt"
+            autocomplete="username"
+            [class.input-error]="!!errors.username"
+            [attr.aria-invalid]="!!errors.username"
+            [attr.aria-describedby]="
+              errors.username
+                ? 'register-username-error'
+                : null
+            "
+          />
+
+
+          @if (errors.username) {
+
+            <p
+              id="register-username-error"
+              class="error-message">
+
+              {{ errors.username }}
+
+            </p>
+
+          }
+
+        </div>
+
+
+        <!-- =================================
+             EMAIL
+        ================================== -->
+
+        <div class="form-group">
+
+          <label
+            for="register-email">
+
+            Email *
+
+          </label>
+
+
+          <input
+            id="register-email"
+            type="email"
+            name="email"
+            [(ngModel)]="form.email"
+            (ngModelChange)="setField('email', $event)"
+            placeholder="ten@email.com"
+            autocomplete="email"
+            [class.input-error]="!!errors.email"
+            [attr.aria-invalid]="!!errors.email"
+            [attr.aria-describedby]="
+              errors.email
+                ? 'register-email-error'
+                : null
+            "
+          />
+
+
+          @if (errors.email) {
+
+            <p
+              id="register-email-error"
+              class="error-message">
+
+              {{ errors.email }}
+
+            </p>
+
+          }
+
+        </div>
+
+
+        <!-- =================================
+             PASSWORD
+        ================================== -->
+
+        <div class="form-group">
+
+          <label
+            for="register-password">
+
+            Mật khẩu *
+
+          </label>
+
+
+          <div class="password-wrapper">
+
+            <input
+              id="register-password"
+              [type]="showPw ? 'text' : 'password'"
+              name="password"
+              [(ngModel)]="form.password"
+              (ngModelChange)="setField('password', $event)"
+              placeholder="••••••••"
+              autocomplete="new-password"
+              [class.input-error]="!!errors.password"
+              [attr.aria-invalid]="!!errors.password"
+              aria-describedby="register-password-help"
+            />
+
+
+            <!-- PASSWORD TOGGLE -->
+
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="togglePassword()"
+              [attr.aria-label]="
+                showPw
+                  ? 'Ẩn mật khẩu'
+                  : 'Hiện mật khẩu'
+              ">
+
+              <!-- EYE -->
+
+              @if (!showPw) {
+
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2">
+
+                  <path
+                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
+                  </path>
+
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3">
+                  </circle>
+
+                </svg>
+
+              }
+
+
+              <!-- EYE OFF -->
+
+              @if (showPw) {
+
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2">
+
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94">
+                  </path>
+
+                  <path
+                    d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19">
+                  </path>
+
+                  <path
+                    d="M14.83 14.83a3 3 0 1 1-4.24-4.24">
+                  </path>
+
+                  <line
+                    x1="1"
+                    y1="1"
+                    x2="23"
+                    y2="23">
+                  </line>
+
+                </svg>
+
+              }
+
+            </button>
+
+          </div>
+
+
+          <!-- PASSWORD HELP -->
+
+          <p
+            id="register-password-help"
+            class="password-help"
+            [class.password-help-error]="!!errors.password">
+
+            {{
+              errors.password ||
+              'Ít nhất 8 ký tự, gồm chữ hoa và chữ thường.'
+            }}
+
+          </p>
+
+
+          <!-- PASSWORD STRENGTH -->
+
+          @if (form.password.length > 0) {
+
+            <div class="password-strength">
+
+              <!-- BAR 1 -->
+
+              <div
+                class="strength-bar"
+                [style.background]="
+                  getPasswordStrengthColor(0)
+                ">
+              </div>
+
+
+              <!-- BAR 2 -->
+
+              <div
+                class="strength-bar"
+                [style.background]="
+                  getPasswordStrengthColor(1)
+                ">
+              </div>
+
+
+              <!-- BAR 3 -->
+
+              <div
+                class="strength-bar"
+                [style.background]="
+                  getPasswordStrengthColor(2)
+                ">
+              </div>
+
+
+              <span class="strength-label">
+
+                {{ getPasswordStrengthLabel() }}
+
+              </span>
+
+            </div>
+
+          }
+
+        </div>
+
+
+        <!-- =================================
+             CONFIRM PASSWORD
+        ================================== -->
+
+        <div class="form-group">
+
+          <label
+            for="register-confirm">
+
+            Xác nhận mật khẩu *
+
+          </label>
+
+
+          <input
+            id="register-confirm"
+            type="password"
+            name="confirm"
+            [(ngModel)]="form.confirm"
+            (ngModelChange)="setField('confirm', $event)"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            [class.input-error]="!!errors.confirm"
+            [attr.aria-invalid]="!!errors.confirm"
+            [attr.aria-describedby]="
+              errors.confirm
+                ? 'register-confirm-error'
+                : null
+            "
+          />
+
+
+          @if (errors.confirm) {
+
+            <p
+              id="register-confirm-error"
+              class="error-message">
+
+              {{ errors.confirm }}
+
+            </p>
+
+          }
+
+        </div>
+
+
+        <!-- =================================
+             TERMS
+        ================================== -->
+
+        <div class="terms-wrapper">
+
+          <input
+            id="register-terms"
+            type="checkbox"
+            name="terms"
+            class="terms-checkbox"
+            [(ngModel)]="agreed"
+            (ngModelChange)="updateTerms($event)"
+            [attr.aria-invalid]="!!errors.terms"
+            [attr.aria-describedby]="
+              errors.terms
+                ? 'register-terms-error'
+                : null
+            "
+          />
+
+
+          <label
+            for="register-terms"
+            class="terms-label">
+
+            Tôi đồng ý với
+
+            <span class="terms-link">
+              Điều khoản sử dụng
+            </span>
+
+            và
+
+            <span class="terms-link">
+              Chính sách bảo mật
+            </span>
+
+            của GameZone.
+
+          </label>
+
+        </div>
+
+
+        <!-- TERMS ERROR -->
+
+        @if (errors.terms) {
+
+          <p
+            id="register-terms-error"
+            class="terms-error">
+
+            {{ errors.terms }}
+
+          </p>
+
+        }
+
+
+        <!-- REGISTER ERROR -->
+
+        @if (errors.register) {
+
+          <div class="register-error">
+
+            {{ errors.register }}
+
+          </div>
+
+        }
+
+
+        <!-- =================================
+             REGISTER BUTTON
+        ================================== -->
+
+        <button
+          type="submit"
+          class="register-button"
+        [disabled]="loadingSignal()">
+
+
+          <!-- LOADING -->
+
+          @if (loadingSignal()) {
+
+            <ng-container>
+
+              <svg
+                class="spinner"
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2">
+
+                <path
+                  d="M21 12a9 9 0 1 1-6.219-8.56">
+                </path>
+
+              </svg>
+
+              <span>
+                Đang tạo tài khoản...
+              </span>
+
+            </ng-container>
+
+          }
+
+
+          <!-- NORMAL -->
+
+          @if (!loadingSignal()) {
+
+            <ng-container>
+
+              Tạo tài khoản
+
+            </ng-container>
+
+          }
+
+        </button>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</div>

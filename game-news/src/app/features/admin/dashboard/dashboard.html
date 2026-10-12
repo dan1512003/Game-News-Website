@@ -1,0 +1,586 @@
+
+<div class="container-fluid">
+  <div class="dashboard">
+
+    <!-- HEADER -->
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Tổng quan</h1>
+
+      <p class="dashboard-subtitle">
+   {{ currentDate | date:'dd/MM/yyyy' }}
+        · Xin chào, Admin!
+      </p>
+    </div>
+
+    <!-- THỐNG KÊ TỔNG QUAN -->
+    <div class="dashboard-stats">
+
+      <div class="stat-card">
+        <span class="stat-icon">📰</span>
+        <div class="stat-content">
+          <p class="stat-value">
+            {{ newsStats()?.total ?? 0 }}
+          </p>
+          <p class="stat-label">BÀI VIẾT</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-icon">💬</span>
+        <div class="stat-content">
+          <p class="stat-value">
+            {{ commentStats()?.total ?? 0 }}
+          </p>
+          <p class="stat-label">BÌNH LUẬN</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-icon">👤</span>
+        <div class="stat-content">
+          <p class="stat-value">
+            {{ userStats()?.total ?? 0 }}
+          </p>
+          <p class="stat-label">NGƯỜI DÙNG</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-icon">👁</span>
+        <div class="stat-content">
+          <!-- Giữ nguyên số lượt xem hiện tại -->
+          <p class="stat-value">2.4M</p>
+          <p class="stat-label">LƯỢT XEM</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CÁC KHỐI QUẢN LÝ -->
+    <div class="management-grid">
+
+      <!-- BÀI VIẾT -->
+      <button type="button" class="management-card">
+
+        <div class="management-header">
+          <div class="management-title">
+            <span class="management-icon">📰</span>
+            <span>Bài viết</span>
+          </div>
+
+          <span class="management-count">
+            {{ newsStats()?.total ?? 0 }}
+          </span>
+        </div>
+
+        <div class="management-list">
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">📝</span>
+                <span class="management-item-text">Bản nháp</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ newsStats()?.draft ?? 0 }}
+            </span>
+          </div>
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">🟡</span>
+                <span class="management-item-text">Chờ duyệt</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ newsStats()?.submitted ?? 0 }}
+            </span>
+          </div>
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">🔵</span>
+                <span class="management-item-text">Đang xử lý</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ newsStats()?.processing ?? 0 }}
+            </span>
+          </div>
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">🕐</span>
+                <span class="management-item-text">Đã lên lịch</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ newsStats()?.scheduled ?? 0 }}
+            </span>
+          </div>
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">📰</span>
+                <span class="management-item-text">Đã đăng</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ newsStats()?.published ?? 0 }}
+            </span>
+          </div>
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">⚠️</span>
+                <span class="management-item-text">Bài cần xử lý</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ newsStats()?.returned ?? 0 }}
+            </span>
+          </div>
+
+        </div>
+
+        <div class="management-footer">
+          <span>QUẢN LÝ</span>
+        </div>
+
+      </button>
+
+      <!-- BÌNH LUẬN -->
+      <button type="button" class="management-card">
+
+        <div class="management-header">
+          <div class="management-title">
+            <span class="management-icon">💬</span>
+            <span>Bình luận</span>
+          </div>
+
+          <span class="management-count">
+            {{ commentStats()?.total ?? 0 }}
+          </span>
+        </div>
+
+        <div class="management-list">
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">🕐</span>
+                <span class="management-item-text">Chờ kiểm tra</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ commentStats()?.pending ?? 0 }}
+            </span>
+          </div>
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">✅</span>
+                <span class="management-item-text">Hợp lệ</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ commentStats()?.approved ?? 0 }}
+            </span>
+          </div>
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">❌</span>
+                <span class="management-item-text">Không hợp lệ</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ commentStats()?.spam ?? 0 }}
+            </span>
+          </div>
+
+        </div>
+
+        <div class="management-footer">
+          <span>QUẢN LÝ</span>
+        </div>
+
+      </button>
+
+      <!-- NGƯỜI DÙNG -->
+      <button type="button" class="management-card">
+
+        <div class="management-header">
+          <div class="management-title">
+            <span class="management-icon">👤</span>
+            <span>Người dùng</span>
+          </div>
+
+          <span class="management-count">
+            {{ userStats()?.total ?? 0 }}
+          </span>
+        </div>
+
+        <div class="management-list">
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">👑</span>
+                <span class="management-item-text">Admin</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ userStats()?.admin ?? 0 }}
+            </span>
+          </div>
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">✏️</span>
+                <span class="management-item-text">Editor</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ userStats()?.editor ?? 0 }}
+            </span>
+          </div>
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">📝</span>
+                <span class="management-item-text">Author</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ userStats()?.author ?? 0 }}
+            </span>
+          </div>
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">👤</span>
+                <span class="management-item-text">User</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ userStats()?.user ?? 0 }}
+            </span>
+          </div>
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">🚫</span>
+                <span class="management-item-text">Bị cấm</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ userStats()?.banned ?? 0 }}
+            </span>
+          </div>
+
+        </div>
+
+        <div class="management-footer">
+          <span>QUẢN LÝ</span>
+        </div>
+
+      </button>
+
+      <!-- DANH MỤC & TAG -->
+      <button type="button" class="management-card">
+
+        <div class="management-header">
+          <div class="management-title">
+            <span class="management-icon">🏷️</span>
+            <span>Danh mục &amp; Tag</span>
+          </div>
+
+          <span class="management-count">
+            {{ (categoryStats()?.total ?? 0) + (tagStats()?.total ?? 0) }}
+          </span>
+        </div>
+
+        <div class="management-list">
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">🗂️</span>
+                <span class="management-item-text">Danh mục</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ categoryStats()?.total ?? 0 }}
+            </span>
+          </div>
+
+          <div class="management-item">
+            <div class="management-item-label">
+              <div class="management-item-content">
+                <span class="management-item-icon">🏷️</span>
+                <span class="management-item-text">Tag</span>
+              </div>
+            </div>
+            <span class="management-item-count">
+              {{ tagStats()?.total ?? 0 }}
+            </span>
+          </div>
+
+        </div>
+
+        <div class="management-footer">
+          <span>QUẢN LÝ</span>
+        </div>
+
+      </button>
+
+    </div>
+
+    <!-- ANALYTICS: GIỮ NGUYÊN SỐ LIỆU VÀ BIỂU ĐỒ -->
+    <div class="analytics-section">
+
+      <div class="analytics-header">
+        <h2 class="analytics-title">
+          <span class="views-chart-accent"></span>
+          LƯỢT XEM 30 NGÀY
+        </h2>
+
+        <div class="analytics-summary">
+          <span>
+            Tổng:
+            <span class="analytics-total">1.8M</span>
+          </span>
+
+          <span class="analytics-growth">
+            +457%
+          </span>
+        </div>
+      </div>
+
+      <div #chartContainer class="chart-container">
+
+        <svg
+          [attr.viewBox]="'0 0 ' + W + ' ' + H"
+          class="chart-svg w-full"
+          style="height: 80px; display: block;"
+          preserveAspectRatio="none"
+        >
+
+          <defs>
+            <linearGradient
+              id="chartFill"
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="1"
+            >
+              <stop
+                offset="0%"
+                stop-color="#ff5c00"
+                stop-opacity="0.25"
+              />
+
+              <stop
+                offset="100%"
+                stop-color="#ff5c00"
+                stop-opacity="0"
+              />
+            </linearGradient>
+          </defs>
+
+          <path
+            [attr.d]="areaD"
+            class="chart-area"
+            fill="url(#chartFill)"
+          />
+
+          <path
+            [attr.d]="lineD"
+            class="chart-line"
+            fill="none"
+            stroke="#ff5c00"
+            stroke-width="1.5"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+          />
+
+        </svg>
+
+      </div>
+
+      <div class="analytics-footer">
+        @for (date of days; track date) {
+          <span>{{ date | date:'d/M' }}</span>
+        }
+      </div>
+
+    </div>
+
+    <!-- TRENDING: LẤY BÀI VIẾT TỪ NEWS DASHBOARD STATS -->
+    <div class="dashboard-content-grid">
+
+      <div class="dashboard-panel">
+
+        <div class="dashboard-panel-header">
+          <h2 class="dashboard-panel-title">
+            <span class="dashboard-title-bar"></span>
+            Trending
+          </h2>
+        </div>
+
+        <div class="dashboard-trending-list">
+
+          @for (news of trendingNews(); track news.news_id; let i = $index) {
+            <div class="dashboard-trending-item">
+
+              <span
+                class="dashboard-rank"
+                [class.dashboard-rank-1]="i === 0"
+                [class.dashboard-rank-2]="i === 1"
+              >
+                {{ i + 1 }}
+              </span>
+
+              <div class="dashboard-thumbnail">
+                @if (news.thumbnail) {
+                  <img
+                    [src]="news.thumbnail"
+                    [alt]="news.title"
+                  />
+                } @else {
+                  <span>📰</span>
+                }
+              </div>
+
+              <div class="dashboard-news-info">
+                <p class="dashboard-news-title">
+                  {{ news.title }}
+                </p>
+
+                <p class="dashboard-news-meta">
+                  {{ news.author?.username ?? 'Không rõ tác giả' }}
+                  ·
+                  @if (news.published_at) {
+                    {{ news.published_at | date:'dd/MM/yyyy' }}
+                  } @else {
+                    Chưa xuất bản
+                  }
+                </p>
+              </div>
+
+              <div class="dashboard-views">
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                  />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+
+                {{ news.views | number }}
+              </div>
+
+            </div>
+          } @empty {
+            <p>Chưa có dữ liệu bài viết xem nhiều.</p>
+          }
+
+        </div>
+
+      </div>
+
+      <!-- HOẠT ĐỘNG GẦN ĐÂY: GIỮ NGUYÊN -->
+      <div class="dashboard-panel">
+
+        <div class="dashboard-panel-header">
+          <h2 class="dashboard-panel-title">
+            <span class="dashboard-title-bar dashboard-activity-bar"></span>
+            Hoạt động gần đây
+          </h2>
+        </div>
+
+        <div class="dashboard-activity-list">
+
+          <div class="dashboard-activity-item">
+            <span class="dashboard-activity-icon">📰</span>
+
+            <div class="dashboard-activity-content">
+              <p class="dashboard-activity-text">
+                Đã đăng một bài viết mới
+              </p>
+
+              <span class="dashboard-activity-time">
+                5 phút trước
+              </span>
+            </div>
+          </div>
+
+          <div class="dashboard-activity-item">
+            <span class="dashboard-activity-icon">✏️</span>
+
+            <div class="dashboard-activity-content">
+              <p class="dashboard-activity-text">
+                Đã cập nhật bài viết
+              </p>
+
+              <span class="dashboard-activity-time">
+                20 phút trước
+              </span>
+            </div>
+          </div>
+
+          <div class="dashboard-activity-item">
+            <span class="dashboard-activity-icon">👁️</span>
+
+            <div class="dashboard-activity-content">
+              <p class="dashboard-activity-text">
+                Bài viết đạt 10.000 lượt xem
+              </p>
+
+              <span class="dashboard-activity-time">
+                1 giờ trước
+              </span>
+            </div>
+          </div>
+
+          <div class="dashboard-activity-item">
+            <span class="dashboard-activity-icon">👤</span>
+
+            <div class="dashboard-activity-content">
+              <p class="dashboard-activity-text">
+                Người dùng mới đăng ký :
+              </p>
+
+              <span class="dashboard-activity-time">
+                1 giờ trước
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>

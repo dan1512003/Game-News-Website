@@ -1,0 +1,667 @@
+
+<div class="comments-page">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-title">
+      <span class="page-icon">💬</span>
+      <h1>Bình luận</h1>
+
+      <span class="total-count">
+        {{ total() }}
+      </span>
+    </div>
+
+    <div class="page-header-right">
+      <div class="search-box">
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+
+        <input
+          type="text"
+          [ngModel]="search()"
+          (ngModelChange)="setSearch($event)"
+          placeholder="Tìm bình luận, tên user..."
+        />
+
+        @if (search()) {
+          <button
+            type="button"
+            (click)="setSearch('')"
+          >
+            ×
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    @for (tab of TABS; track tab.key) {
+      <button
+        type="button"
+        class="tab-button"
+        [class.active]="tabFilter() === tab.key"
+        [style.border-color]="
+          tabFilter() === tab.key
+            ? tab.color
+            : '#1e1e1e'
+        "
+        [style.color]="
+          tabFilter() === tab.key
+            ? tab.color
+            : '#4a4540'
+        "
+        (click)="setTab(tab.key)"
+      >
+        {{ tab.label }}
+
+        <span class="tab-count">
+          {{ tabCount(tab.key) }}
+        </span>
+      </button>
+    }
+  </div>
+
+  <!-- ERROR -->
+  @if (error()) {
+    <div class="error-message">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- SUCCESS -->
+  @if (successMessage()) {
+    <div class="success-message">
+      {{ successMessage() }}
+    </div>
+  }
+
+  <!-- TABLE -->
+  <div class="table-wrapper">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Người dùng</th>
+            <th>Nội dung bình luận</th>
+            <th>Bài viết</th>
+            <th>Thời gian</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (comment of paged(); track comment.comment_id) {
+            <tr>
+              <!-- ID -->
+              <td>
+                <span class="comment-id">
+                  #{{ comment.comment_id }}
+                </span>
+              </td>
+
+              <!-- USER -->
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar">
+                    {{
+                      getUsername(comment)
+                        .charAt(0)
+                        .toUpperCase()
+                    }}
+                  </div>
+
+                  <span>
+                    {{ getUsername(comment) }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- CONTENT -->
+              <td class="content-cell">
+                <p class="comment-content">
+                  {{ comment.content }}
+                </p>
+
+                @if (comment.parent_comment_id) {
+                  <span class="reply-info">
+                    ↩ Trả lời
+                    #{{ comment.parent_comment_id }}
+                  </span>
+                }
+
+                <button
+                  type="button"
+                  class="view-link"
+                  (click)="openComment(comment)"
+                >
+                  👁 Xem đầy đủ
+                </button>
+              </td>
+
+              <!-- ARTICLE -->
+              <td>
+                <span class="article-title">
+                  {{ getNewsTitle(comment) | slice:0:32 }}
+                  @if (getNewsTitle(comment).length > 32) {
+                    ...
+                  }
+                </span>
+              </td>
+
+              <!-- DATE -->
+              <td>
+                <span class="created-date">
+                  {{ comment.created_at }}
+                </span>
+              </td>
+
+              <!-- STATUS -->
+              <td>
+                <span
+                  class="status-badge"
+                  [ngClass]="statusClass(comment.status)"
+                >
+                  {{
+                    STATUS_LABEL[comment.status]
+                      ?? comment.status
+                  }}
+                </span>
+              </td>
+
+              <!-- ACTIONS -->
+              <td>
+                <div class="actions">
+                  @if (canCheck()) {
+                    <button
+                      type="button"
+                      class="action-button approve"
+                      [class.active]="
+                        comment.status === 'approved'
+                      "
+                      [disabled]="
+                        comment.status === 'approved' ||
+                        submitting()
+                      "
+                      (click)="mark(comment, 'approved')"
+                    >
+                      ✓ Hợp lệ
+                    </button>
+
+                    <button
+                      type="button"
+                      class="action-button spam"
+                      [class.active]="
+                        comment.status === 'spam'
+                      "
+                      [disabled]="
+                        comment.status === 'spam' ||
+                        submitting()
+                      "
+                      (click)="mark(comment, 'spam')"
+                    >
+                      × Không hợp lệ
+                    </button>
+                  }
+
+                  @if (canDelete()) {
+                    <button
+                      type="button"
+                      class="delete-button"
+                      title="Xóa"
+                      [disabled]="deleting()"
+                      (click)="askDelete(comment)"
+                    >
+                      🗑
+                    </button>
+                  }
+
+                  @if (!canCheck() && !canDelete()) {
+                    <span class="no-action">—</span>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+
+          <!-- LOADING -->
+          @if (loading()) {
+            <tr>
+              <td colspan="7" class="empty-state">
+                Đang tải bình luận...
+              </td>
+            </tr>
+          }
+
+          <!-- EMPTY -->
+          @if (!loading() && paged().length === 0) {
+            <tr>
+              <td colspan="7" class="empty-state">
+                Không có bình luận nào
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAGINATION -->
+  @if (totalPages() > 1) {
+    <div class="pagination">
+      <span class="pagination-info">
+        {{ recordStart() }}–{{ recordEnd() }}
+        / {{ total() }} bản ghi
+      </span>
+
+      <div class="pagination-controls">
+        <button
+          type="button"
+          class="pagination-btn"
+          [disabled]="page() === 1 || loading()"
+          (click)="changePage(page() - 1)"
+        >
+          ←
+        </button>
+
+        <div class="pagination-pages">
+          @for (item of paginationItems(); track $index) {
+            @if (item === 'dots') {
+              <span class="pagination-dots">
+                ...
+              </span>
+            } @else {
+              <button
+                type="button"
+                class="pagination-btn"
+                [class.active]="item === currentPage()"
+                [disabled]="loading()"
+                (click)="changePage(item)"
+              >
+                {{ item }}
+              </button>
+            }
+          }
+        </div>
+
+        <button
+          type="button"
+          class="pagination-btn"
+          [disabled]="
+            currentPage() === totalPages() || loading()
+          "
+          (click)="changePage(currentPage() + 1)"
+        >
+          →
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- DELETE DIALOG -->
+  @if (deleteItem(); as item) {
+    <div
+      class="modal-overlay"
+      (click)="deleteItem.set(null)"
+    >
+      <div
+        class="delete-dialog"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="dialog-icon">⚠</div>
+
+        <h3>Xác nhận</h3>
+
+        <p>
+          Bạn có chắc muốn xóa bình luận
+          #{{ item.comment_id }}?
+          Hành động này không thể hoàn tác.
+        </p>
+
+        <div class="dialog-actions">
+          <button
+            type="button"
+            class="cancel-button"
+            [disabled]="deleting()"
+            (click)="deleteItem.set(null)"
+          >
+            Hủy
+          </button>
+
+          <button
+            type="button"
+            class="confirm-delete"
+            [disabled]="deleting()"
+            (click)="confirmDelete()"
+          >
+            {{ deleting() ? 'Đang xóa...' : 'Xóa' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- COMMENT DETAIL MODAL -->
+  @if (viewItem(); as comment) {
+    <div
+      class="modal-overlay"
+      (click)="closeComment()"
+    >
+      <div
+        class="comment-modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <!-- HEADER -->
+        <div class="modal-header">
+          <div class="modal-user">
+            <div class="user-avatar large">
+              {{
+                getUsername(comment)
+                  .charAt(0)
+                  .toUpperCase()
+              }}
+            </div>
+
+            <div>
+              <p class="modal-username">
+                {{ getUsername(comment) }}
+              </p>
+
+              <p class="modal-date">
+                {{ comment.created_at }}
+
+                @if (comment.parent_comment_id) {
+                  <span>
+                    ↩ Trả lời
+                    #{{ comment.parent_comment_id }}
+                  </span>
+                }
+              </p>
+
+              <p class="modal-date">
+                {{ getUserEmail(comment) }}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="close-button"
+            (click)="closeComment()"
+          >
+            ×
+          </button>
+        </div>
+
+        <!-- ARTICLE PREVIEW -->
+        <div class="article-row">
+          @if (getArticle(comment.news_id); as article) {
+            @if (article.thumbnail) {
+              <img
+                [src]="getThumbnailUrl(article.thumbnail)"
+                alt="Ảnh bài viết"
+              />
+            }
+
+            <div class="article-info">
+              <p class="small-label">
+                Bài viết
+              </p>
+
+              <p class="article-name">
+                {{ article.title }}
+              </p>
+
+              <p class="article-meta">
+                {{ getArticleAuthorName(article.author) }}
+                ·
+                {{ article.published_at || '—' }}
+              </p>
+            </div>
+          } @else {
+            <div class="article-info">
+              <p class="small-label">
+                Bài viết
+              </p>
+
+              <p class="article-name">
+                {{ getNewsTitle(comment) }}
+              </p>
+            </div>
+          }
+
+          <!-- Chỉ tải bài viết khi bấm nút này -->
+          <button
+            type="button"
+            class="view-article-button"
+            (click)="openArticle(comment.news_id)"
+          >
+            👁 Xem bài viết
+          </button>
+        </div>
+
+        <!-- PARENT COMMENT -->
+        @if (getParentComment(comment); as parent) {
+          <div class="parent-comment">
+            <p class="parent-label">
+              ↩ Đang trả lời
+              {{ getParentUsername(parent) }}
+            </p>
+
+            <p>{{ parent.content }}</p>
+          </div>
+        }
+
+        <!-- COMMENT CONTENT -->
+        <div class="modal-content">
+          <p>{{ comment.content }}</p>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="modal-footer">
+          <div>
+            @if (canCheck()) {
+              <button
+                type="button"
+                class="action-button approve"
+                [disabled]="
+                  comment.status === 'approved' ||
+                  submitting()
+                "
+                (click)="mark(comment, 'approved')"
+              >
+                ✓ Hợp lệ
+              </button>
+
+              <button
+                type="button"
+                class="action-button spam"
+                [disabled]="
+                  comment.status === 'spam' ||
+                  submitting()
+                "
+                (click)="mark(comment, 'spam')"
+              >
+                × Không hợp lệ
+              </button>
+            }
+
+            @if (canDelete()) {
+              <button
+                type="button"
+                class="delete-button"
+                [disabled]="deleting()"
+                (click)="askDelete(comment)"
+              >
+                🗑 Xóa
+              </button>
+            }
+          </div>
+
+          <span
+            class="status-badge"
+            [ngClass]="statusClass(comment.status)"
+          >
+            {{
+              STATUS_LABEL[comment.status]
+                ?? comment.status
+            }}
+          </span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ARTICLE MODAL -->
+  @if (viewArticleId(); as articleId) {
+    <div
+      class="article-overlay"
+      (click)="closeArticle()"
+    >
+      <div
+        class="article-modal"
+        (click)="$event.stopPropagation()"
+      >
+        <!-- HEADER -->
+        <div class="article-modal-header">
+          <button
+            type="button"
+            (click)="closeArticle()"
+          >
+            ‹ Quay lại
+          </button>
+
+          <span>Xem bài viết</span>
+
+          <button
+            type="button"
+            (click)="closeArticle()"
+          >
+            ×
+          </button>
+        </div>
+
+        @if (getArticle(articleId); as article) {
+          @if (article.thumbnail) {
+            <img
+              class="article-cover"
+              [src]="getThumbnailUrl(article.thumbnail)"
+              alt="Ảnh bìa bài viết"
+            />
+          }
+
+          <div class="article-body">
+            <nav class="breadcrumb">
+              Trang chủ /
+              {{ article.title | slice:0:36 }}
+
+              @if (article.title.length > 36) {
+                ...
+              }
+            </nav>
+
+            <span class="category">
+              {{ article.category?.name }}
+            </span>
+
+            <h1>{{ article.title }}</h1>
+
+            <div class="article-author">
+              <div class="author-avatar">
+                {{
+                  getArticleAuthorName(article.author)
+                    .charAt(0)
+                    .toUpperCase()
+                }}
+              </div>
+
+              <div>
+                <p>
+                  {{ getArticleAuthorName(article.author) }}
+                </p>
+                <small>Tác giả</small>
+              </div>
+
+              <div class="article-stats">
+                {{ article.published_at || '—' }}
+
+                @if (article.views !== undefined) {
+                  <span>
+                    {{ article.views | number:'1.0-0' }}
+                    lượt xem
+                  </span>
+                }
+              </div>
+            </div>
+
+            <!-- CONTENT BLOCKS -->
+            @for (
+              block of getArticleBlocks(articleId);
+              track block.position
+            ) {
+              @switch (block.type) {
+                @case ('paragraph') {
+                  <p class="article-paragraph">
+                    {{ block.content }}
+                  </p>
+                }
+
+                @case ('heading1') {
+                  <h2>{{ block.content }}</h2>
+                }
+
+                @case ('heading2') {
+                  <h3>{{ block.content }}</h3>
+                }
+
+                @case ('image') {
+                  <div class="article-image">
+                    <img
+                      [src]="getThumbnailUrl(block.content)"
+                      alt="Ảnh nội dung bài viết"
+                    />
+                  </div>
+                }
+
+                @case ('quote') {
+                  <blockquote>
+                    "{{ block.content }}"
+                  </blockquote>
+                }
+              }
+            }
+
+            @if (getArticleBlocks(articleId).length === 0) {
+              <p class="no-content">
+                Chưa có nội dung chi tiết
+              </p>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">
+            @if (loading()) {
+              Đang tải bài viết...
+            } @else {
+              Không tìm thấy bài viết.
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+</div>

@@ -1,0 +1,397 @@
+
+                    ┌──────────────────────┐
+                    │        USERS         │
+                    ├──────────────────────┤
+                    │ PK user_id           │
+                    │ username             │
+                    │ email                │
+                    │ password_hash        │
+                    │ role                 │
+                    │ status               │
+                    │ created_at           │
+                    └──────────┬───────────┘
+                               │
+                    ┌──────────┴──────────┐
+                    │                     │
+                  1:N                   1:N
+                    │                     │
+                    ▼                     ▼
+             author_id              reviewer_id
+                    │                     │
+                    └──────────┬──────────┘
+                               ▼
+                    ┌────────────────────────┐
+                    │          NEWS          │
+                    ├────────────────────────┤
+                    │ PK news_id             │
+                    │ title                  │
+                    │ slug                   │
+                    │ summary                │
+                    │ FK category_id         │
+                    │ FK author_id            │
+                    │ FK reviewer_id          │
+                    │ thumbnail              │
+                    │ status                 │
+                    │ views                  │
+                    │ published_at           │
+                    │ scheduled_at            │
+                    │ editor_note             │
+                    │ requirement_note        │
+                    │ review_score            │
+                    └───────┬──────┬─────────┘
+                            │      │
+                         1:N│      │1:N
+                            │      │
+                            ▼      ▼
+                 ┌──────────────┐ ┌──────────────────┐
+                 │CONTENT_BLOCKS│ │    COMMENTS      │
+                 ├──────────────┤ ├──────────────────┤
+                 │PK block_id   │ │PK comment_id     │
+                 │FK news_id    │ │FK news_id        │
+                 │type          │ │FK user_id        │
+                 │content       │ │FK parent_id      │
+                 │position      │ │content           │
+                 └──────────────┘ │status            │
+                                  │likes             │
+                                  │created_at        │
+                                  └──────────────────┘
+
+
+┌──────────────────────┐
+│      CATEGORIES      │
+├──────────────────────┤
+│ PK category_id       │
+│ name                 │
+│ description          │
+└──────────┬───────────┘
+           │
+           │ 1:N
+           ▼
+        ┌───────┐
+        │ NEWS  │
+        │FK cat │
+        └───────┘
+
+
+┌──────────────────────┐
+│         TAGS         │
+├──────────────────────┤
+│ PK tag_id            │
+│ name                 │
+│ description          │
+└──────────┬───────────┘
+           │
+           │ 1:N
+           ▼
+┌──────────────────────┐
+│      NEWS_TAGS       │
+├──────────────────────┤
+│ PK/FK news_id        │
+│ PK/FK tag_id         │
+└──────────┬───────────┘
+           │
+           │ N:1
+           ▼
+        ┌───────┐
+        │ NEWS  │
+        └───────┘
+
+
+-- =========================================================
+-- 1. TẠO DATABASE
+-- =========================================================
+
+CREATE DATABASE game_news;
+
+-- Sau khi tạo database, kết nối vào database game_news
+-- rồi chạy phần bên dưới.
+
+
+-- =========================================================
+-- 2. USERS
+-- =========================================================
+
+CREATE TABLE users (
+    user_id BIGSERIAL PRIMARY KEY,
+
+    username VARCHAR(50) NOT NULL UNIQUE,
+
+    email VARCHAR(255) NOT NULL UNIQUE,
+
+    password_hash TEXT NOT NULL,
+
+    role VARCHAR(20) NOT NULL DEFAULT 'user',
+
+    status VARCHAR(20) NOT NULL DEFAULT 'active',
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_users_role
+        CHECK (role IN ('admin', 'editor', 'author', 'user')),
+
+    CONSTRAINT chk_users_status
+        CHECK (status IN ('active', 'banned'))
+);
+
+
+-- =========================================================
+-- 3. CATEGORIES
+-- =========================================================
+
+CREATE TABLE categories (
+    category_id BIGSERIAL PRIMARY KEY,
+
+    name VARCHAR(100) NOT NULL UNIQUE,
+
+    description TEXT
+);
+
+
+-- =========================================================
+-- 4. TAGS
+-- =========================================================
+
+CREATE TABLE tags (
+    tag_id BIGSERIAL PRIMARY KEY,
+
+    name VARCHAR(100) NOT NULL UNIQUE,
+
+    description TEXT
+);
+
+
+-- =========================================================
+-- 5. NEWS
+-- =========================================================
+
+CREATE TABLE news (
+    news_id BIGSERIAL PRIMARY KEY,
+
+    title VARCHAR(255) NOT NULL,
+
+    slug VARCHAR(300) NOT NULL UNIQUE,
+
+    summary TEXT,
+
+    category_id BIGINT NOT NULL,
+
+    author_id BIGINT NOT NULL,
+
+    reviewer_id BIGINT,
+
+    thumbnail TEXT,
+
+    status VARCHAR(20) NOT NULL DEFAULT 'draft',
+
+    views BIGINT NOT NULL DEFAULT 0,
+
+    published_at TIMESTAMP,
+
+    scheduled_at TIMESTAMP,
+
+    editor_note TEXT,
+
+    requirement_note TEXT,
+
+    review_score NUMERIC(3,1),
+
+    CONSTRAINT fk_news_category
+        FOREIGN KEY (category_id)
+        REFERENCES categories(category_id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_news_author
+        FOREIGN KEY (author_id)
+        REFERENCES users(user_id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_news_reviewer
+        FOREIGN KEY (reviewer_id)
+        REFERENCES users(user_id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+
+    CONSTRAINT chk_news_status
+        CHECK (
+            status IN (
+                'draft',
+                'submitted',
+                'processing',
+                'returned',
+                'scheduled',
+                'published'
+            )
+        ),
+
+    CONSTRAINT chk_news_views
+        CHECK (views >= 0),
+
+    CONSTRAINT chk_news_review_score
+        CHECK (
+            review_score IS NULL
+            OR (review_score >= 0 AND review_score <= 10)
+        )
+);
+
+
+-- =========================================================
+-- 6. CONTENT_BLOCKS
+-- =========================================================
+
+CREATE TABLE content_blocks (
+    block_id BIGSERIAL PRIMARY KEY,
+
+    news_id BIGINT NOT NULL,
+
+    type VARCHAR(30) NOT NULL,
+
+    content TEXT NOT NULL,
+
+    position INTEGER NOT NULL,
+
+    CONSTRAINT fk_content_blocks_news
+        FOREIGN KEY (news_id)
+        REFERENCES news(news_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_content_blocks_type
+        CHECK (
+            type IN (
+                'paragraph',
+                'heading1',
+                'heading2',
+                'image',
+                'video',
+                'quote'
+            )
+        ),
+
+    CONSTRAINT chk_content_blocks_position
+        CHECK (position >= 1),
+
+    CONSTRAINT uq_content_blocks_position
+        UNIQUE (news_id, position)
+);
+
+
+-- =========================================================
+-- 7. COMMENTS
+-- =========================================================
+
+CREATE TABLE comments (
+    comment_id BIGSERIAL PRIMARY KEY,
+
+    news_id BIGINT NOT NULL,
+
+    user_id BIGINT NOT NULL,
+
+    parent_id BIGINT,
+
+    content TEXT NOT NULL,
+
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+
+    likes INTEGER NOT NULL DEFAULT 0,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_comments_news
+        FOREIGN KEY (news_id)
+        REFERENCES news(news_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_comments_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(user_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_comments_parent
+        FOREIGN KEY (parent_id)
+        REFERENCES comments(comment_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_comments_status
+        CHECK (
+            status IN (
+                'pending',
+                'approved',
+                'spam'
+            )
+        ),
+
+    CONSTRAINT chk_comments_likes
+        CHECK (likes >= 0)
+);
+
+
+-- =========================================================
+-- 8. NEWS_TAGS
+--    Quan hệ N:N giữa NEWS và TAGS
+-- =========================================================
+
+CREATE TABLE news_tags (
+    news_id BIGINT NOT NULL,
+
+    tag_id BIGINT NOT NULL,
+
+    PRIMARY KEY (news_id, tag_id),
+
+    CONSTRAINT fk_news_tags_news
+        FOREIGN KEY (news_id)
+        REFERENCES news(news_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_news_tags_tag
+        FOREIGN KEY (tag_id)
+        REFERENCES tags(tag_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+
+-- =========================================================
+-- 9. INDEX
+-- =========================================================
+
+CREATE INDEX idx_news_category
+    ON news(category_id);
+
+CREATE INDEX idx_news_author
+    ON news(author_id);
+
+CREATE INDEX idx_news_reviewer
+    ON news(reviewer_id);
+
+CREATE INDEX idx_news_status
+    ON news(status);
+
+CREATE INDEX idx_news_published_at
+    ON news(published_at);
+
+CREATE INDEX idx_news_scheduled_at
+    ON news(scheduled_at);
+
+CREATE INDEX idx_content_blocks_news
+    ON content_blocks(news_id);
+
+CREATE INDEX idx_comments_news
+    ON comments(news_id);
+
+CREATE INDEX idx_comments_user
+    ON comments(user_id);
+
+CREATE INDEX idx_comments_parent
+    ON comments(parent_id);
+
+CREATE INDEX idx_comments_status
+    ON comments(status);
+
+CREATE INDEX idx_news_tags_tag
+    ON news_tags(tag_id);

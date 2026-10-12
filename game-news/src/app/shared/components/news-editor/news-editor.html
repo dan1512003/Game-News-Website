@@ -1,0 +1,1140 @@
+
+<div class="news-editor">
+
+  <!-- HEADER -->
+  <header class="editor-header">
+
+    <button
+      type="button"
+      class="back-button"
+      (click)="closeEditor()">
+      ←
+      <span>Quay lại</span>
+    </button>
+
+    <!-- TABS -->
+    <div class="tabs-wrapper">
+
+      <button
+        type="button"
+        class="tab-scroll-btn left"
+        [class.hidden]="!hasScroll"
+        (click)="scrollTabs('left')"
+        aria-label="Cuộn sang trái">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+
+      <div
+        #tabsContent
+        class="tabs"
+        (scroll)="onTabsScroll()">
+
+        <button
+          type="button"
+          [class.active]="tab === 'basic'"
+          (click)="setTab('basic')">
+          Cơ bản
+        </button>
+
+        <button
+          type="button"
+          [class.active]="tab === 'content'"
+          (click)="setTab('content')">
+          Nội dung
+
+          @if (blocks.length) {
+            <span class="badge">{{ blocks.length }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          [class.active]="tab === 'meta'"
+          (click)="setTab('meta')">
+          Thẻ & Đánh giá
+
+          @if (selectedTags.length) {
+            <span class="badge">{{ selectedTags.length }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          [class.active]="tab === 'other'"
+          (click)="setTab('other')">
+          Thông tin khác
+        </button>
+
+      </div>
+
+      <button
+        type="button"
+        class="tab-scroll-btn right"
+        [class.hidden]="!hasScroll"
+        (click)="scrollTabs('right')"
+        aria-label="Cuộn sang phải">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+
+    </div>
+
+    <!-- HEADER ACTIONS -->
+    <div class="header-actions">
+
+      <button
+        type="button"
+        class="preview-button"
+        [class.active]="showPreview"
+        (click)="showPreview = !showPreview">
+        👁 Preview
+      </button>
+
+   
+@if (!news) {
+
+  @if (currentUser?.role === 'author') {
+
+    <button
+      type="button"
+      [disabled]="viewOnly"
+      (click)="handleAction('draft')">
+      Nháp
+    </button>
+
+    <button
+      type="button"
+      [disabled]="viewOnly"
+      (click)="handleAction('submit')">
+      Gửi duyệt
+    </button>
+
+  } @else {
+
+    <button
+      type="button"
+      [disabled]="viewOnly"
+      (click)="handleAction('draft')">
+      Nháp
+    </button>
+
+    <button
+      type="button"
+      [disabled]="viewOnly"
+      (click)="handleAction('publish')">
+      Đăng bài
+    </button>
+
+    <button
+      type="button"
+      [disabled]="viewOnly"
+      (click)="handleAction('schedule')">
+      Lên lịch
+    </button>
+
+  }
+
+} @else {
+
+  <!-- DRAFT -->
+  @if (news.status === 'draft') {
+
+    @if (currentUser?.role === 'author') {
+
+      @if (!viewOnly) {
+        <button
+          type="button"
+          (click)="handleAction('save')">
+          Lưu bài
+        </button>
+      } @else {
+        <button
+          type="button"
+          (click)="handleAction('edit')">
+          Sửa bài
+        </button>
+      }
+
+      <button
+        type="button"
+        [disabled]="viewOnly"
+        (click)="handleAction('submit')">
+        Gửi duyệt
+      </button>
+
+    }
+
+  }
+
+  <!-- SUBMITTED -->
+  @if (news.status === 'submitted') {
+
+    @if (currentUser?.role === 'author') {
+
+      <button
+        type="button"
+        (click)="handleAction('unsubmitted')">
+        Hủy duyệt
+      </button>
+
+    } @else {
+
+      <button
+        type="button"
+        (click)="handleAction('apply')">
+        Nhận xử lý
+      </button>
+
+    }
+
+  }
+
+  <!-- PUBLISHED -->
+  @if (news.status === 'published') {
+
+    @if (currentUser?.role === 'author') {
+
+      @if (sameId(news.author_id, currentUser?.id)) {
+        <button
+          type="button"
+          (click)="handleAction('required')">
+          Yêu cầu
+        </button>
+      }
+
+    } @else {
+
+      <button
+        type="button"
+        (click)="handleAction('unpublish')">
+        Gỡ bài và xử lý
+      </button>
+
+    }
+
+  }
+
+  <!-- PROCESSING -->
+  @if (news.status === 'processing') {
+
+    @if (sameId(news.author_id, currentUser?.id)) {
+
+      @if (
+        (currentUser?.role === 'admin' ||
+         currentUser?.role === 'super_admin' ||
+         currentUser?.role === 'editor') &&
+        sameId(news.reviewer_id, currentUser?.id)
+      ) {
+
+        @if (!viewOnly) {
+          <button
+            type="button"
+            (click)="handleAction('save')">
+            Lưu bài
+          </button>
+        } @else {
+          <button
+            type="button"
+            (click)="handleAction('edit')">
+            Sửa bài
+          </button>
+        }
+
+        <button
+          type="button"
+          (click)="handleAction('return')">
+          Trả về
+        </button>
+
+        <button
+          type="button"
+          (click)="handleAction('schedule')">
+          Lên lịch
+        </button>
+
+        <button
+          type="button"
+          (click)="handleAction('publish')">
+          Đăng bài
+        </button>
+
+      } @else {
+
+        <button
+          type="button"
+          (click)="handleAction('required')">
+          Yêu cầu
+        </button>
+
+      }
+
+    } @else if (
+      (currentUser?.role === 'admin' ||
+       currentUser?.role === 'super_admin' ||
+       currentUser?.role === 'editor') &&
+      sameId(news.reviewer_id, currentUser?.id)
+    ) {
+
+      @if (!viewOnly) {
+        <button
+          type="button"
+          (click)="handleAction('save')">
+          Lưu bài
+        </button>
+      } @else {
+        <button
+          type="button"
+          (click)="handleAction('edit')">
+          Sửa bài
+        </button>
+      }
+
+      <button
+        type="button"
+        (click)="handleAction('return')">
+        Trả về
+      </button>
+
+      <button
+        type="button"
+        (click)="handleAction('schedule')">
+        Lên lịch
+      </button>
+
+      <button
+        type="button"
+        (click)="handleAction('publish')">
+        Đăng bài
+      </button>
+
+    }
+
+  }
+
+  <!-- RETURNED -->
+  @if (news.status === 'returned') {
+
+    @if (
+      currentUser?.role === 'author' &&
+      sameId(news.author_id, currentUser?.id)
+    ) {
+
+      @if (!viewOnly) {
+        <button
+          type="button"
+          (click)="handleAction('save')">
+          Lưu bài
+        </button>
+      } @else {
+        <button
+          type="button"
+          (click)="handleAction('edit')">
+          Sửa bài
+        </button>
+      }
+
+      <button
+        type="button"
+        [disabled]="viewOnly"
+        (click)="handleAction('submit')">
+        Gửi duyệt
+      </button>
+
+    }
+
+  }
+
+  <!-- SCHEDULED -->
+  @if (news.status === 'scheduled') {
+
+    @if (
+      (currentUser?.role === 'admin' ||
+       currentUser?.role === 'super_admin' ||
+       currentUser?.role === 'editor') &&
+      sameId(news.reviewer_id, currentUser?.id)
+    ) {
+
+      <button
+        type="button"
+        (click)="handleAction('publish')">
+        Đăng bài
+      </button>
+
+      <button
+        type="button"
+        (click)="handleAction('unschedule')">
+        Hủy lịch
+      </button>
+
+    }
+
+  }
+
+}
+    </div>
+  </header>
+
+  <!-- EDITOR NOTE -->
+  @if (news?.editor_note) {
+
+    <div class="editor-note-banner">
+      <span class="editor-note-icon">💬</span>
+
+      <div class="editor-note-content">
+        <p class="editor-note-title">
+          Yêu cầu chỉnh sửa từ biên tập viên
+        </p>
+
+        <p class="editor-note-text">
+          {{ news?.editor_note }}
+        </p>
+      </div>
+    </div>
+
+  }
+
+  <!-- REQUIREMENT NOTE -->
+  @if (news?.requirement_note) {
+
+    <div class="editor-note-banner">
+      <span class="editor-note-icon">⚠️</span>
+
+      <div class="editor-note-content">
+        <p class="editor-note-title">
+          Yêu cầu chỉnh sửa
+        </p>
+
+        <p class="editor-note-text">
+          {{ news?.requirement_note }}
+        </p>
+      </div>
+    </div>
+
+  }
+
+  <!-- BODY -->
+  <main class="editor-body">
+
+    <!-- EDITOR PANEL -->
+    <section
+      class="editor-panel"
+      [class.hidden]="showPreview">
+
+      <fieldset
+        class="editor-readonly"
+        [disabled]="viewOnly">
+
+        <!-- BASIC TAB -->
+        @if (tab === 'basic') {
+
+          <div class="tab-content">
+
+            <div class="field">
+              <label>Tiêu đề *</label>
+
+              <input
+                name="title"
+                [(ngModel)]="form.title"
+                placeholder="Nhập tiêu đề bài viết...">
+            </div>
+
+            <!-- CATEGORY: SINGLE SELECT -->
+            <div class="field">
+              <label>Danh mục</label>
+
+              @if (categoriesLoading()) {
+                <p class="empty">Đang tải danh mục...</p>
+              } @else if (categoriesError()) {
+                <p class="editor-note-text">
+                  Không thể tải danh mục. Vui lòng thử lại.
+                </p>
+              } @else {
+
+                <div class="picker">
+
+                  @for (
+                    category of categories();
+                    track category.category_id
+                  ) {
+
+                    <button
+                      type="button"
+                      [class.selected]="isCategorySelected(category.category_id)"
+                      [attr.aria-pressed]="isCategorySelected(category.category_id)"
+                      (click)="toggleCategory(category.category_id)">
+
+                      @if (isCategorySelected(category.category_id)) {
+                        <span>✓ </span>
+                      }
+
+                      {{ category.name }}
+
+                    </button>
+
+                  } @empty {
+                    <p class="empty">Chưa có danh mục nào</p>
+                  }
+
+                </div>
+
+              }
+
+              <small>
+                @if (form.category_id != null) {
+                  Danh mục đã chọn:
+                  {{ getCategoryName(form.category_id) }}
+                } @else {
+                  Bạn chưa chọn danh mục.
+                }
+              </small>
+
+            </div>
+
+            <!-- THUMBNAIL -->
+           
+<!-- THUMBNAIL -->
+<div class="field thumbnail-field">
+  <label for="thumbnailFile">Ảnh đại diện bài viết</label>
+
+  <input
+    #thumbnailInput
+    id="thumbnailFile"
+    type="file"
+    accept="image/jpeg,image/png,image/webp,image/gif"
+    [disabled]="viewOnly"
+    (change)="onThumbnailSelected($event)"
+  />
+
+  <small class="upload-hint">
+    Chấp nhận JPG, PNG, WEBP, GIF — tối đa 5 MB.
+  </small>
+
+  @if (thumbnailPreview || form.thumbnail) {
+    <div class="thumbnail-preview">
+         <img
+      [src]="thumbnailPreview || getThumbnailUrl(form.thumbnail)"
+      class="thumbnail"
+      alt="Ảnh đại diện bài viết"
+      
+    />
+
+      
+      <div class="thumbnail-actions">
+        <span>
+          {{ selectedThumbnail ? 'Ảnh mới đã chọn' : 'Ảnh hiện tại' }}
+        </span>
+
+        @if (!viewOnly) {
+          <button
+            type="button"
+            class="remove-thumbnail"
+            (click)="removeThumbnail(thumbnailInput)"
+          >
+            Xóa ảnh
+          </button>
+        }
+      </div>
+    </div>
+  }
+</div>
+            <!-- QUICK BLOCKS -->
+            <div class="quick-blocks">
+              <label>Thêm khối nội dung nhanh</label>
+
+              <div class="block-buttons">
+                <div class="toolbar">
+
+                  @for (type of blockTypes; track type) {
+                    <button
+                      type="button"
+                      (click)="addBlock(type)">
+
+                      <strong [style.color]="blockMeta[type].color">
+                        {{ blockMeta[type].badge }}
+                      </strong>
+
+                      {{ blockMeta[type].label }}
+                    </button>
+                  }
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        }
+
+        <!-- CONTENT TAB -->
+     
+@if (tab === 'content') {
+
+  <div class="tab-content">
+
+    <div class="toolbar">
+      @for (type of blockTypes; track type) {
+        <button
+          type="button"
+          [disabled]="viewOnly"
+          (click)="addBlock(type)">
+          + {{ blockMeta[type].label }}
+        </button>
+      }
+    </div>
+
+    @if (blocks.length === 0) {
+      <div class="empty">
+        Chưa có khối nội dung nào
+      </div>
+    }
+
+    <div class="blocks">
+
+      @for (
+        block of blocks;
+        track block.id;
+        let i = $index
+      ) {
+
+        <div class="content-block">
+
+          <div
+            class="block-type"
+            [style.color]="blockMeta[block.type].color">
+            {{ blockMeta[block.type].badge }}
+          </div>
+
+          <div class="block-input">
+
+            @if (block.type === 'image') {
+
+              <!-- Chỉ chọn file, không hiển thị ảnh -->
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                [disabled]="viewOnly"
+                (change)="onBlockImageSelected($event, block)">
+
+              @if (block.imageFile) {
+                <small>
+                  Đã chọn: {{ block.imageFile.name }}
+                </small>
+              }
+
+            } @else {
+
+              <textarea
+                [ngModel]="block.content"
+                (ngModelChange)="updateBlock(block, $event)"
+                [ngModelOptions]="{ standalone: true }"
+                [disabled]="viewOnly"
+                [placeholder]="blockMeta[block.type].placeholder"
+                [rows]="
+                  block.type === 'heading1' ||
+                  block.type === 'heading2' ? 1 : 3
+                ">
+              </textarea>
+
+            }
+
+          </div>
+
+          <div class="block-controls">
+
+            <button
+              type="button"
+              [disabled]="viewOnly || i === 0"
+              (click)="moveBlock(i, -1)">
+              ↑
+            </button>
+
+            <button
+              type="button"
+              [disabled]="viewOnly || i === blocks.length - 1"
+              (click)="moveBlock(i, 1)">
+              ↓
+            </button>
+
+            <button
+              type="button"
+              class="delete"
+              [disabled]="viewOnly"
+              (click)="deleteBlock(block.id)">
+              ×
+            </button>
+
+          </div>
+
+        </div>
+
+      }
+
+    </div>
+
+  </div>
+
+}
+
+
+
+        <!-- META TAB -->
+        @if (tab === 'meta') {
+
+          <div class="tab-content">
+
+            <h3>Thẻ bài viết</h3>
+
+            @if (tagsLoading()) {
+              <p class="empty">Đang tải thẻ...</p>
+            } @else if (tagsError()) {
+              <p class="editor-note-text">
+                Không thể tải danh sách thẻ.
+              </p>
+            } @else {
+
+              <div class="tag-list">
+
+                @for (tag of tags(); track tag.tag_id) {
+
+                  <button
+                    type="button"
+                    class="tag-item"
+                    [class.selected]="isTagSelected(tag.tag_id)"
+                    [attr.aria-pressed]="isTagSelected(tag.tag_id)"
+                    [title]="tag.description ?? tag.name"
+                    (click)="toggleTag(tag.tag_id)">
+
+                    @if (isTagSelected(tag.tag_id)) {
+                      <span class="tag-check">✓</span>
+                    }
+
+                    <span class="tag-name">
+                      #{{ tag.name }}
+                    </span>
+
+                  </button>
+
+                } @empty {
+                  <p class="empty">Chưa có thẻ nào</p>
+                }
+
+              </div>
+
+            }
+
+            <small>Đã chọn {{ selectedTags.length }} thẻ.</small>
+
+            <!-- REVIEW -->
+            <div class="review">
+
+              <h3>Đánh giá game</h3>
+
+              @if (review) {
+
+                <label>
+                  Điểm số:
+                  <strong>{{ review.score }}/10</strong>
+                </label>
+
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  name="reviewScore"
+                  [(ngModel)]="review.score">
+
+                <label>Điểm cộng</label>
+
+                <textarea
+                  name="reviewPros"
+                  [(ngModel)]="review.pros">
+                </textarea>
+
+                <label>Điểm trừ</label>
+
+                <textarea
+                  name="reviewCons"
+                  [(ngModel)]="review.cons">
+                </textarea>
+
+              } @else {
+
+                <button
+                  type="button"
+                  class="add-button"
+                  (click)="review = { score: 7, pros: '', cons: '' }">
+                  + Thêm đánh giá
+                </button>
+
+              }
+
+            </div>
+
+          </div>
+
+        }
+
+        <!-- OTHER TAB -->
+        @if (tab === 'other') {
+          <div class="tab-content">
+            <h3>Thông tin khác</h3>
+            <p class="empty">
+              Chưa có trường thông tin bổ sung.
+            </p>
+          </div>
+        }
+
+      </fieldset>
+
+    </section>
+
+    <!-- PREVIEW -->
+    @if (showPreview) {
+
+      <section class="preview-panel">
+
+        <div class="preview-header">
+
+          <span>● Preview</span>
+
+          <div class="preview-header-info">
+
+            <strong>
+              {{ form.title || 'Bài viết mới' }}
+            </strong>
+
+            <span class="preview-author">
+
+              @if (sameId(form.author_id, currentUser?.id)) {
+                Bài viết của bạn
+              } @else {
+                Tác giả: {{ getUserName(form.author_id) }}
+              }
+
+            </span>
+
+            @if (
+              (form.status === 'scheduled' ||
+               form.status === 'published') &&
+              form.reviewer_id != null
+            ) {
+
+              <span class="preview-reviewer">
+                Người kiểm duyệt:
+
+                @if (sameId(form.reviewer_id, currentUser?.id)) {
+                  Bạn
+                } @else {
+                  {{ getUserName(form.reviewer_id) }}
+                }
+
+              </span>
+
+            }
+
+          </div>
+
+        </div>
+
+        <div class="preview-content">
+
+          <article class="preview">
+
+            <!-- SINGLE CATEGORY BREADCRUMB -->
+            <div class="breadcrumb">
+              Trang chủ /
+              {{ getCategoryName(form.category_id) }} /
+              {{ form.title || 'Bài viết mới' }}
+            </div>
+
+            <div class="categories">
+              @if (form.category_id != null) {
+                <span class="category">
+                  {{ getCategoryName(form.category_id) }}
+                </span>
+              }
+            </div>
+
+            <h1>
+              {{ form.title || 'Tiêu đề bài viết...' }}
+            </h1>
+
+            <div class="author">
+
+              <div class="avatar">
+                {{ (getUserName(form.author_id) || 'A').charAt(0) }}
+              </div>
+
+              <div>
+                <strong>{{ getUserName(form.author_id) }}</strong>
+                <small>Tác giả</small>
+              </div>
+
+            </div>
+
+            @if (form.thumbnail) {
+              <img
+                [src]="form.thumbnail"
+                class="hero-image"
+                alt="Ảnh đại diện bài viết">
+            }
+
+ 
+<div class="article-content">
+
+  @for (block of blocks; track block.id) {
+
+    @if (block.type === 'paragraph') {
+      <p>{{ block.content }}</p>
+    }
+
+    @if (block.type === 'heading1') {
+      <h2>{{ block.content }}</h2>
+    }
+
+    @if (block.type === 'heading2') {
+      <h3>{{ block.content }}</h3>
+    }
+
+    @if (block.type === 'image') {
+      @if (block.content) {
+        <!-- Ảnh đã lưu khi update -->
+        <img
+          [src]="getThumbnailUrl(block.content)"
+          alt="Ảnh nội dung"
+          class="article-image">
+      } @else if (block.imageFile) {
+        <!-- Ảnh mới chọn từ máy tính -->
+        <img
+          [src]="getBlockImagePreview(block)"
+          alt="Ảnh nội dung"
+          class="article-image">
+      }
+    }
+
+    @if (block.type === 'quote') {
+      <blockquote>{{ block.content }}</blockquote>
+    }
+
+  }
+
+</div>
+
+
+
+          </article>
+
+        </div>
+
+      </section>
+
+    }
+
+  </main>
+
+  <!-- REQUIREMENT DIALOG -->
+  @if (showRequirementDialog) {
+
+    <div class="return-dialog-overlay">
+
+      <div class="return-dialog">
+
+        <div class="return-dialog-header">
+
+          <h3>⚠ Yêu cầu chỉnh sửa bài</h3>
+
+          <button
+            type="button"
+            class="return-dialog-close"
+            (click)="showRequirementDialog = false">
+            ×
+          </button>
+
+        </div>
+
+        <div class="return-dialog-body">
+
+          <p class="article-title">
+            {{ news?.title }}
+          </p>
+
+          <p class="article-author">
+            Tác giả:
+            {{ news ? getUserName(news.author_id) : 'Tác giả' }}
+          </p>
+
+          <label>Nội dung yêu cầu chỉnh sửa *</label>
+
+          <textarea
+            name="requiredNote"
+            [(ngModel)]="requiredNote"
+            placeholder="Mô tả cụ thể nội dung cần chỉnh sửa, bổ sung hoặc lỗi cần sửa..."
+            rows="5">
+          </textarea>
+
+          <div class="return-dialog-actions">
+
+            <button
+              type="button"
+              class="return-cancel"
+              (click)="showRequirementDialog = false">
+              Hủy
+            </button>
+
+            <button
+              type="button"
+              class="return-confirm"
+              [disabled]="!requiredNote.trim()"
+              (click)="confirmRequire()">
+              ⚠ Xác nhận yêu cầu
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+  <!-- RETURN DIALOG -->
+  @if (showReturnDialog) {
+
+    <div class="return-dialog-overlay">
+
+      <div class="return-dialog">
+
+        <div class="return-dialog-header">
+
+          <h3>↩ Trả bài cho tác giả</h3>
+
+          <button
+            type="button"
+            class="return-dialog-close"
+            (click)="showReturnDialog = false">
+            ×
+          </button>
+
+        </div>
+
+        <div class="return-dialog-body">
+
+          <label>Ghi chú yêu cầu chỉnh sửa *</label>
+
+          <textarea
+            name="editorNote"
+            [(ngModel)]="editorNote"
+            placeholder="Mô tả cụ thể cần chỉnh sửa gì, bổ sung nội dung nào, lỗi gì cần sửa..."
+            rows="5">
+          </textarea>
+
+          <div class="return-dialog-actions">
+
+            <button
+              type="button"
+              class="return-cancel"
+              (click)="showReturnDialog = false">
+              Hủy
+            </button>
+
+            <button
+              type="button"
+              class="return-confirm"
+              [disabled]="!editorNote.trim()"
+              (click)="confirmReturn()">
+              ↩ Xác nhận trả bài
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+  <!-- SCHEDULE DIALOG -->
+  @if (showScheduleDialog) {
+
+    <div
+      class="modal-overlay"
+      (click)="showScheduleDialog = false">
+
+      <div
+        class="modal"
+        (click)="$event.stopPropagation()">
+
+        <div class="modal-header">
+
+          <h3>📅 Lên lịch đăng bài</h3>
+
+          <button
+            type="button"
+            (click)="showScheduleDialog = false">
+            ×
+          </button>
+
+        </div>
+
+        <div class="modal-body">
+
+          <div class="article-preview">
+            <small>BÀI VIẾT</small>
+            <p>{{ form.title || 'Bài viết mới' }}</p>
+          </div>
+
+          <label>Ngày đăng</label>
+
+          <input
+            type="date"
+            name="scheduleDate"
+            [(ngModel)]="scheduleDate">
+
+          <label>Giờ đăng</label>
+
+          <input
+            type="time"
+            name="scheduleTime"
+            [(ngModel)]="scheduleTime">
+
+          @if (scheduleDate && scheduleTime) {
+            <div class="schedule-preview">
+              📅 Sẽ đăng lúc
+              {{ scheduleTime }}
+              ngày
+              {{ scheduleDate }}
+            </div>
+          }
+
+        </div>
+
+        <div class="modal-footer">
+
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="showScheduleDialog = false">
+            Hủy
+          </button>
+
+          <button
+            type="button"
+            class="btn-primary"
+            [disabled]="!scheduleDate || !scheduleTime"
+            (click)="confirmSchedule()">
+            Xác nhận lên lịch
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+</div>

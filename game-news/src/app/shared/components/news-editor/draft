@@ -1,0 +1,959 @@
+// import {
+//   afterNextRender,
+//   ChangeDetectorRef,
+//   Component,
+//   ElementRef,
+//   EventEmitter,
+//   HostListener,
+//   inject,
+//   Input,
+//   Output,
+//   ViewChild
+// } from '@angular/core';
+
+// import { FormsModule } from '@angular/forms';
+
+// import { Category, NewsItem, Tag, User, users } from '../../../features/admin/comment/news/news';
+
+
+
+
+// export type BlockType =
+//   | 'paragraph'
+//   | 'heading1'
+//   | 'heading2'
+//   | 'image'
+//   | 'quote';
+// export type NewsAction =
+//   | 'draft'
+//   | 'save'
+//   | 'apply'
+//   | 'submit'
+//   | 'unsubmitted'
+//   | 'return'
+//   | 'schedule'
+//   | 'publish'
+//   | 'unpublish'
+//   | 'required'
+//   | 'unrequired'
+//   | 'unschedule'
+//   | 'edit';
+  
+
+
+// export interface EditorBlock {
+//   id: number;
+//   type: BlockType;
+//   content: string;
+// }
+
+// interface BlockMeta {
+//   label: string;
+//   badge: string;
+//   color: string;
+//   placeholder: string;
+// }
+
+// @Component({
+//   imports: [FormsModule],
+//   selector: 'app-news-editor',
+//   styleUrl: './news-editor.css',
+//   templateUrl: './news-editor.html',
+// })
+// export class NewsEditor {
+
+//   // =====================================================
+//   // INPUT
+//   // =====================================================
+
+//   @Input() news: NewsItem | null = null;
+
+//   @Input() initialBlocks: EditorBlock[] = [];
+
+//   @Input() initialTagIds: number[] = [];
+
+//   @Input() initialCategoryIds: number[] = [];
+
+//   @Input() initialReview: any = null;
+
+//  @Input() currentUser!: User;
+//   @Input() viewOnly = false;
+
+
+//   // =====================================================
+//   // OUTPUT
+//   // =====================================================
+
+//   @Output() save = new EventEmitter<any>();
+
+//   @Output() close = new EventEmitter<void>();
+
+//   @Output() recall = new EventEmitter<void>();
+//   private readonly cdr = inject(ChangeDetectorRef);
+//   @ViewChild('tabsContent')
+//   tabsContent!: ElementRef<HTMLDivElement>;
+
+
+//   hasScroll =false;
+//   // =====================================================
+//   // UI STATE
+//   // =====================================================
+
+//   tab: 'basic' | 'content' | 'meta' | 'other' = 'basic';
+
+//   showPreview = false;
+// showRequirementDialog=false;
+//   showReturnDialog = false;
+// showScheduleDialog=false;
+
+//   // =====================================================
+//   // BLOCKS
+//   // =====================================================
+
+//   readonly blockTypes: BlockType[] = [
+//     'paragraph',
+//     'heading1',
+//     'heading2',
+//     'image',
+//     'quote'
+//   ];
+
+
+//   blocks: EditorBlock[] = [];
+
+//   nextId = 1000;
+
+
+//   scheduleDate = '';
+
+//   scheduleTime = '08:00';
+//   // =====================================================
+//   // NEWS FORM
+//   // =====================================================
+
+// form: NewsItem = {
+//   news_id: 0,
+//   title: '',
+//   category_id: [],
+//   tag_id: [],
+
+//   author_id: 0,
+
+//   thumbnail: '',
+//   published_at: '',
+//   status: 'draft',
+//   views: 0,
+
+//   reviewer_id: null,
+
+//   editor_note: '',
+//   requirement_note: ''
+// };
+
+
+
+//   // =====================================================
+//   // TAGS
+//   // =====================================================
+
+//   selectedTags: number[] = [];
+
+
+//   // =====================================================
+//   // REVIEW
+//   // =====================================================
+
+//   review: any = null;
+
+
+//   // =====================================================
+//   // RETURN NOTE
+//   // =====================================================
+
+//   editorNote = '';
+// requiredNote=''
+
+//   // =====================================================
+//   // BLOCK META
+//   // =====================================================
+
+//   blockMeta: Record<BlockType, BlockMeta> = {
+
+//     paragraph: {
+//       label: 'Đoạn văn',
+//       badge: 'P',
+//       color: '#6b6560',
+//       placeholder: 'Nhập nội dung đoạn văn...'
+//     },
+
+//     heading1: {
+//       label: 'Tiêu đề lớn',
+//       badge: 'H1',
+//       color: '#ff5c00',
+//       placeholder: 'Tiêu đề lớn...'
+//     },
+
+//     heading2: {
+//       label: 'Tiêu đề vừa',
+//       badge: 'H2',
+//       color: '#f59e0b',
+//       placeholder: 'Tiêu đề vừa...'
+//     },
+
+//     image: {
+//       label: 'Hình ảnh',
+//       badge: '⬛',
+//       color: '#3b82f6',
+//       placeholder: 'Dán URL hình ảnh...'
+//     },
+
+//     quote: {
+//       label: 'Trích dẫn',
+//       badge: '❝',
+//       color: '#a78bfa',
+//       placeholder: 'Nhập nội dung trích dẫn...'
+//     }
+
+//   };
+
+
+//   // =====================================================
+//   // CATEGORY
+//   // =====================================================
+
+// categories: Category[] = [
+//   {
+//     category_id: 1,
+//     name: 'PC Gaming',
+//     description: 'Tin tức về game PC và phần cứng',
+//     news_count: 48
+//   },
+//   {
+//     category_id: 2,
+//     name: 'Console',
+//     description: 'PlayStation, Xbox, Nintendo',
+//     news_count: 35
+//   },
+//   {
+//     category_id: 3,
+//     name: 'Mobile',
+//     description: 'Game di động iOS & Android',
+//     news_count: 29
+//   },
+//   {
+//     category_id: 4,
+//     name: 'Esports',
+//     description: 'Tin tức thi đấu chuyên nghiệp',
+//     news_count: 64
+//   },
+//   {
+//     category_id: 5,
+//     name: 'Đánh giá',
+//     description: 'Review game chuyên sâu',
+//     news_count: 22
+//   },
+//   {
+//     category_id: 6,
+//     name: 'Tin nhanh',
+//     description: 'Cập nhật nhanh từ làng game',
+//     news_count: 87
+//   }
+// ];
+
+
+//   // =====================================================
+//   // TAG
+//   // =====================================================
+
+// readonly tags: Tag[] = [
+//   {
+//     tag_id: 1,
+//     name: 'RPG',
+//     description: 'Game nhập vai'
+//   },
+//   {
+//     tag_id: 2,
+//     name: 'FPS',
+//     description: 'Game bắn súng góc nhìn thứ nhất'
+//   },
+//   {
+//     tag_id: 3,
+//     name: 'PC',
+//     description: 'Game dành cho nền tảng PC'
+//   },
+//   {
+//     tag_id: 4,
+//     name: 'Console',
+//     description: 'Game dành cho PlayStation, Xbox, Nintendo'
+//   },
+//   {
+//     tag_id: 5,
+//     name: 'Mobile',
+//     description: 'Game trên nền tảng iOS và Android'
+//   },
+//   {
+//     tag_id: 6,
+//     name: 'Open World',
+//     description: 'Game thế giới mở'
+//   },
+//   {
+//     tag_id: 7,
+//     name: 'Action',
+//     description: 'Game hành động'
+//   },
+//   {
+//     tag_id: 8,
+//     name: 'Indie',
+//     description: 'Game độc lập'
+//   }
+// ];
+
+
+
+
+//   constructor() {
+
+//     afterNextRender(() => {
+
+   
+//       this.updateTabScrollButtons();
+
+//     });
+
+//   }
+//   ngOnInit() {
+
+//     document.body.classList.add('side-nav-open');
+
+
+//     // ---------------------------------------------
+//     // NEWS
+//     // ---------------------------------------------
+
+
+// this.form = {
+
+//   news_id:
+//     this.news?.news_id ?? 0,
+
+//   title:
+//     this.news?.title ?? '',
+
+//   category_id:
+//     this.news?.category_id
+//       ? [...this.news.category_id]
+//       : [...this.initialCategoryIds],
+
+//   tag_id:
+//     this.news?.tag_id
+//       ? [...this.news.tag_id]
+//       : [...this.initialTagIds],
+
+//   author_id:
+//     this.news?.author_id ?? this.currentUser.id,
+
+//   thumbnail:
+//     this.news?.thumbnail ?? '',
+
+//   published_at:
+//     this.formatDateForInput(
+//       this.news?.published_at
+//     ),
+
+//   status:
+//     this.news?.status ?? 'draft',
+
+//   views:
+//     this.news?.views ?? 0,
+
+//   reviewer_id:
+//     this.news?.reviewer_id ?? null,
+
+//   editor_note:
+//     this.news?.editor_note ?? '',
+
+//   requirement_note:
+//     this.news?.requirement_note ?? ''
+// };
+
+
+
+//     // ---------------------------------------------
+//     // BLOCKS
+//     // ---------------------------------------------
+
+//     this.blocks = [...this.initialBlocks]
+
+//       .sort(
+//         (a, b) =>
+//           ((a as any).position ?? 0) -
+//           ((b as any).position ?? 0)
+//       )
+
+//       .map(block => ({
+
+//         id: block.id,
+
+//         type: block.type,
+
+//         content: block.content ?? ''
+
+//       }));
+
+
+//     // ---------------------------------------------
+//     // TAGS
+//     // ---------------------------------------------
+
+//     this.selectedTags = [
+//       ...this.initialTagIds
+//     ];
+
+
+//     // ---------------------------------------------
+//     // REVIEW
+//     // ---------------------------------------------
+
+//     this.review = this.initialReview;
+
+//     // REQUIRED NOTE
+//     this.requiredNote=this.news?.requirement_note??'';
+//     // ---------------------------------------------
+//     // EDITOR NOTE
+//     // ---------------------------------------------
+
+//     this.editorNote =
+//       this.news?.editor_note ?? '';
+//   }
+
+
+//   // =====================================================
+//   // DESTROY
+//   // =====================================================
+
+//   ngOnDestroy() {
+
+//     document.body.classList.remove(
+//       'side-nav-open'
+//     );
+
+//   }
+//   @HostListener('window:resize')
+//   onWindowResize(): void {
+
+//     requestAnimationFrame(() => {
+
+//       this.updateTabScrollButtons();
+
+//     });
+
+//   }
+
+//   // =====================================================
+//   // DATE
+//   // =====================================================
+// getCategoryName(categoryId: number): string {
+
+//   return this.categories.find(
+//     category => category.category_id === categoryId
+//   )?.name ?? `#${categoryId}`;
+
+// }
+
+//   private formatDateForInput(
+//     date: string | undefined
+//   ): string {
+
+//     if (!date) {
+//       return '';
+//     }
+
+
+//     // Nếu đã là yyyy-MM-dd
+//     if (
+//       /^\d{4}-\d{2}-\d{2}/.test(date)
+//     ) {
+
+//       return date.substring(0, 10);
+
+//     }
+
+
+//     // Nếu là dd/MM/yyyy
+//     const match =
+//       date.match(
+//         /^(\d{2})\/(\d{2})\/(\d{4})$/
+//       );
+
+
+//     if (match) {
+
+//       const [, day, month, year] =
+//         match;
+
+//       return `${year}-${month}-${day}`;
+
+//     }
+
+
+//     return date.substring(0, 10);
+//   }
+
+
+//   // =====================================================
+//   // TAB
+//   // =====================================================
+
+//   setTab(
+//     tab: 'basic' | 'content' | 'meta' | 'other'
+//   ) {
+
+//     this.tab = tab;
+
+//   }
+
+
+//   // =====================================================
+//   // BLOCK
+//   // =====================================================
+
+//   addBlock(type: BlockType) {
+
+//     this.blocks.push({
+
+//       id: this.nextId++,
+
+//       type,
+
+//       content: ''
+
+//     });
+
+
+//     this.tab = 'content';
+//   }
+
+// getUserName(userId: number | null | undefined): string {
+//   if (userId == null) {
+//     return this.currentUser?.name ?? 'Tác giả';
+//   }
+
+//   return users.find(
+//     user => user.id === userId
+//   )?.name ?? 'Không xác định';
+// }
+
+//   updateBlock(
+//     block: EditorBlock,
+//     content: string
+//   ) {
+
+//     block.content = content;
+
+//   }
+
+
+//   deleteBlock(id: number) {
+
+//     this.blocks =
+//       this.blocks.filter(
+//         block => block.id !== id
+//       );
+
+//   }
+
+
+//   moveBlock(
+//     index: number,
+//     direction: -1 | 1
+//   ) {
+
+//     const target =
+//       index + direction;
+
+
+//     if (
+//       target < 0 ||
+//       target >= this.blocks.length
+//     ) {
+
+//       return;
+
+//     }
+
+
+//     const temp =
+//       this.blocks[index];
+
+//     this.blocks[index] =
+//       this.blocks[target];
+
+//     this.blocks[target] =
+//       temp;
+//   }
+
+
+//   // =====================================================
+//   // CATEGORY
+//   // =====================================================
+
+//   toggleCategory(id: number) {
+
+//     if (
+//       this.form.category_id.includes(id)
+//     ) {
+
+//       this.form.category_id =
+//         this.form.category_id.filter(
+//           categoryId =>
+//             categoryId !== id
+//         );
+
+//     } else {
+
+//       this.form.category_id = [
+//         ...this.form.category_id,
+//         id
+//       ];
+
+//     }
+
+//   }
+
+
+//   // =====================================================
+//   // TAG
+//   // =====================================================
+
+//   toggleTag(id: number) {
+
+//     if (
+//       this.selectedTags.includes(id)
+//     ) {
+
+//       this.selectedTags =
+//         this.selectedTags.filter(
+//           tagId => tagId !== id
+//         );
+
+//     } else {
+
+//       this.selectedTags = [
+//         ...this.selectedTags,
+//         id
+//       ];
+
+//     }
+
+//   }
+
+
+//   // =====================================================
+//   // SAVE
+//   // =====================================================
+
+// saveArticle(
+//   status?: NewsItem['status']
+// ) {
+
+//   const finalStatus =
+//     status ?? this.form.status;
+
+//   console.log(
+//     '[NewsEditor] saveArticle()'
+//   );
+
+//   console.log(
+//     '[NewsEditor] Status:',
+//     finalStatus
+//   );
+
+//   const news: NewsItem = {
+
+//     news_id:
+//       this.form.news_id,
+
+//     title:
+//       this.form.title.trim(),
+
+//     category_id:
+//       [...this.form.category_id],
+
+//     tag_id:
+//       [...this.selectedTags],
+
+//     author_id:
+//       this.form.author_id,
+
+//     thumbnail:
+//       this.form.thumbnail.trim(),
+
+//     published_at:
+//       this.form.published_at,
+
+//     status:
+//       finalStatus,
+
+//     views:
+//       Number(this.form.views) || 0,
+
+//     reviewer_id:
+//       this.form.reviewer_id ?? null,
+
+//     editor_note:
+//       this.form.editor_note?.trim() || '',
+
+//     requirement_note:
+//       this.form.requirement_note?.trim() || ''
+
+//   };
+
+//   console.log(
+//     '[NewsEditor] News emit:',
+//     news
+//   );
+
+//   this.save.emit({
+
+//     news,
+
+//     blocks:
+//       [...this.blocks],
+
+//     tagIds:
+//       [...this.selectedTags],
+
+//     review:
+//       this.review
+
+//   });
+// }
+
+
+
+
+//   // =====================================================
+//   // CLOSE
+//   // =====================================================
+
+//   closeEditor() {
+
+//     this.close.emit();
+
+//   }
+
+
+
+// handleAction(action: NewsAction): void {
+
+//   switch (action) {
+//   // =========================
+//     // CHỈNH SỬA
+//     // =========================
+//     case 'edit':
+//       this.viewOnly = false;
+//       break;
+//     // =========================
+//     // LƯU NHÁP
+//     // =========================
+//     case 'draft':
+//       this.saveArticle('draft');
+//       break;
+
+//     // =========================
+//     // LƯU BÀI
+//     // Giữ nguyên status hiện tại
+//     // =========================
+//     case 'save':
+//       this.saveArticle();
+//       break;
+
+//     // =========================
+//     // GỬI DUYỆT
+//     // =========================
+//     case 'submit':
+//       this.saveArticle('submitted');
+//       break;
+
+//     // =========================
+//     // ĐĂNG BÀI
+//     // =========================
+//     case 'publish':
+//       this.saveArticle('published');
+//       break;
+
+//     // =========================
+//     // GỠ BÀI
+//     // =========================
+//     case 'unpublish':
+//         this.form.reviewer_id = this.currentUser.id;
+//       this.saveArticle('processing');
+//       break;
+
+//     // =========================
+//     // TRẢ BÀI
+//     // =========================
+//     case 'return':
+//       this.showReturnDialog = true;
+//       break;
+
+//     // =========================
+//     // YÊU CẦU CHỈNH SỬA
+//     // =========================
+//     case 'required':
+//       this.showRequirementDialog = true;
+//       break;
+
+//     // =========================
+//     // HỦY YÊU CẦU
+//     // =========================
+//     case 'unrequired':
+//       this.form.requirement_note = '';
+//       this.saveArticle();
+//       break;
+
+//     // =========================
+//     // LÊN LỊCH
+//     // =========================
+//     case 'schedule':
+//       this.saveArticle('scheduled');
+//       break;
+
+//     // =========================
+//     // HỦY LỊCH
+//     // =========================
+//     case 'unschedule':
+//         this.form.reviewer_id = this.currentUser.id;
+//       this.saveArticle('processing');
+//       break;
+
+//     // =========================
+//     // HỦY GỬI DUYỆT
+//     // =========================
+//     case 'unsubmitted':
+//       this.saveArticle('draft');
+//       break;
+//     case 'apply':
+//   this.form.reviewer_id = this.currentUser.id;
+//   this.saveArticle('processing');
+//   break;
+//   }
+// }
+
+// confirmRequire(): void {
+
+//   const note = this.requiredNote.trim();
+// console.log(
+//     '[NewsEditor] Editor note:',
+//     note
+//   );
+
+//  this.form.requirement_note =
+//     note;
+
+// this.showRequirementDialog=false
+
+//   this.saveArticle(
+//     'returned'
+//   );
+// }
+
+// confirmReturn() {
+
+//   const note =
+//     this.editorNote.trim();
+
+
+//   console.log(
+//     '[NewsEditor] Editor note:',
+//     note
+//   );
+
+
+
+//   this.form.editor_note =
+//     note;
+
+
+
+//   this.showReturnDialog =
+//     false;
+
+
+
+//   this.saveArticle(
+//     'returned'
+//   );
+
+// }
+// confirmSchedule(): void {
+
+
+
+//     this.form.published_at =
+//       `${this.scheduleDate.split('-').reverse().join('/')} ${this.scheduleTime}`;
+  
+//   this.showScheduleDialog=false;
+//       this.saveArticle('scheduled');
+    
+//   }
+
+//  onTabsScroll(): void {
+//     this.updateTabScrollButtons();
+//   }
+
+//   updateTabScrollButtons(): void {
+
+//     if (!this.tabsContent) {
+//       return;
+//     }
+
+//     const container = this.tabsContent.nativeElement;
+
+//     const clientWidth = container.clientWidth;
+//     const scrollWidth = container.scrollWidth;
+
+//   this.hasScroll = scrollWidth > clientWidth + 1;
+
+//     this.cdr.detectChanges();
+
+//   }
+//   scrollTabs(direction: 'left' | 'right'): void {
+
+//     if (!this.tabsContent) {
+//       return;
+//     }
+
+//     const container = this.tabsContent.nativeElement;
+
+//     const tab = container.querySelector(
+//       'button'
+//     ) as HTMLElement | null;
+
+//     if (!tab) {
+//       return;
+//     }
+
+//     const style = getComputedStyle(container);
+
+//     const gap =
+//       parseFloat(style.columnGap) ||
+//       parseFloat(style.gap) ||
+//       0;
+
+//     const scrollAmount =
+//       tab.offsetWidth + gap;
+
+//     container.scrollBy({
+
+//       left:
+//         direction === 'right'
+//           ? scrollAmount
+//           : -scrollAmount,
+
+//       behavior: 'smooth'
+
+//     });
+
+//   }
+// }

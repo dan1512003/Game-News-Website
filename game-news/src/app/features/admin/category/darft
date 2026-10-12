@@ -1,0 +1,654 @@
+<div class="page">
+
+  <!-- ======================================================
+       HEADER
+  ======================================================= -->
+
+  <div class="page-header">
+
+    <div class="page-title">
+
+      <span class="page-icon">
+        🗂️
+      </span>
+
+      <h1>
+        Danh mục
+      </h1>
+
+      <span class="total-badge">
+        {{ items.length }}
+      </span>
+
+    </div>
+
+
+    <div class="header-actions">
+
+      <!-- SEARCH -->
+
+      <div class="search-box">
+
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#4a4540"
+          stroke-width="2">
+
+          <circle
+            cx="11"
+            cy="11"
+            r="8">
+          </circle>
+
+          <path
+            d="m21 21-4.35-4.35">
+          </path>
+
+        </svg>
+
+
+        <input
+          type="text"
+          [(ngModel)]="search"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Tìm danh mục..."
+        />
+
+
+        @if (search) {
+
+          <button
+            class="clear-btn"
+            type="button"
+            (click)="search = ''; page = 1">
+
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2">
+
+              <path
+                d="M18 6 6 18">
+              </path>
+
+              <path
+                d="M6 6l12 12">
+              </path>
+
+            </svg>
+
+          </button>
+
+        }
+
+      </div>
+
+
+      <!-- ADD -->
+
+      <button
+        class="add-btn"
+        type="button"
+        (click)="openAdd()">
+
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5">
+
+          <path
+            d="M12 5v14">
+          </path>
+
+          <path
+            d="M5 12h14">
+          </path>
+
+        </svg>
+
+        Thêm danh mục
+
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ======================================================
+       TABLE
+  ======================================================= -->
+
+  <div class="table-wrapper">
+
+    <div class="table-scroll">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th class="id-column">
+              ID
+            </th>
+
+            <th>
+              Tên danh mục
+            </th>
+
+            <th>
+              Mô tả
+            </th>
+
+            <th>
+              Số tin
+            </th>
+
+            <th class="action-header">
+              Hành động
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          <!-- EMPTY -->
+
+          @if (filtered.length === 0) {
+
+            <tr>
+
+              <td
+                colspan="5"
+                class="empty">
+
+                Không có dữ liệu
+
+              </td>
+
+            </tr>
+
+          }
+
+
+          <!-- DATA -->
+
+          @for (
+            item of paged;
+            track item.category_id
+          ) {
+
+            <tr>
+
+              <!-- ID -->
+
+              <td>
+
+                <span class="id">
+                  #{{ item.category_id }}
+                </span>
+
+              </td>
+
+
+              <!-- NAME -->
+
+              <td>
+
+                <span class="category-name">
+                  {{ item.name }}
+                </span>
+
+              </td>
+
+
+              <!-- DESCRIPTION -->
+
+              <td>
+
+                <span class="description">
+                  {{ item.description }}
+                </span>
+
+              </td>
+
+
+              <!-- NEWS COUNT -->
+
+              <td>
+
+                <span class="news-count">
+                  {{ item.news_count }}
+                </span>
+
+              </td>
+
+
+              <!-- ACTION -->
+
+              <td>
+
+                <div class="actions">
+
+                  <!-- EDIT -->
+
+                  <button
+                    class="action edit"
+                    type="button"
+                    (click)="openEdit(item)">
+
+                    <svg
+                      width="11"
+                      height="11"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2">
+
+                      <path
+                        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7">
+                      </path>
+
+                      <path
+                        d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z">
+                      </path>
+
+                    </svg>
+
+                    Sửa
+
+                  </button>
+
+
+                  <!-- DELETE -->
+
+                  <button
+                    class="action delete"
+                    type="button"
+                    (click)="openDelete(item)">
+
+                    <svg
+                      width="11"
+                      height="11"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2">
+
+                      <polyline
+                        points="3 6 5 6 21 6">
+                      </polyline>
+
+                      <path
+                        d="m19 6-.867 14.142A2 2 0 0 1 16.138 22H7.862a2 2 0 0 1-1.995-1.858L5 6">
+                      </path>
+
+                      <path
+                        d="M10 11v6">
+                      </path>
+
+                      <path
+                        d="M14 11v6">
+                      </path>
+
+                      <path
+                        d="M9 6V4h6v2">
+                      </path>
+
+                    </svg>
+
+                    Xóa
+
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+
+  <!-- ======================================================
+       PAGINATION
+  ======================================================= -->
+
+  @if (totalPages > 1) {
+
+    <div class="pagination">
+
+      <span class="pagination-info">
+
+        {{ recordStart }}–{{ recordEnd }}
+        /
+        {{ total }}
+        bản ghi
+
+      </span>
+
+
+      <div class="pagination-controls">
+
+        <!-- PREVIOUS -->
+
+        <button
+          type="button"
+          class="pagination-btn"
+          [disabled]="page === 1"
+          (click)="changePage(page - 1)">
+
+          ←
+
+        </button>
+
+
+        <!-- PAGE NUMBERS -->
+
+        <div class="pagination-pages">
+
+          @for (
+            item of paginationItems;
+            track $index
+          ) {
+
+            @if (item === 'dots') {
+
+              <span
+                class="pagination-dots">
+
+                ...
+
+              </span>
+
+            } @else {
+
+              <button
+                type="button"
+                class="pagination-btn"
+                [class.active]="item === page"
+                (click)="changePage(item)">
+
+                {{ item }}
+
+              </button>
+
+            }
+
+          }
+
+        </div>
+
+
+        <!-- NEXT -->
+
+        <button
+          type="button"
+          class="pagination-btn"
+          [disabled]="page === totalPages"
+          (click)="changePage(page + 1)">
+
+          →
+
+        </button>
+
+      </div>
+
+    </div>
+
+  }
+
+
+  <!-- ======================================================
+       ADD / EDIT MODAL
+  ======================================================= -->
+
+  @if (modal !== 'closed') {
+
+    <div
+      class="overlay"
+      (click)="closeOnOverlay($event)">
+
+      <div
+        class="modal"
+        (click)="$event.stopPropagation()">
+
+
+        <!-- HEADER -->
+
+        <div class="modal-header">
+
+          <h3>
+
+            {{
+              modal === 'add'
+                ? 'Thêm danh mục'
+                : 'Sửa danh mục'
+            }}
+
+          </h3>
+
+
+          <button
+            class="close-btn"
+            type="button"
+            (click)="closeModal()">
+
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2">
+
+              <path
+                d="M18 6 6 18">
+              </path>
+
+              <path
+                d="M6 6l12 12">
+              </path>
+
+            </svg>
+
+          </button>
+
+        </div>
+
+
+        <!-- BODY -->
+
+        <div class="modal-body">
+
+          <div class="form-grid">
+
+
+            <!-- NAME -->
+
+            <div class="form-field">
+
+              <label>
+
+                Tên danh mục
+
+                <span>*</span>
+
+              </label>
+
+
+              <input
+                type="text"
+                [(ngModel)]="form.name"
+                placeholder="Nhập tên danh mục..."
+              />
+
+            </div>
+
+
+            <!-- DESCRIPTION -->
+
+            <div class="form-field full">
+
+              <label>
+                Mô tả
+              </label>
+
+
+              <textarea
+                [(ngModel)]="form.description"
+                rows="4"
+                placeholder="Nhập mô tả..."
+              ></textarea>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- FOOTER -->
+
+        <div class="modal-footer">
+
+          <button
+            class="cancel-btn"
+            type="button"
+            (click)="closeModal()">
+
+            Hủy
+
+          </button>
+
+
+          <button
+            class="save-btn"
+            type="button"
+            (click)="save()">
+
+            Lưu
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+
+  <!-- ======================================================
+       DELETE DIALOG
+  ======================================================= -->
+
+  @if (deleteItem) {
+
+    <div class="overlay">
+
+      <div class="delete-dialog">
+
+
+        <div class="delete-title">
+
+          <div class="warning-icon">
+
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#ef4444"
+              stroke-width="2">
+
+              <path
+                d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z">
+              </path>
+
+              <path
+                d="M12 9v4">
+              </path>
+
+              <path
+                d="M12 17h.01">
+              </path>
+
+            </svg>
+
+          </div>
+
+
+          <h3>
+            Xác nhận
+          </h3>
+
+        </div>
+
+
+        <p>
+
+          Xóa danh mục
+
+          "<strong>
+            {{ deleteItem.name }}
+          </strong>"?
+
+          Tất cả tin tức liên kết
+          sẽ mất danh mục.
+
+        </p>
+
+
+        <div class="delete-actions">
+
+          <button
+            class="cancel-btn"
+            type="button"
+            (click)="cancelDelete()">
+
+            Hủy
+
+          </button>
+
+
+          <button
+            class="confirm-delete"
+            type="button"
+            (click)="confirmDelete()">
+
+            Xóa
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+</div>

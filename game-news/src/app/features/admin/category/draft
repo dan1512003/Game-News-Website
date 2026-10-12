@@ -1,0 +1,537 @@
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+interface CategoryItem {
+  category_id: number;
+  name: string;
+  description: string;
+  news_count: number;
+}
+
+@Component({
+  selector: 'app-category',
+  standalone: true,
+  imports: [FormsModule],
+  templateUrl: './category.html',
+  styleUrl: './category.css'
+})
+export class Category {
+
+  // ==========================================================
+  // DATA
+  // ==========================================================
+
+  items: CategoryItem[] = [
+    {
+      category_id: 1,
+      name: 'Thể thao',
+      description: 'Tin tức thể thao trong nước và quốc tế',
+      news_count: 128
+    },
+    {
+      category_id: 2,
+      name: 'Công nghệ',
+      description: 'Tin tức công nghệ, AI và sản phẩm mới',
+      news_count: 96
+    },
+    {
+      category_id: 3,
+      name: 'Kinh tế',
+      description: 'Kinh tế, tài chính và thị trường',
+      news_count: 84
+    },
+    {
+      category_id: 4,
+      name: 'Giải trí',
+      description: 'Điện ảnh, âm nhạc và người nổi tiếng',
+      news_count: 73
+    },
+    {
+      category_id: 5,
+      name: 'Thế giới',
+      description: 'Tin tức quốc tế mới nhất',
+      news_count: 65
+    },
+    {
+      category_id: 6,
+      name: 'Sức khỏe',
+      description: 'Thông tin sức khỏe và đời sống',
+      news_count: 58
+    },
+    {
+      category_id: 7,
+      name: 'Giáo dục',
+      description: 'Tin tức giáo dục và đào tạo',
+      news_count: 52
+    },
+    {
+      category_id: 8,
+      name: 'Pháp luật',
+      description: 'Tin tức pháp luật và chính sách',
+      news_count: 47
+    },
+    {
+      category_id: 9,
+      name: 'Đời sống',
+      description: 'Các thông tin về cuộc sống hàng ngày',
+      news_count: 41
+    },
+    {
+      category_id: 10,
+      name: 'Du lịch',
+      description: 'Du lịch trong nước và quốc tế',
+      news_count: 36
+    },
+    {
+      category_id: 11,
+      name: 'Xe',
+      description: 'Ô tô, xe máy và phương tiện',
+      news_count: 31
+    },
+    {
+      category_id: 12,
+      name: 'Khoa học',
+      description: 'Khoa học và những khám phá mới',
+      news_count: 28
+    }
+  ];
+
+
+  // ==========================================================
+  // SEARCH
+  // ==========================================================
+
+  search = '';
+
+
+  // ==========================================================
+  // PAGINATION
+  // ==========================================================
+
+  PER_PAGE = 5;
+
+  page = 1;
+
+
+  // ==========================================================
+  // MODAL
+  // ==========================================================
+
+  modal: 'closed' | 'add' | 'edit' = 'closed';
+
+  editItem: CategoryItem | null = null;
+
+  deleteItem: CategoryItem | null = null;
+
+
+  // ==========================================================
+  // FORM
+  // ==========================================================
+
+  form: {
+    name: string;
+    description: string;
+    news_count: number;
+  } = {
+    name: '',
+    description: '',
+    news_count: 0
+  };
+
+
+  // ==========================================================
+  // FILTER
+  // ==========================================================
+
+  get filtered(): CategoryItem[] {
+
+    const keyword =
+      this.search
+        .trim()
+        .toLowerCase();
+
+    if (!keyword) {
+      return this.items;
+    }
+
+    return this.items.filter(item =>
+      item.name
+        .toLowerCase()
+        .includes(keyword)
+    );
+  }
+
+
+  // ==========================================================
+  // PAGINATION
+  // ==========================================================
+
+  get paged(): CategoryItem[] {
+
+    const start =
+      (this.page - 1) *
+      this.PER_PAGE;
+
+    return this.filtered.slice(
+      start,
+      start + this.PER_PAGE
+    );
+  }
+
+
+  get total(): number {
+
+    return this.filtered.length;
+  }
+
+
+  get totalPages(): number {
+
+    return Math.ceil(
+      this.total /
+      this.PER_PAGE
+    );
+  }
+
+
+  get recordStart(): number {
+
+    if (this.total === 0) {
+      return 0;
+    }
+
+    return (
+      (this.page - 1) *
+      this.PER_PAGE
+    ) + 1;
+  }
+
+
+  get recordEnd(): number {
+
+    return Math.min(
+      this.page *
+      this.PER_PAGE,
+      this.total
+    );
+  }
+
+
+  get paginationItems():
+    (number | 'dots')[] {
+
+    const total =
+      this.totalPages;
+
+    const current =
+      this.page;
+
+    // Không có trang
+    if (total === 0) {
+      return [];
+    }
+
+    // Có ít trang
+    if (total <= 6) {
+
+      return Array.from(
+        {
+          length: total
+        },
+        (_, index) =>
+          index + 1
+      );
+    }
+
+    // Đầu danh sách
+    if (current <= 3) {
+
+      return [
+        1,
+        2,
+        3,
+        4,
+        'dots',
+        total - 1,
+        total
+      ];
+    }
+
+    // Cuối danh sách
+    if (
+      current >=
+      total - 2
+    ) {
+
+      return [
+        1,
+        2,
+        'dots',
+        total - 3,
+        total - 2,
+        total - 1,
+        total
+      ];
+    }
+
+    // Ở giữa
+    return [
+      1,
+      2,
+      'dots',
+      current - 1,
+      current,
+      'dots',
+      total - 1,
+      total
+    ];
+  }
+
+
+  changePage(page: number): void {
+
+    if (
+      page < 1 ||
+      page > this.totalPages
+    ) {
+      return;
+    }
+
+    this.page = page;
+  }
+
+
+  // ==========================================================
+  // SEARCH CHANGE
+  // ==========================================================
+
+  onSearchChange(): void {
+
+    this.page = 1;
+  }
+
+
+  // ==========================================================
+  // ADD
+  // ==========================================================
+
+  openAdd(): void {
+
+    this.form = {
+      name: '',
+      description: '',
+      news_count: 0
+    };
+
+    this.editItem = null;
+
+    this.modal = 'add';
+  }
+
+
+  // ==========================================================
+  // EDIT
+  // ==========================================================
+
+  openEdit(item: CategoryItem): void {
+
+    this.editItem = item;
+
+    this.form = {
+      name: item.name,
+      description: item.description,
+      news_count: item.news_count
+    };
+
+    this.modal = 'edit';
+  }
+
+
+  // ==========================================================
+  // SAVE
+  // ==========================================================
+
+  save(): void {
+
+    const name =
+      this.form.name.trim();
+
+    if (!name) {
+
+      alert(
+        'Vui lòng nhập tên danh mục.'
+      );
+
+      return;
+    }
+
+
+    // --------------------------------------------------------
+    // ADD
+    // --------------------------------------------------------
+
+    if (this.modal === 'add') {
+
+      const newId =
+        this.items.length > 0
+          ? Math.max(
+              ...this.items.map(
+                item =>
+                  item.category_id
+              )
+            ) + 1
+          : 1;
+
+
+      const newItem: CategoryItem = {
+
+        category_id: newId,
+
+        name,
+
+        description:
+          this.form.description.trim(),
+
+        news_count: 0
+      };
+
+
+      this.items = [
+        newItem,
+        ...this.items
+      ];
+
+
+      // Về trang đầu
+      this.page = 1;
+    }
+
+
+    // --------------------------------------------------------
+    // EDIT
+    // --------------------------------------------------------
+
+    else if (
+      this.modal === 'edit' &&
+      this.editItem
+    ) {
+
+      const id =
+        this.editItem.category_id;
+
+
+      this.items =
+        this.items.map(item =>
+
+          item.category_id === id
+
+            ? {
+                ...item,
+                name,
+                description:
+                  this.form.description.trim()
+              }
+
+            : item
+        );
+    }
+
+
+    this.closeModal();
+  }
+
+
+  // ==========================================================
+  // CLOSE MODAL
+  // ==========================================================
+
+  closeModal(): void {
+
+    this.modal = 'closed';
+
+    this.editItem = null;
+
+    this.form = {
+      name: '',
+      description: '',
+      news_count: 0
+    };
+  }
+
+
+  // ==========================================================
+  // CLOSE MODAL WHEN CLICK OVERLAY
+  // ==========================================================
+
+  closeOnOverlay(
+    event: MouseEvent
+  ): void {
+
+    if (
+      event.target ===
+      event.currentTarget
+    ) {
+
+      this.closeModal();
+    }
+  }
+
+
+  // ==========================================================
+  // DELETE
+  // ==========================================================
+
+  openDelete(
+    item: CategoryItem
+  ): void {
+
+    this.deleteItem = item;
+  }
+
+
+  cancelDelete(): void {
+
+    this.deleteItem = null;
+  }
+
+
+  confirmDelete(): void {
+
+    if (!this.deleteItem) {
+      return;
+    }
+
+
+    const id =
+      this.deleteItem.category_id;
+
+
+    this.items =
+      this.items.filter(
+        item =>
+          item.category_id !== id
+      );
+
+
+    this.deleteItem = null;
+
+
+    // Nếu xóa phần tử cuối
+    // của trang hiện tại
+    if (
+      this.page > this.totalPages &&
+      this.totalPages > 0
+    ) {
+
+      this.page =
+        this.totalPages;
+    }
+
+
+    // Không còn dữ liệu
+    if (this.total === 0) {
+
+      this.page = 1;
+    }
+  }
+}

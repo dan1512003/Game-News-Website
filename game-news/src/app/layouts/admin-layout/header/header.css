@@ -1,0 +1,261 @@
+.header{
+    display: flex;
+    height: 56px;
+    gap: 12px;
+    border-bottom: 1px solid #1A1A1A;
+    padding: 16px 0px;
+    justify-content: space-between;
+}
+.header-left{
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+  
+}
+.header-menu-button{
+    display: flex;
+    align-items: center;
+    border: none;
+    background: none;
+    height: 26px;
+    width: 26px;
+    padding: 4px;
+}
+.sidebar-menu-icon{
+    display: flex;
+    align-items: center;
+    justify-content: center;  
+}
+.header-title{
+     font-family: 'DM Mono', serif;
+display: flex;
+margin: 0;
+padding: 0;
+  color: #4A4540;
+    font-size:11px;
+    font-weight: 400;
+    line-height: 16.5px;
+}
+.header-right{
+    display: flex;
+    gap: 8px;
+}
+.header-avatar{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: #FF5C00;
+    color: #FFFFFF;
+    font-size: 12px;
+}
+.header-user-info{
+    display: flex;
+    flex-direction: column;
+}
+.header-role{
+        font-family: 'Inter', sans-serif;
+display: flex;
+margin: 0;
+    font-weight: 600;
+    line-height: 12px;
+    font-size: 12px;
+    color: #F0EDE8;
+}
+.header-username{
+         font-family: 'DM Mono', serif;
+display: flex;
+margin: 0;
+    font-weight: 400;
+    line-height: 9px;
+    font-size: 9px;
+    color: #4A4540;
+}
+
+.side-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.9);
+display: none;
+
+}
+.side-overlay.open {
+  display: block;
+}
+
+.sidebar{
+    position: fixed;
+  top: 0;
+  left: 0;
+display: none;
+    z-index: 10;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100vh;
+    width: 259px;
+    background-color: #0A0A0A;
+}
+.sidebar.open{
+display: flex;
+}
+.sidebar-header{
+display: flex;
+
+flex: 0 0 56px;
+height: 56px;
+padding: 16px 16px;
+gap: 8px;
+border: 1px solid #1A1A1A;
+border-bottom: none;
+
+}
+.sidebar-logo{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 28px;
+    height: 28px;
+    background-color: #FF5C00;
+}
+.sidebar-brand{
+    display: flex;
+flex: 1;
+    align-items: center;
+    gap: 2px;
+}
+.sidebar-title>span{
+    color: #F0EDE8;
+    font-size: 17px;
+    font-weight: 900;
+    line-height: 25.5px;
+}
+.sidebar-title-2{
+    color: #FF5C00 !important;
+}
+.sidebar-role{
+   display: flex;
+  font-family: 'DM Mono', serif;
+background-color: rgba(255, 92, 0, 0.2);
+height: 16px;
+align-items: center;
+margin: 0;
+  color: #FF5C00;
+    font-size:10px;
+    font-weight: 900;
+    line-height: 12px;
+}
+.sidebar-nav{
+    display: flex;
+    flex: 1;
+    width: 100%;
+    flex-direction: column;
+    border: 1px solid #1A1A1A;
+border-bottom: none;
+
+
+}
+
+
+.sidebar-menu-item {
+    display: flex;
+    width: 100%;
+    height: 44px;
+
+}
+.sidebar-menu-link{
+    position: relative;
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+      padding: 8px 16px;
+      text-decoration: none;
+      align-items: center;
+  
+}
+.sidebar-menu-text{
+    font-family: 'Inter', sans-serif;
+display: flex;
+margin: 0;
+    font-weight: 400;
+    line-height: 19.5px;
+    font-size: 15px;
+    color: #6B6560;
+}
+
+
+.sidebar-section-title{
+  display: flex;
+  font-family: 'DM Mono', serif;
+height: 36px;
+align-items: center;
+
+  letter-spacing: 1.35px;
+  line-height: 13.5px;
+  color: #2A2520;
+  margin: 0;
+}
+.sidebar-menu-active {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+
+    width: 4px;
+    height: 100%;
+
+    background-color: #FF5C00;
+    border-radius: 0 4px 4px 0;
+}
+/* Khi a có active thì hiện thanh */
+.sidebar-menu-link.active .sidebar-menu-active {
+    display: block;
+}
+
+/* Màu nội dung khi active */
+.sidebar-menu-link.active {
+   
+   background-color: #FF5C001A;
+
+}
+.sidebar-footer{
+    display: flex;
+    flex: 0 0 59px;
+    border: 1px solid #1A1A1A;
+    padding: 12px 12px;
+}
+
+.sidebar-footer-item{
+    width: 100%;
+
+   
+}
+.sidebar-footer-link{
+       position: relative;
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+      text-decoration: none;
+      align-items: center;
+    
+}
+.sidebar-menu-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-footer-text{
+      font-family: 'Inter', sans-serif;
+display: flex;
+margin: 0;
+    font-weight: 400;
+    line-height: 18px;
+    font-size: 15px;
+color: #4A4540;
+}

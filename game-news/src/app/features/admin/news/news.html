@@ -1,0 +1,644 @@
+
+<div class="news-page">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <h1>📰 Tin tức</h1>
+      <span>{{ news().length }} bài viết</span>
+    </div>
+
+    <div class="header-actions">
+      <input
+        type="text"
+        placeholder="Tìm bài viết..."
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="openEditor()"
+      >
+        + Viết bài mới
+      </button>
+    </div>
+  </div>
+
+  <!-- ROLE TABS -->
+  <div class="role-tabs">
+    @for (tab of currentTabs(); track tab.key) {
+      <button
+        type="button"
+        class="role-tab"
+        [class.active]="roleFilter() === tab.key"
+        (click)="switchRoleFilter(tab.key)"
+      >
+        <span>{{ tab.icon }}</span>
+        {{ tab.label }}
+        <small>({{ tabCount(tab) }})</small>
+      </button>
+    }
+  </div>
+
+  <!-- CATEGORY FILTER -->
+  <div class="category-filter">
+
+    <button
+      type="button"
+      class="category-button"
+      [class.active]="catFilter() === ''"
+      (click)="changeCategory('')"
+    >
+      🗂️ Tất cả danh mục
+      <small>({{ categoryTotalCount() }})</small>
+    </button>
+
+    @for (category of categories(); track category.category_id) {
+      <button
+        type="button"
+        class="category-button"
+        [class.active]="sameId(catFilter(), category.category_id)"
+        (click)="changeCategory(category.category_id.toString())"
+      >
+        {{ category.name }}
+
+        <small>
+          ({{ categoryCount(category.category_id.toString()) }})
+        </small>
+      </button>
+    }
+
+    @if (categoriesLoading()) {
+      <span>Đang tải danh mục...</span>
+    }
+
+    @if (categoriesError()) {
+      <span class="error-message">
+        {{ categoriesError() }}
+      </span>
+    }
+  </div>
+
+  <!-- ERROR / SUCCESS -->
+  @if (error()) {
+    <div class="error-message">
+      {{ error() }}
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="success-message">
+      {{ successMessage() }}
+    </div>
+  }
+
+  <!-- TABLE -->
+  <div class="table-wrapper">
+    <table class="news-table">
+
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Tiêu đề</th>
+          <th>Danh mục</th>
+          <th>Lượt xem</th>
+          <th>Ngày đăng</th>
+          <th>Trạng thái</th>
+          <th>Tác giả</th>
+          <th>Người xử lý</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (row of pagedNews(); track row.news_id) {
+          <tr>
+
+            <!-- ID -->
+            <td>#{{ row.news_id }}</td>
+
+            <!-- TITLE -->
+            <td>
+              <div class="news-title">
+              <img
+      [src]="getThumbnailUrl(row.thumbnail)"
+      [alt]="row.title"
+      width="100"
+      (error)="onImageError($event, row.thumbnail)"
+    />
+
+
+                <div>
+                  <strong>{{ row.title }}</strong>
+
+                  <small class="news-author">
+                    {{ getUserName(row.author_id) }}
+
+                    @if (row.news_tags?.length) {
+                      <span class="tag-count">
+                        {{ row.news_tags.length }} thẻ
+                      </span>
+                    }
+                  </small>
+
+                  @if (row.editor_note) {
+                    <small class="editor-note">
+                      💬 {{ row.editor_note }}
+                    </small>
+                  }
+                </div>
+              </div>
+            </td>
+
+            <!-- CATEGORY -->
+            <td>
+              <div class="category-list">
+                @if (row.category) {
+                  <span class="category-badge">
+                    {{ row.category.name }}
+                  </span>
+                } @else {
+                  <span class="text-muted">
+                    Chưa phân loại
+                  </span>
+                }
+              </div>
+            </td>
+
+            <!-- VIEWS -->
+            <td class="views">
+              {{ formatViews(row.views) }}
+            </td>
+
+            <!-- PUBLISHED DATE -->
+            <td>
+              {{ formatDate(row.published_at) }}
+            </td>
+
+            <!-- STATUS -->
+            <td>
+              {{ row.status }}
+            </td>
+
+            <!-- AUTHOR -->
+            <td>
+           @if(row.author !=null){
+               @if (
+                currentUser() &&
+              sameId(row.author.user_id, currentUser()!.id)
+              ) {
+                <span class="user-name">Bạn</span>
+              } @else {
+                <span class="user-name">
+                 {{ row.author.username}}
+                </span>
+              }
+           }
+            </td>
+
+            <!-- REVIEWER -->
+            <td>
+              @if (row.reviewer != null) {
+                @if (
+                  currentUser() &&
+                  sameId(row.reviewer.user_id, currentUser()!.id)
+                ) {
+                  <span class="user-name">Bạn</span>
+                } @else {
+                  <span class="user-name">
+                    {{ row.reviewer.username}}
+                  </span>
+                }
+              } @else {
+                <span class="text-muted">—</span>
+              }
+            </td>
+
+            <!-- ACTIONS -->
+            <td>
+              <div class="actions">
+
+                @if (getActions(row).includes('view')) {
+                  <button
+                    type="button"
+                    (click)="openViewer(row)"
+                    title="Xem bài"
+                  >
+                    👁
+                  </button>
+                }
+
+                @if (getActions(row).includes('apply')) {
+                  <button
+                    type="button"
+                    (click)="applyNews(row)"
+                    title="Nhận xử lý"
+                  >
+                    ✓ Nhận xử lý
+                  </button>
+                }
+
+                @if (getActions(row).includes('edit')) {
+                  <button
+                    type="button"
+                    (click)="openEditor(row)"
+                    title="Chỉnh sửa"
+                  >
+                    ✏️
+                  </button>
+                }
+
+                @if (getActions(row).includes('publish')) {
+                  <button
+                    type="button"
+                    (click)="publishNews(row)"
+                    title="Đăng bài"
+                  >
+                    Đăng bài
+                  </button>
+                }
+
+                @if (getActions(row).includes('unpublish')) {
+                  <button
+                    type="button"
+                    (click)="unPublishNews(row)"
+                    title="Gỡ bài"
+                  >
+                    Gỡ bài và xử lý
+                  </button>
+                }
+
+                @if (getActions(row).includes('schedule')) {
+                  <button
+                    type="button"
+                    (click)="openSchedule(row)"
+                    title="Lên lịch"
+                  >
+                    📅
+                  </button>
+                }
+
+                @if (getActions(row).includes('unschedule')) {
+                  <button
+                    type="button"
+                    (click)="unschedule(row)"
+                    title="Hủy lịch"
+                  >
+                    Hủy lịch và xử lý
+                  </button>
+                }
+
+                @if (getActions(row).includes('submitted')) {
+                  <button
+                    type="button"
+                    (click)="submitNews(row)"
+                    title="Gửi duyệt"
+                  >
+                    ✓ Gửi duyệt
+                  </button>
+                }
+
+                @if (getActions(row).includes('unsubmitted')) {
+                  <button
+                    type="button"
+                    (click)="unsubmitNews(row)"
+                    title="Hủy gửi duyệt"
+                  >
+                    Hủy duyệt
+                  </button>
+                }
+
+                @if (getActions(row).includes('require')) {
+                  <button
+                    type="button"
+                    (click)="requireNews(row)"
+                    title="Yêu cầu chỉnh sửa"
+                  >
+                    ⚠ Yêu cầu
+                  </button>
+                }
+
+                @if (getActions(row).includes('return')) {
+                  <button
+                    type="button"
+                    (click)="returnItem = row; returnNote = ''"
+                    title="Trả bài"
+                  >
+                    ↩ Trả về
+                  </button>
+                }
+
+                @if (getActions(row).includes('unrequire')) {
+                  <button
+                    type="button"
+                    (click)="unrequireNews(row)"
+                    title="Hủy yêu cầu chỉnh sửa"
+                  >
+                    ↩ Hủy yêu cầu
+                  </button>
+                }
+
+                @if (getActions(row).includes('delete')) {
+                  <button
+                    type="button"
+                    class="btn-delete"
+                    (click)="deleteNews(row)"
+                    title="Xóa bài"
+                  >
+                    🗑 Xóa
+                  </button>
+                }
+
+              </div>
+            </td>
+
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="9" class="empty">
+              @if (loading()) {
+                Đang tải tin tức...
+              } @else {
+                Không có bài viết
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+
+    </table>
+  </div>
+
+  <!-- PAGINATION -->
+  @if (totalPages() > 1) {
+    <div class="pagination">
+
+      <span class="pagination-info">
+        {{ recordStart() }}–{{ recordEnd() }}
+        / {{ total() }} bản ghi
+      </span>
+
+      <div class="pagination-controls">
+
+        <button
+          type="button"
+          class="pagination-btn"
+          [disabled]="currentPage() === 1 || loading()"
+          (click)="changePage(currentPage() - 1)"
+        >
+          ←
+        </button>
+
+        <div class="pagination-pages">
+          @for (item of paginationItems(); track $index) {
+            @if (item === 'dots') {
+              <span class="pagination-dots">...</span>
+            } @else {
+              <button
+                type="button"
+                class="pagination-btn"
+                [class.active]="item === currentPage()"
+                [disabled]="loading()"
+                (click)="changePage(item)"
+              >
+                {{ item }}
+              </button>
+            }
+          }
+        </div>
+
+        <button
+          type="button"
+          class="pagination-btn"
+          [disabled]="
+            currentPage() === totalPages() || loading()
+          "
+          (click)="changePage(currentPage() + 1)"
+        >
+          →
+        </button>
+
+      </div>
+    </div>
+  }
+
+  <!-- REQUIRED MODAL -->
+  @if (requiredItem) {
+    <div
+      class="modal-overlay"
+      (click)="requiredItem = null"
+    >
+      <div
+        class="modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <div class="modal-header">
+          <h3>⚠ Yêu cầu chỉnh sửa bài</h3>
+
+          <button
+            type="button"
+            (click)="requiredItem = null"
+          >
+            ×
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p class="article-title">
+            {{ requiredItem.title }}
+          </p>
+
+          <p class="article-author">
+            Tác giả:
+            {{ getUserName(requiredItem.author_id) }}
+          </p>
+
+          <label>Nội dung yêu cầu chỉnh sửa *</label>
+
+          <textarea
+            [(ngModel)]="requiredNote"
+            rows="4"
+            placeholder="Mô tả cụ thể nội dung cần chỉnh sửa..."
+          ></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="requiredItem = null"
+          >
+            Hủy
+          </button>
+
+          <button
+            type="button"
+            class="btn-danger"
+            [disabled]="!requiredNote.trim() || saving()"
+            (click)="confirmRequire()"
+          >
+            ⚠ Xác nhận yêu cầu
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- RETURN MODAL -->
+  @if (returnItem) {
+    <div
+      class="modal-overlay"
+      (click)="returnItem = null"
+    >
+      <div
+        class="modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <div class="modal-header">
+          <h3>↩ Trả bài cho tác giả</h3>
+
+          <button
+            type="button"
+            (click)="returnItem = null"
+          >
+            ×
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p class="article-title">
+            {{ returnItem.title }}
+          </p>
+
+          <p class="article-author">
+            Tác giả:
+            {{ getUserName(returnItem.author_id) }}
+          </p>
+
+          <label>Ghi chú yêu cầu chỉnh sửa *</label>
+
+          <textarea
+            [(ngModel)]="returnNote"
+            rows="4"
+            placeholder="Mô tả cụ thể cần chỉnh sửa..."
+          ></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="returnItem = null"
+          >
+            Hủy
+          </button>
+
+          <button
+            type="button"
+            class="btn-danger"
+            [disabled]="!returnNote.trim() || saving()"
+            (click)="confirmReturn()"
+          >
+            ↩ Xác nhận trả bài
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- SCHEDULE MODAL -->
+  @if (scheduleItem) {
+    <div
+      class="modal-overlay"
+      (click)="scheduleItem = null"
+    >
+      <div
+        class="modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <div class="modal-header">
+          <h3>📅 Lên lịch đăng bài</h3>
+
+          <button
+            type="button"
+            (click)="scheduleItem = null"
+          >
+            ×
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="article-preview">
+            <small>BÀI VIẾT</small>
+            <p>{{ scheduleItem.title }}</p>
+          </div>
+
+          <label>Ngày đăng</label>
+
+          <input
+            type="date"
+            [(ngModel)]="scheduleDate"
+          />
+
+          <label>Giờ đăng</label>
+
+          <input
+            type="time"
+            [(ngModel)]="scheduleTime"
+          />
+
+          @if (scheduleDate) {
+            <div class="schedule-preview">
+              📅 Sẽ đăng lúc {{ scheduleTime }}
+              ngày {{ scheduleDate }}
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="scheduleItem = null"
+          >
+            Hủy
+          </button>
+
+          <button
+            type="button"
+            class="btn-primary"
+            [disabled]="!scheduleDate || !scheduleTime || saving()"
+            (click)="confirmSchedule()"
+          >
+            Xác nhận lên lịch
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- EDITOR -->
+@if (editorOpen && currentUser()) {
+<app-news-editor
+[news]="editingNews"
+[currentUser]="currentUser()!"
+[viewOnly]="editorViewOnly"
+[initialBlocks]="toEditorBlocks(editingNews?.content_blocks)"
+[initialTagIds]="toInitialTagIds(editingNews?.news_tags)"
+(close)="closeEditor()"
+
+> </app-news-editor>
+
+}
+
+
+</div>
+

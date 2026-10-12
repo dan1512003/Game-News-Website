@@ -1,0 +1,498 @@
+import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+type RegisterField =
+  | 'username'
+  | 'email'
+  | 'password'
+  | 'confirm'
+  | 'terms';
+
+interface RegisterErrors {
+  username?: string;
+  email?: string;
+  password?: string;
+  confirm?: string;
+  terms?: string;
+  register?: string;
+}
+
+interface RegisteredUser {
+  id: number;
+  username: string;
+  email: string;
+  password: string;
+  role: 'user';
+}
+@Component({
+  imports: [FormsModule,CommonModule],
+  selector: 'app-register',
+  styleUrl: './register.css',
+  templateUrl: './register.html',
+})
+export class Register {
+   // ==========================================
+  // FORM
+  // ==========================================
+
+  form = {
+    username: '',
+    email: '',
+    password: '',
+    confirm: ''
+  };
+
+  showPw = false;
+  agreed = false;
+  loading = false;
+
+  errors: RegisterErrors = {};
+
+
+  // ==========================================
+  // CONSTRUCTOR
+  // ==========================================
+
+  constructor(
+    private router: Router
+  ) {}
+
+
+  // ==========================================
+  // UPDATE FIELD
+  // ==========================================
+
+  setField(
+    field: Exclude<RegisterField, 'terms'>,
+    value: string
+  ): void {
+
+    this.form = {
+      ...this.form,
+      [field]: value
+    };
+
+
+    // Xóa lỗi field khi người dùng sửa
+    if (this.errors[field]) {
+
+      this.errors = {
+        ...this.errors,
+        [field]: undefined,
+        register: undefined
+      };
+
+    }
+  }
+
+
+  // ==========================================
+  // TERMS
+  // ==========================================
+
+  updateTerms(value: boolean): void {
+
+    this.agreed = value;
+
+    if (this.errors.terms) {
+
+      this.errors = {
+        ...this.errors,
+        terms: undefined
+      };
+
+    }
+  }
+
+
+  // ==========================================
+  // SUBMIT
+  // ==========================================
+
+  handleSubmit(): void {
+
+    if (this.loading) {
+      return;
+    }
+
+
+    const nextErrors: RegisterErrors = {};
+
+
+    // ========================================
+    // USERNAME
+    // ========================================
+
+    const username = this.form.username.trim();
+
+    if (!username) {
+
+      nextErrors.username =
+        'Vui lòng nhập tên hiển thị.';
+
+    } else if (username.length < 3) {
+
+      nextErrors.username =
+        'Tên hiển thị phải có ít nhất 3 ký tự.';
+
+    }
+
+
+    // ========================================
+    // EMAIL
+    // ========================================
+
+    const email = this.form.email.trim();
+
+    if (!email) {
+
+      nextErrors.email =
+        'Vui lòng nhập email.';
+
+    } else if (!this.isValidEmail(email)) {
+
+      nextErrors.email =
+        'Email không đúng định dạng.';
+
+    }
+
+
+    // ========================================
+    // PASSWORD
+    // ========================================
+
+    const passwordError =
+      this.getPasswordError(this.form.password);
+
+    if (passwordError) {
+
+      nextErrors.password =
+        passwordError;
+
+    }
+
+
+    // ========================================
+    // CONFIRM PASSWORD
+    // ========================================
+
+    if (!this.form.confirm) {
+
+      nextErrors.confirm =
+        'Vui lòng xác nhận mật khẩu.';
+
+    } else if (
+      this.form.password !== this.form.confirm
+    ) {
+
+      nextErrors.confirm =
+        'Mật khẩu xác nhận không khớp.';
+
+    }
+
+
+    // ========================================
+    // TERMS
+    // ========================================
+
+    if (!this.agreed) {
+
+      nextErrors.terms =
+        'Bạn cần đồng ý với điều khoản để tạo tài khoản.';
+
+    }
+
+
+    // ========================================
+    // VALIDATION ERROR
+    // ========================================
+
+    if (Object.keys(nextErrors).length > 0) {
+
+      this.errors = nextErrors;
+
+      return;
+    }
+
+
+    // ========================================
+    // CHECK EMAIL EXISTS
+    // ========================================
+
+    const users = this.getRegisteredUsers();
+
+    const emailExists = users.some(
+      user =>
+        user.email.toLowerCase() ===
+        email.toLowerCase()
+    );
+
+
+    if (emailExists) {
+
+      this.errors = {
+        email:
+          'Email này đã được đăng ký.'
+      };
+
+      return;
+    }
+
+
+    // ========================================
+    // LOADING
+    // ========================================
+
+    this.errors = {};
+
+    this.loading = true;
+
+
+    // ========================================
+    // CREATE USER
+    // ========================================
+
+    const newUser: RegisteredUser = {
+
+      id: Date.now(),
+
+      username,
+
+      email,
+
+      password: this.form.password,
+
+      role: 'user'
+    };
+
+
+    // ========================================
+    // MOCK API DELAY
+    // ========================================
+
+    setTimeout(() => {
+
+      users.push(newUser);
+
+      localStorage.setItem(
+        'registeredUsers',
+        JSON.stringify(users)
+      );
+
+
+      // Lưu user hiện tại
+      localStorage.setItem(
+        'currentUser',
+        JSON.stringify({
+          id: newUser.id,
+          username: newUser.username,
+          email: newUser.email,
+          role: newUser.role
+        })
+      );
+
+
+      localStorage.setItem(
+        'isLoggedIn',
+        'true'
+      );
+
+
+      this.loading = false;
+
+
+      // Chuyển về trang chủ
+      this.router.navigate(['/']);
+
+    }, 1000);
+  }
+
+
+  // ==========================================
+  // EMAIL VALIDATION
+  // ==========================================
+
+  private isValidEmail(email: string): boolean {
+
+    const EMAIL_PATTERN =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    return EMAIL_PATTERN.test(email);
+  }
+
+
+  // ==========================================
+  // PASSWORD VALIDATION
+  // ==========================================
+
+  getPasswordError(password: string): string {
+
+    if (!password) {
+
+      return 'Vui lòng nhập mật khẩu.';
+    }
+
+
+    if (password.length < 8) {
+
+      return 'Mật khẩu phải có ít nhất 8 ký tự.';
+    }
+
+
+    if (!/[A-Z]/.test(password)) {
+
+      return 'Mật khẩu phải có ít nhất 1 chữ cái viết hoa.';
+    }
+
+
+    if (!/[a-z]/.test(password)) {
+
+      return 'Mật khẩu phải có ít nhất 1 chữ cái viết thường.';
+    }
+
+
+    return '';
+  }
+
+
+  // ==========================================
+  // GET REGISTERED USERS
+  // ==========================================
+
+  private getRegisteredUsers(): RegisteredUser[] {
+
+    const usersJson =
+      localStorage.getItem('registeredUsers');
+
+
+    if (!usersJson) {
+      return [];
+    }
+
+
+    try {
+
+      const users =
+        JSON.parse(usersJson);
+
+      if (Array.isArray(users)) {
+        return users;
+      }
+
+      return [];
+
+    } catch {
+
+      return [];
+    }
+  }
+
+
+  // ==========================================
+  // PASSWORD TOGGLE
+  // ==========================================
+
+  togglePassword(): void {
+
+    this.showPw = !this.showPw;
+  }
+
+
+  // ==========================================
+  // PASSWORD STRENGTH
+  // ==========================================
+
+  getPasswordStrength(): number {
+
+    const password =
+      this.form.password;
+
+
+    if (!password) {
+      return 0;
+    }
+
+
+    let score = 0;
+
+
+    // Độ dài
+    if (password.length >= 4) {
+      score++;
+    }
+
+
+    if (password.length >= 8) {
+      score++;
+    }
+
+
+    if (password.length >= 12) {
+      score++;
+    }
+
+
+    return score;
+  }
+
+
+  // ==========================================
+  // PASSWORD STRENGTH LABEL
+  // ==========================================
+
+  getPasswordStrengthLabel(): string {
+
+    const length =
+      this.form.password.length;
+
+
+    if (length < 4) {
+      return 'Yếu';
+    }
+
+
+    if (length < 8) {
+      return 'Trung bình';
+    }
+
+
+    if (length < 12) {
+      return 'Tốt';
+    }
+
+
+    return 'Mạnh';
+  }
+
+
+  // ==========================================
+  // PASSWORD STRENGTH COLOR
+  // ==========================================
+
+  getPasswordStrengthColor(
+    index: number
+  ): string {
+
+    const strength =
+      this.getPasswordStrength();
+
+
+    if (strength < index + 1) {
+      return '#1e1e1e';
+    }
+
+
+    if (index === 0) {
+      return '#ef4444';
+    }
+
+
+    if (index === 1) {
+      return '#f59e0b';
+    }
+
+
+    return '#22c55e';
+  }
+}

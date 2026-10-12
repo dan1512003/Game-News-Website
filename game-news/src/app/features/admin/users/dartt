@@ -1,0 +1,1030 @@
+import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+/* =========================================================
+ * MODELS
+ * ========================================================= */
+
+export interface User {
+  user_id: number;
+  username: string;
+  email: string;
+  role: 'admin' | 'editor' | 'author' | 'user';
+  status: 'active' | 'banned';
+  created_at: string;
+}
+
+export interface Comment {
+  comment_id: number;
+  user_id: number;
+  status: 'approved' | 'pending' | 'spam';
+  content?: string;
+}
+
+export interface News {
+  news_id: number;
+  author: string;
+  views?: number;
+  status:
+    | 'published'
+    | 'draft'
+    | 'returned'
+    | 'submitted'
+    | 'removed';
+}
+
+/* =========================================================
+ * MOCK DATA
+ * ========================================================= */
+
+const MOCK_USERS: User[] = [
+  {
+    user_id: 1,
+    username: 'admin',
+    email: 'admin@example.com',
+    role: 'admin',
+    status: 'active',
+    created_at: '01/01/2025'
+  },
+  {
+    user_id: 2,
+    username: 'editor01',
+    email: 'editor@example.com',
+    role: 'editor',
+    status: 'active',
+    created_at: '05/01/2025'
+  },
+  {
+    user_id: 3,
+    username: 'author01',
+    email: 'author@example.com',
+    role: 'author',
+    status: 'active',
+    created_at: '10/01/2025'
+  },
+  {
+    user_id: 4,
+    username: 'nguyenvanA',
+    email: 'nguyenvana@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '15/01/2025'
+  },
+  {
+    user_id: 5,
+    username: 'tranvanB',
+    email: 'tranvanb@example.com',
+    role: 'user',
+    status: 'banned',
+    created_at: '20/01/2025'
+  },
+  {
+    user_id: 6,
+    username: 'author02',
+    email: 'author02@example.com',
+    role: 'author',
+    status: 'active',
+    created_at: '22/01/2025'
+  },
+  {
+    user_id: 7,
+    username: 'editor02',
+    email: 'editor02@example.com',
+    role: 'editor',
+    status: 'active',
+    created_at: '25/01/2025'
+  },
+  {
+    user_id: 8,
+    username: 'user01',
+    email: 'user01@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '01/02/2025'
+  },
+  {
+    user_id: 9,
+    username: 'user02',
+    email: 'user02@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '03/02/2025'
+  },
+  {
+    user_id: 10,
+    username: 'user03',
+    email: 'user03@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '05/02/2025'
+  },
+  {
+    user_id: 11,
+    username: 'user04',
+    email: 'user04@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '08/02/2025'
+  },
+  {
+    user_id: 12,
+    username: 'user05',
+    email: 'user05@example.com',
+    role: 'user',
+    status: 'banned',
+    created_at: '10/02/2025'
+  },
+    {
+    user_id: 13,
+    username: 'user13',
+    email: 'user13@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '01/02/2025'
+  },
+  {
+    user_id: 14,
+    username: 'user14',
+    email: 'user14@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '03/02/2025'
+  },
+  {
+    user_id: 15,
+    username: 'user03',
+    email: 'user03@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '05/02/2025'
+  },
+  {
+    user_id: 16,
+    username: 'user04',
+    email: 'user04@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '08/02/2025'
+  },
+  {
+    user_id: 17,
+    username: 'user05',
+    email: 'user05@example.com',
+    role: 'user',
+    status: 'banned',
+    created_at: '10/02/2025'
+  },  {
+    user_id: 18,
+    username: 'user01',
+    email: 'user01@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '01/02/2025'
+  },
+  {
+    user_id: 19,
+    username: 'user02',
+    email: 'user02@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '03/02/2025'
+  },
+  {
+    user_id: 20,
+    username: 'user03',
+    email: 'user03@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '05/02/2025'
+  },
+  {
+    user_id: 21,
+    username: 'user04',
+    email: 'user04@example.com',
+    role: 'user',
+    status: 'active',
+    created_at: '08/02/2025'
+  },
+  {
+    user_id: 22,
+    username: 'user05',
+    email: 'user05@example.com',
+    role: 'user',
+    status: 'banned',
+    created_at: '10/02/2025'
+  }
+];
+
+const MOCK_COMMENTS: Comment[] = [
+  {
+    comment_id: 1,
+    user_id: 1,
+    status: 'approved',
+    content: 'Comment 1'
+  },
+  {
+    comment_id: 2,
+    user_id: 1,
+    status: 'pending',
+    content: 'Comment 2'
+  },
+  {
+    comment_id: 3,
+    user_id: 2,
+    status: 'approved',
+    content: 'Comment 3'
+  },
+  {
+    comment_id: 4,
+    user_id: 3,
+    status: 'spam',
+    content: 'Comment 4'
+  },
+  {
+    comment_id: 5,
+    user_id: 4,
+    status: 'approved',
+    content: 'Comment 5'
+  },
+  {
+    comment_id: 6,
+    user_id: 4,
+    status: 'approved',
+    content: 'Comment 6'
+  }
+];
+
+const MOCK_NEWS: News[] = [
+  {
+    news_id: 1,
+    author: 'author01',
+    views: 1200,
+    status: 'published'
+  },
+  {
+    news_id: 2,
+    author: 'author01',
+    views: 2500,
+    status: 'published'
+  },
+  {
+    news_id: 3,
+    author: 'author01',
+    views: 500,
+    status: 'draft'
+  },
+  {
+    news_id: 4,
+    author: 'author02',
+    views: 3200,
+    status: 'published'
+  },
+  {
+    news_id: 5,
+    author: 'author02',
+    views: 1000,
+    status: 'submitted'
+  }
+];
+
+/* =========================================================
+ * COMPONENT
+ * ========================================================= */
+
+@Component({
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
+  selector: 'app-users',
+  styleUrl: './users.css',
+  templateUrl: './users.html'
+})
+export class Users {
+
+  /* =======================================================
+   * CONSTANTS
+   * ======================================================= */
+
+  readonly PER_PAGE = 3;
+
+  /* =======================================================
+   * ROLE FILTER TABS
+   * ======================================================= */
+
+  roleFilterTabs: {
+    key: 'all' | 'admin' | 'editor' | 'author' | 'user';
+    label: string;
+  }[] = [
+    {
+      key: 'all',
+      label: 'Tất cả'
+    },
+    {
+      key: 'admin',
+      label: 'Admin'
+    },
+    {
+      key: 'editor',
+      label: 'Editor'
+    },
+    {
+      key: 'author',
+      label: 'Author'
+    },
+    {
+      key: 'user',
+      label: 'User'
+    }
+  ];
+
+  readonly roleOptions = [
+    'admin',
+    'editor',
+    'author',
+    'user'
+  ];
+
+  readonly statusOptions = [
+    'active',
+    'banned'
+  ];
+
+  /* =======================================================
+   * STYLES
+   * ======================================================= */
+
+  readonly roleStyles: Record<string, string> = {
+    admin: 'role-admin',
+    editor: 'role-editor',
+    author: 'role-author',
+    user: 'role-user'
+  };
+
+  readonly statusStyles: Record<string, string> = {
+    active: 'status-active',
+    banned: 'status-banned'
+  };
+
+  readonly roleColors: Record<string, string> = {
+    all: '#6b6560',
+    admin: '#ff5c00',
+    editor: '#3b82f6',
+    author: '#a78bfa',
+    user: '#6b7280'
+  };
+
+  /* =======================================================
+   * DATA
+   * ======================================================= */
+
+  items: User[] = [
+    ...MOCK_USERS
+  ];
+
+  comments: Comment[] = [
+    ...MOCK_COMMENTS
+  ];
+
+  news: News[] = [
+    ...MOCK_NEWS
+  ];
+
+  /* =======================================================
+   * FILTER
+   * ======================================================= */
+
+  search = '';
+
+  roleFilter:
+    | 'all'
+    | 'admin'
+    | 'editor'
+    | 'author'
+    | 'user' = 'all';
+
+  /* =======================================================
+   * PAGINATION
+   * ======================================================= */
+
+  currentPage = 1;
+
+  /* =======================================================
+   * MODALS
+   * ======================================================= */
+
+  deleteItem: User | null = null;
+
+  viewItem: User | null = null;
+
+  editItem: User | null = null;
+
+  editRole = '';
+
+  editStatus = '';
+
+  /* =======================================================
+   * FILTERED USERS
+   * ======================================================= */
+
+  get filteredUsers(): User[] {
+
+    const keyword =
+      this.search
+        .trim()
+        .toLowerCase();
+
+    return this.items
+
+      /* ROLE FILTER */
+      .filter(user => {
+
+        if (
+          this.roleFilter !== 'all' &&
+          user.role !== this.roleFilter
+        ) {
+          return false;
+        }
+
+        return true;
+      })
+
+      /* SEARCH */
+      .filter(user => {
+
+        if (!keyword) {
+          return true;
+        }
+
+        return (
+          user.username
+            .toLowerCase()
+            .includes(keyword) ||
+
+          user.email
+            .toLowerCase()
+            .includes(keyword)
+        );
+      });
+  }
+
+  /* =======================================================
+   * PAGED USERS
+   * ======================================================= */
+
+  get pagedUsers(): User[] {
+
+    const start =
+      (this.currentPage - 1) *
+      this.PER_PAGE;
+
+    const end =
+      start +
+      this.PER_PAGE;
+
+    return this.filteredUsers.slice(
+      start,
+      end
+    );
+  }
+
+  /* =======================================================
+   * PAGINATION
+   * ======================================================= */
+
+  get total(): number {
+
+    return this.filteredUsers.length;
+  }
+
+  get totalPages(): number {
+
+    return Math.ceil(
+      this.total /
+      this.PER_PAGE
+    );
+  }
+
+  get recordStart(): number {
+
+    if (this.total === 0) {
+      return 0;
+    }
+
+    return (
+      (this.currentPage - 1) *
+      this.PER_PAGE
+    ) + 1;
+  }
+
+  get recordEnd(): number {
+
+    return Math.min(
+      this.currentPage *
+      this.PER_PAGE,
+      this.total
+    );
+  }
+
+  get paginationItems(): (number | 'dots')[] {
+
+    const total =
+      this.totalPages;
+
+    const current =
+      this.currentPage;
+
+    /* Không có trang */
+    if (total === 0) {
+      return [];
+    }
+
+    /* Có ít trang */
+    if (total <= 6) {
+
+      return Array.from(
+        {
+          length: total
+        },
+        (_, index) =>
+          index + 1
+      );
+    }
+
+    /* Đầu danh sách */
+    if (current <= 3) {
+
+      return [
+        1,
+        2,
+        3,
+        4,
+        'dots',
+        total - 1,
+        total
+      ];
+    }
+
+    /* Cuối danh sách */
+    if (
+      current >=
+      total - 2
+    ) {
+
+      return [
+        1,
+        2,
+        'dots',
+        total - 3,
+        total - 2,
+        total - 1,
+        total
+      ];
+    }
+
+    /* Ở giữa */
+    return [
+      1,
+      2,
+      'dots',
+      current - 1,
+      current,
+      'dots',
+      total - 1,
+      total
+    ];
+  }
+
+  changePage(page: number): void {
+
+    if (page < 1) {
+      return;
+    }
+
+    const maxPage =
+      Math.ceil(
+        this.filteredUsers.length /
+        this.PER_PAGE
+      );
+
+    if (page > maxPage) {
+      return;
+    }
+
+    this.currentPage = page;
+  }
+
+  /* =======================================================
+   * SEARCH
+   * ======================================================= */
+
+  onSearch(): void {
+
+    this.currentPage = 1;
+  }
+
+  clearSearch(): void {
+
+    this.search = '';
+
+    this.currentPage = 1;
+  }
+
+  /* =======================================================
+   * ROLE FILTER
+   * ======================================================= */
+
+  selectRoleFilter(
+    role:
+      | 'all'
+      | 'admin'
+      | 'editor'
+      | 'author'
+      | 'user'
+  ): void {
+
+    this.roleFilter = role;
+
+    this.currentPage = 1;
+  }
+
+  /* =======================================================
+   * ROLE COUNT
+   * ======================================================= */
+
+  getRoleCount(
+    role:
+      | 'all'
+      | 'admin'
+      | 'editor'
+      | 'author'
+      | 'user'
+  ): number {
+
+    if (role === 'all') {
+
+      return this.items.length;
+    }
+
+    return this.items.filter(
+      user =>
+        user.role === role
+    ).length;
+  }
+
+  /* =======================================================
+   * VIEW
+   * ======================================================= */
+
+  openView(
+    user: User
+  ): void {
+
+    this.viewItem = user;
+  }
+
+  closeView(): void {
+
+    this.viewItem = null;
+  }
+
+  /* =======================================================
+   * EDIT
+   * ======================================================= */
+
+  openEdit(
+    user: User
+  ): void {
+
+    this.editItem = {
+      ...user
+    };
+
+    this.editRole =
+      user.role;
+
+    this.editStatus =
+      user.status;
+  }
+
+  closeEdit(): void {
+
+    this.editItem = null;
+
+    this.editRole = '';
+
+    this.editStatus = '';
+  }
+
+confirmEdit(): void {
+  if (!this.editItem) {
+    return;
+  }
+
+  this.items = this.items.map(user => {
+    if (user.user_id === this.editItem!.user_id) {
+      return {
+        ...user,
+        role: this.editRole as User['role'],
+        status: this.editStatus as User['status']
+      };
+    }
+
+    return user;
+  });
+
+  this.closeEdit();
+}
+
+
+  /* =======================================================
+   * DELETE
+   * ======================================================= */
+
+  openDelete(
+    user: User
+  ): void {
+
+    this.deleteItem = user;
+  }
+
+  closeDelete(): void {
+
+    this.deleteItem = null;
+  }
+
+  confirmDelete(): void {
+
+    if (!this.deleteItem) {
+      return;
+    }
+
+    this.items =
+      this.items.filter(
+        user =>
+          user.user_id !==
+          this.deleteItem!.user_id
+      );
+
+    /*
+     * Nếu xoá record cuối
+     * của page hiện tại,
+     * quay về page trước.
+     */
+
+    if (
+      this.currentPage > 1 &&
+      this.currentPage > this.totalPages
+    ) {
+
+      this.currentPage =
+        Math.max(
+          1,
+          this.totalPages
+        );
+    }
+
+    this.deleteItem = null;
+  }
+
+  /* =======================================================
+   * USER COMMENTS
+   * ======================================================= */
+
+  getUserComments(
+    user: User
+  ): Comment[] {
+
+    return this.comments.filter(
+      comment =>
+        comment.user_id ===
+        user.user_id
+    );
+  }
+
+  getCommentTotal(
+    user: User
+  ): number {
+
+    return this
+      .getUserComments(user)
+      .length;
+  }
+
+  getCommentApproved(
+    user: User
+  ): number {
+
+    return this
+      .getUserComments(user)
+      .filter(
+        comment =>
+          comment.status ===
+          'approved'
+      )
+      .length;
+  }
+
+  getCommentPending(
+    user: User
+  ): number {
+
+    return this
+      .getUserComments(user)
+      .filter(
+        comment =>
+          comment.status ===
+          'pending'
+      )
+      .length;
+  }
+
+  getCommentSpam(
+    user: User
+  ): number {
+
+    return this
+      .getUserComments(user)
+      .filter(
+        comment =>
+          comment.status ===
+          'spam'
+      )
+      .length;
+  }
+
+  /* =======================================================
+   * WRITER STATISTICS
+   * ======================================================= */
+
+  isWriter(
+    user: User
+  ): boolean {
+
+    return (
+      user.role === 'admin' ||
+      user.role === 'editor' ||
+      user.role === 'author'
+    );
+  }
+
+  normalizeName(
+    value: string
+  ): string {
+
+    return value
+      .toLowerCase()
+      .replace(/\s/g, '');
+  }
+
+  getAuthorNews(
+    user: User
+  ): News[] {
+
+    const username =
+      this.normalizeName(
+        user.username
+      );
+
+    return this.news.filter(
+      news =>
+        this.normalizeName(
+          news.author
+        ) === username
+    );
+  }
+
+  getNewsByStatus(
+    user: User,
+    status: News['status']
+  ): number {
+
+    return this
+      .getAuthorNews(user)
+      .filter(
+        news =>
+          news.status === status
+      )
+      .length;
+  }
+
+  getPublishedCount(
+    user: User
+  ): number {
+
+    return this.getNewsByStatus(
+      user,
+      'published'
+    );
+  }
+
+  getDraftCount(
+    user: User
+  ): number {
+
+    return this.getNewsByStatus(
+      user,
+      'draft'
+    );
+  }
+
+  getReturnedCount(
+    user: User
+  ): number {
+
+    return this.getNewsByStatus(
+      user,
+      'returned'
+    );
+  }
+
+  getApplyCount(
+    user: User
+  ): number {
+
+    return this.getNewsByStatus(
+      user,
+      'submitted'
+    );
+  }
+
+  getRemovedCount(
+    user: User
+  ): number {
+
+    return this.getNewsByStatus(
+      user,
+      'removed'
+    );
+  }
+
+  getTotalViews(
+    user: User
+  ): number {
+
+    return this
+      .getAuthorNews(user)
+      .reduce(
+        (total, news) =>
+          total +
+          (news.views ?? 0),
+        0
+      );
+  }
+
+  getLikeCount(
+    user: User
+  ): number {
+
+    const views =
+      this.getTotalViews(user);
+
+    return Math.round(
+      views * 0.04
+    );
+  }
+
+  /* =======================================================
+   * FORMAT
+   * ======================================================= */
+
+  formatNumber(
+    value: number
+  ): string {
+
+    return value.toLocaleString(
+      'vi-VN'
+    );
+  }
+
+  getRoleClass(
+    role: string
+  ): string {
+
+    return (
+      this.roleStyles[role] ??
+      this.roleStyles['user']
+    );
+  }
+
+  getStatusClass(
+    status: string
+  ): string {
+
+    return (
+      this.statusStyles[status] ??
+      ''
+    );
+  }
+
+  getRoleColor(
+    role: string
+  ): string {
+
+    return (
+      this.roleColors[role] ??
+      '#6b6560'
+    );
+  }
+}

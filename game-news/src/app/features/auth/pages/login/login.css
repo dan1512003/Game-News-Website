@@ -1,0 +1,1003 @@
+/* ==========================================
+   VARIABLES
+========================================== */
+
+:host {
+  --bg: #080808;
+  --panel: #0a0a0a;
+  --input: #0d0d0d;
+
+  --orange: #ff5c00;
+  --orange-hover: #e05200;
+  --orange-light: #ff8c00;
+
+  --white: #f0ede8;
+  --text: #c8c0b8;
+
+  --gray: #6b6560;
+  --gray-dark: #4a4540;
+  --gray-darker: #3a3530;
+
+  --border: #1e1e1e;
+  --border-dark: #141414;
+
+  --danger: #f87171;
+  --danger-border: #7f1d1d;
+
+  display: block;
+  min-height: 100vh;
+}
+
+
+/* ==========================================
+   RESET
+========================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+
+/* ==========================================
+   PAGE
+========================================== */
+
+.login-page {
+  min-height: 100vh;
+
+  display: flex;
+
+  background: var(--bg);
+
+  color: var(--white);
+}
+
+
+/* ==========================================
+   LEFT PANEL
+========================================== */
+
+.branding-panel {
+  display: none;
+
+  width: 52%;
+
+  padding: 48px;
+
+  background: var(--panel);
+
+  border-right: 1px solid #121212;
+
+  position: relative;
+
+  overflow: hidden;
+
+  flex-direction: column;
+
+  justify-content: space-between;
+}
+
+
+/* ==========================================
+   BACKGROUND GLOW
+========================================== */
+
+.branding-glow {
+  position: absolute;
+
+  inset: 0;
+
+  opacity: 0.05;
+
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle at 60% 40%,
+      #ff5c00 0%,
+      transparent 60%
+    );
+}
+
+
+/* ==========================================
+   LOGO
+========================================== */
+
+.logo-link {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  text-decoration: none;
+
+  position: relative;
+
+  z-index: 2;
+}
+
+
+.logo-box {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background: var(--orange);
+}
+
+
+.logo-g {
+  color: white;
+
+  font-family: var(--font-display), sans-serif;
+
+  font-size: 18px;
+
+  font-weight: 900;
+}
+
+
+.logo-text {
+  color: var(--white);
+
+  font-family: var(--font-display), sans-serif;
+
+  font-size: 22px;
+
+  font-weight: 900;
+
+  letter-spacing: 0.05em;
+}
+
+
+.logo-text span {
+  color: var(--orange);
+}
+
+
+/* ==========================================
+   HERO
+========================================== */
+
+.hero-content {
+  position: relative;
+
+  z-index: 2;
+}
+
+
+.hero-title {
+  margin: 0;
+
+  color: var(--white);
+
+  font-family: var(--font-display), sans-serif;
+
+  font-size: 52px;
+
+  font-weight: 900;
+
+  line-height: 1.05;
+
+  letter-spacing: -0.01em;
+}
+
+
+.hero-title span {
+  color: var(--orange);
+}
+
+
+.hero-description {
+  max-width: 340px;
+
+  margin: 20px 0 0;
+
+  color: var(--gray);
+
+  font-size: 15px;
+
+  line-height: 1.7;
+}
+
+
+/* ==========================================
+   GAME TAGS
+========================================== */
+
+.game-tags {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 12px;
+
+  margin-top: 32px;
+}
+
+
+.game-tags span {
+  padding: 6px 12px;
+
+  border: 1px solid var(--border);
+
+  color: var(--gray-dark);
+
+  font-family: var(--font-mono), monospace;
+
+  font-size: 11px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.1em;
+}
+
+
+/* ==========================================
+   STATS
+========================================== */
+
+.stats {
+  display: flex;
+
+  gap: 32px;
+
+  position: relative;
+
+  z-index: 2;
+}
+
+
+.stat-number {
+  margin: 0;
+
+  color: var(--orange);
+
+  font-family: var(--font-display), sans-serif;
+
+  font-size: 26px;
+
+  font-weight: 900;
+}
+
+
+.stat-label {
+  margin: 0;
+
+  color: var(--gray-dark);
+
+  font-family: var(--font-mono), monospace;
+
+  font-size: 10px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.1em;
+}
+
+
+/* ==========================================
+   RIGHT PANEL
+========================================== */
+
+.form-panel {
+  flex: 1;
+
+  min-height: 100vh;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 40px;
+}
+
+
+/* ==========================================
+   FORM CONTAINER
+========================================== */
+
+.form-container {
+  width: 100%;
+
+  max-width: 380px;
+}
+
+
+/* ==========================================
+   MOBILE LOGO
+========================================== */
+
+.mobile-logo {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  margin-bottom: 40px;
+
+  text-decoration: none;
+}
+
+
+.mobile-logo-box {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background: var(--orange);
+}
+
+
+.mobile-logo-box span {
+  color: white;
+
+  font-family: var(--font-display), sans-serif;
+
+  font-size: 16px;
+
+  font-weight: 900;
+}
+
+
+.mobile-logo-text {
+  color: var(--white);
+
+  font-family: var(--font-display), sans-serif;
+
+  font-size: 20px;
+
+  font-weight: 900;
+}
+
+
+.mobile-logo-text span {
+  color: var(--orange);
+}
+
+
+/* ==========================================
+   TITLE
+========================================== */
+
+.form-title {
+  margin: 0 0 4px;
+
+  color: var(--white);
+
+  font-family: var(--font-display), sans-serif;
+
+  font-size: 30px;
+
+  font-weight: 900;
+
+  line-height: 1.2;
+
+  letter-spacing: -0.01em;
+}
+
+
+.register-text {
+  margin: 0 0 32px;
+
+  color: var(--gray-dark);
+
+  font-size: 14px;
+}
+
+
+.orange-link {
+  color: var(--orange);
+
+  font-weight: 600;
+
+  text-decoration: none;
+
+  transition: color 0.2s ease;
+}
+
+
+.orange-link:hover {
+  color: var(--orange-light);
+}
+
+
+/* ==========================================
+   FORM
+========================================== */
+
+.login-form {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 16px;
+}
+
+
+.form-group {
+  width: 100%;
+}
+
+
+.form-group label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: var(--gray-dark);
+
+  font-family: var(--font-mono), monospace;
+
+  font-size: 10px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.12em;
+}
+
+
+/* ==========================================
+   INPUT
+========================================== */
+
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="text"] {
+  width: 100%;
+
+  padding: 12px 16px;
+
+  background: var(--input);
+
+  border: 1px solid var(--border);
+
+  outline: none;
+
+  color: var(--white);
+
+  font-size: 14px;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.form-group input::placeholder {
+  color: #2a2520;
+}
+
+
+.form-group input:focus {
+  border-color: var(--orange);
+}
+
+
+.form-group input.input-error {
+  border-color: #991b1b;
+}
+
+
+.form-group input.input-error:focus {
+  border-color: #ef4444;
+}
+
+
+/* ==========================================
+   PASSWORD
+========================================== */
+
+.password-wrapper {
+  position: relative;
+}
+
+
+.password-wrapper input {
+  padding-right: 48px !important;
+}
+
+
+.password-toggle {
+  position: absolute;
+
+  top: 50%;
+
+  right: 12px;
+
+  transform: translateY(-50%);
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 4px;
+
+  border: none;
+
+  background: transparent;
+
+  color: #3a3530;
+
+  cursor: pointer;
+
+  transition: color 0.2s ease;
+}
+
+
+.password-toggle:hover {
+  color: var(--gray);
+}
+
+
+/* ==========================================
+   FIELD ERROR
+========================================== */
+
+.error-message {
+  margin: 6px 0 0;
+
+  color: var(--danger);
+
+  font-size: 12px;
+}
+
+
+/* ==========================================
+   LOGIN ERROR
+========================================== */
+
+.login-error {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  width: 100%;
+
+  padding: 10px 12px;
+
+  border: 1px solid var(--danger-border);
+
+  background: rgba(127, 29, 29, 0.12);
+
+  color: var(--danger);
+
+  font-size: 12px;
+
+  line-height: 1.4;
+}
+
+
+/* ==========================================
+   OPTIONS
+========================================== */
+
+.options-row {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding-top: 4px;
+}
+
+
+.remember-label {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  color: var(--gray);
+
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+
+.remember-checkbox {
+  width: 16px !important;
+  height: 16px !important;
+
+  padding: 0 !important;
+
+  accent-color: var(--orange);
+
+  cursor: pointer;
+}
+
+
+.forgot-link {
+  color: var(--orange);
+
+  font-size: 13px;
+
+  text-decoration: none;
+
+  transition: color 0.2s ease;
+}
+
+
+.forgot-link:hover {
+  color: var(--orange-light);
+}
+
+
+/* ==========================================
+   LOGIN BUTTON
+========================================== */
+
+.login-button {
+  width: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top: 8px;
+
+  padding: 14px;
+
+  border: none;
+
+  background: var(--orange);
+
+  color: white;
+
+  font-family: var(--font-display), sans-serif;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.12em;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease;
+}
+
+
+.login-button:hover:not(:disabled) {
+  background: var(--orange-hover);
+}
+
+
+.login-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+
+/* ==========================================
+   SPINNER
+========================================== */
+
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+
+@keyframes spin {
+
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+
+}
+
+
+/* ==========================================
+   DEMO ACCOUNT
+========================================== */
+
+.demo-section {
+  margin-top: 20px;
+
+  padding: 14px;
+
+  border: 1px dashed #1e1e1e;
+
+  background: #0b0b0b;
+}
+
+
+.demo-title {
+  margin: 0 0 10px;
+
+  color: var(--gray-darker);
+
+  font-family: var(--font-mono), monospace;
+
+  font-size: 9px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.1em;
+
+  text-align: center;
+}
+
+
+.demo-button {
+  width: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 9px;
+
+  border: 1px solid #1e1e1e;
+
+  background: #0d0d0d;
+
+  color: var(--gray);
+
+  font-family: var(--font-mono), monospace;
+
+  font-size: 10px;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.demo-button:hover {
+  border-color: var(--orange);
+
+  background: #111;
+
+  color: var(--white);
+}
+
+
+.demo-password {
+  color: var(--orange);
+}
+
+
+/* ==========================================
+   SOCIAL LOGIN
+========================================== */
+
+.social-section {
+  margin-top: 32px;
+
+  padding-top: 24px;
+
+  border-top: 1px solid var(--border-dark);
+}
+
+
+.social-title {
+  margin: 0 0 16px;
+
+  color: var(--gray-darker);
+
+  font-family: var(--font-mono), monospace;
+
+  font-size: 10px;
+
+  text-align: center;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.1em;
+}
+
+
+.social-buttons {
+  display: flex;
+
+  gap: 12px;
+}
+
+
+.social-button {
+  flex: 1;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 10px;
+
+  border: 1px solid var(--border);
+
+  background: var(--input);
+
+  color: var(--gray);
+
+  font-size: 12px;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+
+.social-button:hover {
+  border-color: #2a2520;
+
+  background: #111;
+
+  color: var(--text);
+}
+
+
+.social-button span:last-child {
+  font-family: var(--font-mono), monospace;
+}
+
+
+/* ==========================================
+   DESKTOP
+========================================== */
+
+@media (min-width: 1024px) {
+
+  .branding-panel {
+    display: flex;
+  }
+
+
+  .mobile-logo {
+    display: none;
+  }
+
+
+  .form-panel {
+    padding: 40px;
+  }
+
+}
+
+
+/* ==========================================
+   TABLET
+========================================== */
+
+@media (max-width: 1023px) {
+
+  .form-panel {
+    min-height: 100vh;
+
+    padding: 40px 24px;
+  }
+
+}
+
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 480px) {
+
+  .form-panel {
+    padding: 24px 20px;
+  }
+
+
+  .form-container {
+    max-width: 100%;
+  }
+
+
+  .form-title {
+    font-size: 28px;
+  }
+
+
+  .options-row {
+    align-items: flex-start;
+  }
+
+
+  .remember-label {
+    font-size: 12px;
+  }
+
+
+  .forgot-link {
+    font-size: 12px;
+  }
+
+
+  .social-buttons {
+    gap: 8px;
+  }
+
+
+  .social-button {
+    padding: 10px 6px;
+  }
+
+
+  .demo-button {
+    flex-wrap: wrap;
+  }
+
+}
+
+
+/* ==========================================
+   VERY SMALL MOBILE
+========================================== */
+
+@media (max-width: 360px) {
+
+  .form-panel {
+    padding: 20px 16px;
+  }
+
+
+  .options-row {
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+
+
+  .forgot-link {
+    margin-left: 24px;
+  }
+
+
+  .social-button span:last-child {
+    display: none;
+  }
+
+}

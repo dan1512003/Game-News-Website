@@ -1,0 +1,1136 @@
+
+<div class="users-page">
+
+  <!-- =====================================================
+       PAGE HEADER
+       ===================================================== -->
+
+  <div class="page-header">
+
+    <div class="page-title-wrapper">
+
+      <span class="page-icon">
+        👤
+      </span>
+
+      <h1 class="page-title">
+        Người dùng
+      </h1>
+
+      <span class="total-badge">
+        {{ items.length }}
+      </span>
+
+    </div>
+
+    <!-- SEARCH -->
+
+    <div class="search-box">
+
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#4a4540"
+        stroke-width="2">
+
+        <circle
+          cx="11"
+          cy="11"
+          r="8">
+        </circle>
+
+        <path
+          d="m21 21-4.35-4.35">
+        </path>
+
+      </svg>
+
+      <input
+        [(ngModel)]="search"
+        (ngModelChange)="onSearch()"
+        type="text"
+        placeholder="Tìm username, email..."
+      />
+
+      @if (search) {
+        <button
+          type="button"
+          class="clear-search"
+          (click)="clearSearch()">
+
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+
+            <path d="M18 6 6 18"></path>
+            <path d="M6 6l12 12"></path>
+
+          </svg>
+
+        </button>
+      }
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       ROLE FILTER
+       ===================================================== -->
+
+  <div class="role-tabs">
+
+    @for (tab of roleFilterTabs; track tab.key) {
+
+      <button
+        type="button"
+        class="role-tab"
+        [class.active]="roleFilter === tab.key"
+        [style.--tab-color]="getRoleColor(tab.key)"
+    (click)="selectRoleFilter(tab.key)"
+>
+
+        <span>
+          {{ tab.label }}
+        </span>
+
+        <span class="role-count">
+        {{ getRoleCount(tab.key) }}
+
+        </span>
+
+      </button>
+
+    }
+
+  </div>
+
+
+  <!-- =====================================================
+       TABLE
+       ===================================================== -->
+
+  <div class="table-wrapper">
+
+    <div class="table-scroll">
+
+      <table class="users-table">
+
+        <thead>
+
+          <tr>
+
+            <th>#</th>
+
+            <th>Người dùng</th>
+
+            <th>Ngày tạo</th>
+
+            <th>Vai trò</th>
+
+            <th>Trạng thái</th>
+
+            <th></th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          <!-- DATA -->
+
+          @for (user of pagedUsers; track user.user_id) {
+
+            <tr>
+
+              <!-- ID -->
+
+              <td>
+
+                <span class="user-id">
+                  #{{ user.user_id }}
+                </span>
+
+              </td>
+
+
+              <!-- USER -->
+
+              <td>
+
+                <div class="user-info">
+
+                  <div class="avatar">
+                    {{ user.username.charAt(0).toUpperCase() }}
+                  </div>
+
+                  <div class="user-text">
+
+                    <p class="username">
+                      {{ user.username }}
+                    </p>
+
+                    <p class="email">
+                      {{ user.email }}
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </td>
+
+
+              <!-- DATE -->
+
+              <td>
+
+                <span class="created-date">
+                  {{ user.created_at }}
+                </span>
+
+              </td>
+
+
+              <!-- ROLE -->
+
+              <td>
+
+                <span
+                  class="role-badge"
+                  [class.role-admin]="getRoleClass(user.role) === 'role-admin'"
+                  [class.role-writer]="getRoleClass(user.role) === 'role-writer'"
+                  [class.role-user]="getRoleClass(user.role) === 'role-user'"
+                  [class.role-editor]="getRoleClass(user.role) === 'role-editor'">
+
+                  {{ user.role }}
+
+                </span>
+
+              </td>
+
+
+              <!-- STATUS -->
+
+              <td>
+
+                <span
+                  class="status-badge"
+                  [class.status-active]="user.status === 'active'"
+                  [class.status-banned]="user.status !== 'active'">
+
+                  @if (user.status === 'active') {
+                    Hoạt động
+                  } @else {
+                    Bị cấm
+                  }
+
+                </span>
+
+              </td>
+
+
+              <!-- ACTION -->
+
+              <td>
+
+                <div class="action-buttons">
+
+                  <!-- VIEW -->
+
+                  <button
+                    type="button"
+                    class="action-button view-button"
+                    (click)="openView(user)">
+
+                    <svg
+                      width="11"
+                      height="11"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2">
+
+                      <path
+                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
+                      </path>
+
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="3">
+                      </circle>
+
+                    </svg>
+
+                    Xem
+
+                  </button>
+
+
+                  <!-- EDIT -->
+
+                  <button
+                    type="button"
+                    class="action-button edit-button"
+                    (click)="openEdit(user)">
+
+                    <svg
+                      width="11"
+                      height="11"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2">
+
+                      <path
+                        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7">
+                      </path>
+
+                      <path
+                        d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z">
+                      </path>
+
+                    </svg>
+
+                    Sửa
+
+                  </button>
+
+
+                  <!-- DELETE -->
+
+                  <button
+                    type="button"
+                    class="delete-button"
+                    (click)="openDelete(user)">
+
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2">
+
+                      <polyline
+                        points="3 6 5 6 21 6">
+                      </polyline>
+
+                      <path
+                        d="M19 6l-1 14H6L5 6">
+                      </path>
+
+                      <path
+                        d="M10 11v6M14 11v6">
+                      </path>
+
+                      <path
+                        d="M9 6V4h6v2">
+                      </path>
+
+                    </svg>
+
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          } @empty {
+
+            <!-- EMPTY -->
+
+            <tr>
+
+              <td
+                colspan="6"
+                class="empty-cell">
+
+                Không tìm thấy người dùng
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       PAGINATION
+       ===================================================== -->
+
+ @if (totalPages > 1) {
+  <div class="pagination">
+
+    <span class="pagination-info">
+      {{ recordStart }}–{{ recordEnd }} / {{ total }} bản ghi
+    </span>
+
+    <div class="pagination-controls">
+
+      <!-- PREVIOUS -->
+      <button
+        type="button"
+        class="pagination-btn"
+        [disabled]="currentPage === 1"
+        (click)="changePage(currentPage - 1)"
+      >
+        ←
+      </button>
+
+      <!-- PAGES -->
+      <div class="pagination-pages">
+
+        @for (item of paginationItems; track $index) {
+
+          @if (item === 'dots') {
+
+            <span class="pagination-dots">...</span>
+
+          } @else {
+
+            <button
+              type="button"
+              class="pagination-btn"
+              [class.active]="item === currentPage"
+              (click)="changePage(item)"
+            >
+              {{ item }}
+            </button>
+
+          }
+
+        }
+
+      </div>
+
+      <!-- NEXT -->
+      <button
+        type="button"
+        class="pagination-btn"
+        [disabled]="currentPage === totalPages"
+        (click)="changePage(currentPage + 1)"
+      >
+        →
+      </button>
+
+    </div>
+
+  </div>
+}
+
+
+  <!-- =====================================================
+       VIEW MODAL
+       ===================================================== -->
+
+  @if (viewItem; as user) {
+
+    <div
+      class="modal-overlay"
+      (click)="closeView()">
+
+      <div
+        class="info-modal"
+        (click)="$event.stopPropagation()">
+
+
+        <!-- HEADER -->
+
+        <div class="modal-header">
+
+          <div class="modal-user">
+
+            <div class="modal-avatar">
+              {{ user.username.charAt(0).toUpperCase() }}
+            </div>
+
+            <div>
+
+              <p class="modal-username">
+                {{ user.username }}
+              </p>
+
+              <p class="modal-email">
+                {{ user.email }}
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="close-button"
+            (click)="closeView()">
+
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2">
+
+              <path d="M18 6 6 18"></path>
+              <path d="M6 6l12 12"></path>
+
+            </svg>
+
+          </button>
+
+        </div>
+
+
+        <!-- ROLE + STATUS -->
+
+        <div class="user-meta">
+
+          <span
+            class="role-badge"
+            [class.role-admin]="getRoleClass(user.role) === 'role-admin'"
+            [class.role-writer]="getRoleClass(user.role) === 'role-writer'"
+            [class.role-user]="getRoleClass(user.role) === 'role-user'"
+            [class.role-editor]="getRoleClass(user.role) === 'role-editor'">
+
+            {{ user.role }}
+
+          </span>
+
+
+          <span
+            class="status-badge"
+            [class.status-active]="user.status === 'active'"
+            [class.status-banned]="user.status !== 'active'">
+
+            @if (user.status === 'active') {
+              Hoạt động
+            } @else {
+              Bị cấm
+            }
+
+          </span>
+
+
+          <span class="created-label">
+            Từ {{ user.created_at }}
+          </span>
+
+        </div>
+
+
+        <!-- STATISTICS -->
+
+        <div class="modal-content">
+
+
+          <!-- WRITER -->
+
+          @if (isWriter(user)) {
+
+            <!-- ROW 1 -->
+
+            <div class="stats-grid three">
+
+              <!-- PUBLISHED -->
+
+              <div class="stat-box">
+
+                <p class="stat-number">
+                  {{ getPublishedCount(user) }}
+                </p>
+
+                <p class="stat-label">
+                  Đã đăng
+                </p>
+
+              </div>
+
+
+              <!-- APPLY -->
+
+              <div class="stat-box stat-apply">
+
+                <p class="stat-number yellow">
+                  {{ getApplyCount(user) }}
+                </p>
+
+                <p class="stat-label yellow">
+                Bài đang kiểm duyệt
+                </p>
+
+              </div>
+
+
+              <!-- REMOVED -->
+
+              <div class="stat-box stat-removed">
+
+                <p class="stat-number orange">
+                  {{ getRemovedCount(user) }}
+                </p>
+
+                <p class="stat-label orange">
+                  Bài viết
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <!-- ROW 2 -->
+
+            <div class="stats-grid two">
+
+              <!-- DRAFT -->
+
+              <div class="stat-box">
+
+                <p class="stat-number gray">
+                  {{ getDraftCount(user) }}
+                </p>
+
+                <p class="stat-label">
+                  Nháp
+                </p>
+
+              </div>
+
+
+              <!-- RETURNED -->
+
+              <div class="stat-box stat-returned">
+
+                <p class="stat-number purple">
+                  {{ getReturnedCount(user) }}
+                </p>
+
+                <p class="stat-label purple">
+                  Trả về
+                </p>
+
+              </div>
+
+            </div>
+
+
+         
+
+
+            <!-- COMMENT STATS -->
+
+            <div class="comment-stats">
+
+              <div class="comment-header">
+
+                <div class="comment-title">
+
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2">
+
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z">
+                    </path>
+
+                  </svg>
+
+                  Bình luận
+
+                </div>
+
+                <span class="comment-total">
+                  {{ getCommentTotal(user) }}
+                </span>
+
+              </div>
+
+
+              <div class="comment-grid">
+
+                <div class="comment-item">
+
+                  <p class="comment-number green">
+                    {{ getCommentApproved(user) }}
+                  </p>
+
+                  <p class="comment-label green">
+                    Hợp lệ
+                  </p>
+
+                </div>
+
+
+                <div class="comment-item">
+
+                  <p class="comment-number yellow">
+                    {{ getCommentPending(user) }}
+                  </p>
+
+                  <p class="comment-label yellow">
+                    Chưa check
+                  </p>
+
+                </div>
+
+
+                <div class="comment-item">
+
+                  <p class="comment-number red">
+                    {{ getCommentSpam(user) }}
+                  </p>
+
+                  <p class="comment-label red">
+                    Không hợp lệ
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          } @else {
+
+            <!-- =================================================
+                 REGULAR USER
+                 ================================================= -->
+
+            <div class="stats-grid two large">
+
+              <!-- LIKES -->
+
+              <div class="big-stat">
+
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#ff5c00"
+                  stroke-width="2">
+
+                  <path
+                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                  </path>
+
+                </svg>
+
+                <div>
+
+                  <p class="big-stat-number">
+                    {{ formatNumber(getLikeCount(user)) }}
+                  </p>
+
+                  <p class="big-stat-label">
+                    Lượt thích
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <!-- COMMENTS -->
+
+              <div class="big-stat comments">
+
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#3b82f6"
+                  stroke-width="2">
+
+                  <path
+                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z">
+                  </path>
+
+                </svg>
+
+                <div>
+
+                  <p class="big-stat-number blue">
+                    {{ getCommentTotal(user) }}
+                  </p>
+
+                  <p class="big-stat-label">
+                    Bình luận
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <!-- COMMENT STATS -->
+
+            <div class="comment-stats">
+
+              <div class="comment-header">
+
+                <div class="comment-title">
+
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2">
+
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z">
+                    </path>
+
+                  </svg>
+
+                  Bình luận
+
+                </div>
+
+                <span class="comment-total">
+                  {{ getCommentTotal(user) }}
+                </span>
+
+              </div>
+
+
+              <div class="comment-grid">
+
+                <div class="comment-item">
+
+                  <p class="comment-number green">
+                    {{ getCommentApproved(user) }}
+                  </p>
+
+                  <p class="comment-label green">
+                    Hợp lệ
+                  </p>
+
+                </div>
+
+
+                <div class="comment-item">
+
+                  <p class="comment-number yellow">
+                    {{ getCommentPending(user) }}
+                  </p>
+
+                  <p class="comment-label yellow">
+                    Chưa check
+                  </p>
+
+                </div>
+
+
+                <div class="comment-item">
+
+                  <p class="comment-number red">
+                    {{ getCommentSpam(user) }}
+                  </p>
+
+                  <p class="comment-label red">
+                    Không hợp lệ
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+
+  <!-- =====================================================
+       EDIT MODAL
+       ===================================================== -->
+
+  @if (editItem; as user) {
+
+    <div
+      class="modal-overlay"
+      (click)="closeEdit()">
+
+      <div
+        class="edit-modal"
+        (click)="$event.stopPropagation()">
+
+
+        <!-- HEADER -->
+
+        <div class="modal-header">
+
+          <div class="modal-user">
+
+            <div class="modal-avatar">
+              {{ user.username.charAt(0).toUpperCase() }}
+            </div>
+
+            <div>
+
+              <p class="modal-username">
+                {{ user.username }}
+              </p>
+
+              <p class="modal-email">
+                {{ user.email }}
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="close-button"
+            (click)="closeEdit()">
+
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2">
+
+              <path d="M18 6 6 18"></path>
+              <path d="M6 6l12 12"></path>
+
+            </svg>
+
+          </button>
+
+        </div>
+
+
+        <!-- FIELDS -->
+
+        <div class="edit-content">
+
+
+          <!-- ROLE -->
+
+          <div class="field-group">
+
+            <label>
+              Vai trò
+            </label>
+
+            <div class="option-grid">
+
+              @for (role of roleOptions; track role) {
+
+                <button
+                  type="button"
+                  class="option-button"
+                  [class.selected]="editRole === role"
+                  [style.--option-color]="getRoleColor(role)"
+                  (click)="editRole = role">
+
+                  <span class="option-dot">
+                  </span>
+
+                  {{ role }}
+
+                </button>
+
+              }
+
+            </div>
+
+          </div>
+
+
+          <!-- STATUS -->
+
+          <div class="field-group">
+
+            <label>
+              Trạng thái
+            </label>
+
+            <div class="option-grid">
+
+              @for (status of statusOptions; track status) {
+
+                <button
+                  type="button"
+                  class="option-button"
+                  [class.selected]="editStatus === status"
+                  [style.--option-color]="status === 'active' ? '#22c55e' : '#ef4444'"
+                  (click)="editStatus = status">
+
+                  <span class="option-dot">
+                  </span>
+
+                  @if (status === 'active') {
+                    Hoạt động
+                  } @else {
+                    Bị cấm
+                  }
+
+                </button>
+
+              }
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- FOOTER -->
+
+        <div class="modal-footer">
+
+          <button
+            type="button"
+            class="cancel-button"
+            (click)="closeEdit()">
+
+            Hủy
+
+          </button>
+
+          <button
+            type="button"
+            class="save-button"
+            (click)="confirmEdit()">
+
+            Lưu thay đổi
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+
+  <!-- =====================================================
+       DELETE MODAL
+       ===================================================== -->
+
+  @if (deleteItem; as user) {
+
+    <div class="modal-overlay">
+
+      <div class="delete-modal">
+
+
+        <div class="delete-title-row">
+
+          <div class="warning-icon">
+
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#ef4444"
+              stroke-width="2">
+
+              <path
+                d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z">
+              </path>
+
+              <path d="M12 9v4"></path>
+
+              <path d="M12 17h.01"></path>
+
+            </svg>
+
+          </div>
+
+          <h3>
+            Xác nhận
+          </h3>
+
+        </div>
+
+
+        <p class="delete-message">
+
+          Xóa người dùng
+
+          <strong>
+            "{{ user.username }}"
+          </strong>?
+
+          Hành động này không thể hoàn tác.
+
+        </p>
+
+
+        <div class="delete-actions">
+
+          <button
+            type="button"
+            class="cancel-delete"
+            (click)="closeDelete()">
+
+            Hủy
+
+          </button>
+
+          <button
+            type="button"
+            class="confirm-delete"
+            (click)="confirmDelete()">
+
+            Xóa
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+</div>

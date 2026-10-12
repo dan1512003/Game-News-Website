@@ -1,0 +1,347 @@
+
+<div class="profile-page">
+  <!-- HEADER -->
+  <header class="profile-header">
+    <div>
+      <p class="eyebrow">TÀI KHOẢN CỦA TÔI</p>
+      <h1>Thông tin người dùng</h1>
+    </div>
+
+    <button type="button" class="logout-button" (click)="logout()">
+      <svg width="14" height="14" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M10 17l5-5-5-5M15 12H3M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+      </svg>
+      Đăng xuất
+    </button>
+  </header>
+
+  <!-- PROFILE LAYOUT -->
+  <div class="profile-layout">
+    <aside class="user-card">
+      <div class="avatar">
+        {{ user.name.charAt(0).toUpperCase() }}
+      </div>
+
+      <p class="user-name">{{ user.name }}</p>
+      <p class="user-email">{{ user.email }}</p>
+
+      <div class="user-meta">
+        <div class="meta-row">
+          <span>Vai trò</span>
+          <span class="role">
+            {{ user.role === 'admin' ? 'Quản trị viên' : 'Thành viên' }}
+          </span>
+        </div>
+
+        <div class="meta-row">
+          <span>Ngày tham gia</span>
+          <span class="joined-date">{{ user.joinedAt }}</span>
+        </div>
+      </div>
+
+      <a *ngIf="user.role !== 'admin'" routerLink="/" class="back-home">
+        ← Quay lại trang chủ
+      </a>
+    </aside>
+
+    <main class="profile-content">
+      <!-- PERSONAL INFORMATION -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Thông tin cá nhân</h2>
+          <p>Cập nhật tên hiển thị và email đăng nhập.</p>
+        </div>
+
+        <form class="panel-body" (ngSubmit)="saveProfile()" novalidate>
+          <div class="form-group">
+            <label for="profile-name">TÊN HIỂN THỊ</label>
+
+            <input
+              id="profile-name"
+              name="name"
+              type="text"
+              [(ngModel)]="name"
+              [class.invalid]="!!nameError"
+              [attr.aria-invalid]="!!nameError"
+              (ngModelChange)="nameError = ''; profileMessage = ''"
+            />
+
+            <p *ngIf="nameError" class="field-error">
+              {{ nameError }}
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="profile-email">EMAIL</label>
+
+            <input
+              id="profile-email"
+              name="email"
+              type="email"
+              [(ngModel)]="email"
+              [class.invalid]="!!emailError"
+              [attr.aria-invalid]="!!emailError"
+              (ngModelChange)="emailError = ''; profileMessage = ''"
+            />
+
+            <p *ngIf="emailError" class="field-error">
+              {{ emailError }}
+            </p>
+
+            <p *ngIf="!emailError" class="field-hint">
+              Email mới cần được xác thực bằng mã 6 số trước khi thay đổi.
+            </p>
+          </div>
+
+          <p *ngIf="profileMessage" class="success-message" role="status">
+            {{ profileMessage }}
+          </p>
+
+          <button type="submit" class="primary-button">
+            Lưu thay đổi
+          </button>
+        </form>
+      </section>
+
+      <!-- PASSWORD SECURITY -->
+      <section class="panel">
+        <div class="security-row">
+          <span class="security-icon">
+            <svg width="19" height="19" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="10" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </span>
+
+          <div class="security-info">
+            <h2>Mật khẩu và bảo mật</h2>
+            <p>Đổi mật khẩu định kỳ để bảo vệ tài khoản của bạn.</p>
+          </div>
+
+          <button
+            type="button"
+            class="outline-button"
+            (click)="openPasswordModal()"
+          >
+            Đổi mật khẩu
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- EMAIL MODAL -->
+  <div
+    *ngIf="emailModalOpen"
+    class="modal-overlay"
+    (click)="closeEmailModal()"
+  >
+    <section
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="email-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">XÁC THỰC BẢO MẬT</p>
+          <h2 id="email-modal-title">Xác nhận email mới</h2>
+        </div>
+
+        <button
+          type="button"
+          class="close-button"
+          aria-label="Đóng"
+          (click)="closeEmailModal()"
+        >
+          ×
+        </button>
+      </div>
+
+      <form class="modal-body" (ngSubmit)="confirmNewEmail()" novalidate>
+        <p class="modal-description">
+          Mã xác nhận 6 số dành cho
+          <strong>{{ pendingProfile.email }}</strong>.
+          Đây là mã mô phỏng, không gửi email thật.
+        </p>
+
+        <div class="demo-code" role="status">
+          <p>Mã xác nhận demo của bạn:</p>
+          <strong>{{ demoEmailCode }}</strong>
+        </div>
+
+        <div class="form-group">
+          <label for="email-change-code">MÃ XÁC NHẬN</label>
+
+          <input
+            id="email-change-code"
+            name="emailCode"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            placeholder="000000"
+            [(ngModel)]="emailCode"
+            (ngModelChange)="onEmailCodeInput($event)"
+            [class.invalid]="!!emailCodeError"
+            [attr.aria-invalid]="!!emailCodeError"
+          />
+
+          <p *ngIf="emailCodeError" class="field-error">
+            {{ emailCodeError }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="resend-link"
+          (click)="resendEmailCode()"
+        >
+          Gửi lại mã
+        </button>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="cancel-button"
+            (click)="closeEmailModal()"
+          >
+            Hủy
+          </button>
+
+          <button type="submit" class="primary-button">
+            Xác nhận và đổi email
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- PASSWORD MODAL -->
+  <div
+    *ngIf="passwordModalOpen"
+    class="modal-overlay"
+    (click)="closePasswordModal()"
+  >
+    <section
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="password-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <div>
+          <h2 id="password-modal-title">Đổi mật khẩu</h2>
+          <p class="modal-subtitle">
+            Ít nhất 8 ký tự, gồm chữ hoa, chữ thường và chữ số.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="close-button"
+          aria-label="Đóng"
+          (click)="closePasswordModal()"
+        >
+          ×
+        </button>
+      </div>
+
+      <form class="modal-body" (ngSubmit)="changePassword()" novalidate>
+        <div class="form-group">
+          <label for="password-current">MẬT KHẨU HIỆN TẠI</label>
+
+          <div class="password-input">
+            <input
+              id="password-current"
+              name="currentPassword"
+              [type]="showPasswords.current ? 'text' : 'password'"
+              [(ngModel)]="passwords.current"
+              placeholder="Nhập mật khẩu hiện tại"
+              autocomplete="current-password"
+              (ngModelChange)="passwordError = ''; passwordMessage = ''"
+            />
+
+            <button type="button" (click)="togglePassword('current')">
+              {{ showPasswords.current ? 'Ẩn' : 'Hiện' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password-next">MẬT KHẨU MỚI</label>
+
+          <div class="password-input">
+            <input
+              id="password-next"
+              name="nextPassword"
+              [type]="showPasswords.next ? 'text' : 'password'"
+              [(ngModel)]="passwords.next"
+              placeholder="Nhập mật khẩu mới"
+              autocomplete="new-password"
+              (ngModelChange)="passwordError = ''; passwordMessage = ''"
+            />
+
+            <button type="button" (click)="togglePassword('next')">
+              {{ showPasswords.next ? 'Ẩn' : 'Hiện' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password-confirm">XÁC NHẬN MẬT KHẨU MỚI</label>
+
+          <div class="password-input">
+            <input
+              id="password-confirm"
+              name="confirmPassword"
+              [type]="showPasswords.confirm ? 'text' : 'password'"
+              [(ngModel)]="passwords.confirm"
+              placeholder="Nhập lại mật khẩu mới"
+              autocomplete="new-password"
+              (ngModelChange)="passwordError = ''; passwordMessage = ''"
+            />
+
+            <button type="button" (click)="togglePassword('confirm')">
+              {{ showPasswords.confirm ? 'Ẩn' : 'Hiện' }}
+            </button>
+          </div>
+        </div>
+
+        <p class="password-hint">
+          Mật khẩu demo hiện tại: GameZone&#64;123
+        </p>
+
+        <a routerLink="/forgot-password" class="forgot-password">
+          Không nhớ mật khẩu hiện tại?
+        </a>
+
+        <p *ngIf="passwordError" class="field-error message-box" role="alert">
+          {{ passwordError }}
+        </p>
+
+        <p *ngIf="passwordMessage" class="success-message" role="status">
+          {{ passwordMessage }}
+        </p>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="cancel-button"
+            (click)="closePasswordModal()"
+          >
+            Hủy
+          </button>
+
+          <button type="submit" class="primary-button">
+            Cập nhật mật khẩu
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>

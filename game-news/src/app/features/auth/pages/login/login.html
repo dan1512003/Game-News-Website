@@ -1,0 +1,614 @@
+<div class="login-page">
+
+  <!-- ======================================
+       LEFT BRANDING PANEL
+  ======================================= -->
+
+  <div class="branding-panel">
+
+    <div class="branding-glow"></div>
+
+    <a
+      routerLink="/"
+      class="logo-link"
+    >
+
+      <div class="logo-box">
+        <span class="logo-g">G</span>
+      </div>
+
+      <span class="logo-text">
+        GAME<span>ZONE</span>
+      </span>
+
+    </a>
+
+
+    <div class="hero-content">
+
+      <h1 class="hero-title">
+        TIN TỨC<br>
+        <span>ESPORTS</span><br>
+        HÀNG ĐẦU
+      </h1>
+
+      <p class="hero-description">
+        Cập nhật tin tức mới nhất, kết quả giải đấu
+        và đánh giá game từ cộng đồng game thủ
+        Việt Nam.
+      </p>
+
+      <div class="game-tags">
+        <span>Valorant</span>
+        <span>LMHT</span>
+        <span>CS2</span>
+        <span>Dota 2</span>
+      </div>
+
+    </div>
+
+
+    <div class="stats">
+
+      <div class="stat">
+        <p class="stat-number">
+          50K+
+        </p>
+
+        <p class="stat-label">
+          Bài viết
+        </p>
+      </div>
+
+
+      <div class="stat">
+        <p class="stat-number">
+          2M+
+        </p>
+
+        <p class="stat-label">
+          Độc giả
+        </p>
+      </div>
+
+
+      <div class="stat">
+        <p class="stat-number">
+          500+
+        </p>
+
+        <p class="stat-label">
+          Giải đấu
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ======================================
+       RIGHT FORM PANEL
+  ======================================= -->
+
+  <div class="form-panel">
+
+    <!-- MOBILE LOGO -->
+
+    <a
+      routerLink="/"
+      class="mobile-logo"
+    >
+
+      <div class="mobile-logo-box">
+        <span>G</span>
+      </div>
+
+      <span class="mobile-logo-text">
+        GAME<span>ZONE</span>
+      </span>
+
+    </a>
+
+
+    <div class="form-container">
+
+      <!-- TITLE -->
+
+      <h2 class="form-title">
+        Đăng nhập
+      </h2>
+
+
+      <p class="register-text">
+
+        Chưa có tài khoản?
+
+        <a
+          routerLink="/register"
+          class="orange-link"
+        >
+          Đăng ký ngay
+        </a>
+
+      </p>
+
+
+      <!-- ==================================
+           LOGIN FORM
+      =================================== -->
+
+      <form
+        class="login-form"
+        (ngSubmit)="handleSubmit()"
+        novalidate
+      >
+
+
+        <!-- ==================================
+             EMAIL
+        =================================== -->
+
+        <div class="form-group">
+
+          <label for="login-email">
+            Email
+          </label>
+
+          <input
+            id="login-email"
+
+            type="email"
+
+            name="email"
+
+            [(ngModel)]="email"
+
+            (ngModelChange)="
+              updateEmail($event)
+            "
+
+            placeholder="ten@email.com"
+
+            autocomplete="email"
+
+            [class.input-error]="
+              !!errors.email
+            "
+
+            [attr.aria-invalid]="
+              !!errors.email
+            "
+
+            [attr.aria-describedby]="
+              errors.email
+                ? 'login-email-error'
+                : null
+            "
+          />
+
+
+          @if (errors.email) {
+
+            <p
+              id="login-email-error"
+              class="error-message"
+            >
+              {{ errors.email }}
+            </p>
+
+          }
+
+        </div>
+
+
+        <!-- ==================================
+             PASSWORD
+        =================================== -->
+
+        <div class="form-group">
+
+          <label for="login-password">
+            Mật khẩu
+          </label>
+
+
+          <div class="password-wrapper">
+
+            <input
+              id="login-password"
+
+              [type]="
+                showPw
+                  ? 'text'
+                  : 'password'
+              "
+
+              name="password"
+
+              [(ngModel)]="password"
+
+              (ngModelChange)="
+                updatePassword($event)
+              "
+
+              placeholder="••••••••"
+
+              autocomplete="current-password"
+
+              [class.input-error]="
+                !!errors.password
+              "
+
+              [attr.aria-invalid]="
+                !!errors.password
+              "
+
+              [attr.aria-describedby]="
+                errors.password
+                  ? 'login-password-error'
+                  : null
+              "
+            />
+
+
+            <!-- PASSWORD TOGGLE -->
+
+            <button
+              type="button"
+
+              class="password-toggle"
+
+              (click)="togglePassword()"
+
+              [attr.aria-label]="
+                showPw
+                  ? 'Ẩn mật khẩu'
+                  : 'Hiện mật khẩu'
+              "
+            >
+
+              <!-- SHOW PASSWORD -->
+
+              @if (!showPw) {
+
+                <svg
+                  width="16"
+                  height="16"
+
+                  viewBox="0 0 24 24"
+
+                  fill="none"
+
+                  stroke="currentColor"
+
+                  stroke-width="2"
+                >
+
+                  <path
+                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                  />
+
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                  />
+
+                </svg>
+
+              }
+
+
+              <!-- HIDE PASSWORD -->
+
+              @if (showPw) {
+
+                <svg
+                  width="16"
+                  height="16"
+
+                  viewBox="0 0 24 24"
+
+                  fill="none"
+
+                  stroke="currentColor"
+
+                  stroke-width="2"
+                >
+
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+                  />
+
+                  <path
+                    d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
+                  />
+
+                  <path
+                    d="M14.83 14.83a3 3 0 1 1-4.24-4.24"
+                  />
+
+                  <line
+                    x1="1"
+                    y1="1"
+                    x2="23"
+                    y2="23"
+                  />
+
+                </svg>
+
+              }
+
+            </button>
+
+          </div>
+
+
+          <!-- PASSWORD ERROR -->
+
+          @if (errors.password) {
+
+            <p
+              id="login-password-error"
+              class="error-message"
+            >
+              {{ errors.password }}
+            </p>
+
+          }
+
+        </div>
+
+
+        <!-- ==================================
+             LOGIN ERROR
+        =================================== -->
+
+        @if (errors.login) {
+
+          <div
+            class="login-error"
+          >
+
+            <svg
+              width="16"
+              height="16"
+
+              viewBox="0 0 24 24"
+
+              fill="none"
+
+              stroke="currentColor"
+
+              stroke-width="2"
+            >
+
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+              />
+
+              <line
+                x1="12"
+                y1="8"
+                x2="12"
+                y2="12"
+              />
+
+              <line
+                x1="12"
+                y1="16"
+                x2="12.01"
+                y2="16"
+              />
+
+            </svg>
+
+
+            <span>
+              {{ errors.login }}
+            </span>
+
+          </div>
+
+        }
+
+
+        <!-- ==================================
+             REMEMBER / FORGOT
+        =================================== -->
+
+        <div class="options-row">
+
+          <label class="remember-label">
+
+            <input
+              type="checkbox"
+
+              name="remember"
+
+              class="remember-checkbox"
+
+              [(ngModel)]="remember"
+
+              (ngModelChange)="
+                updateRemember($event)
+              "
+            />
+
+            <span>
+              Ghi nhớ đăng nhập
+            </span>
+
+          </label>
+
+
+          <a
+            routerLink="/forgot-password"
+
+            class="forgot-link"
+          >
+            Quên mật khẩu
+          </a>
+
+        </div>
+
+
+        <!-- ==================================
+             LOGIN BUTTON
+        =================================== -->
+
+        <button
+          type="submit"
+
+          class="login-button"
+
+          [disabled]="
+            loadingSignal()
+          "
+        >
+
+          <!-- ==================================
+               LOADING
+          ================================== -->
+
+          @if (loadingSignal()) {
+
+            <svg
+              class="spinner"
+
+              width="16"
+              height="16"
+
+              viewBox="0 0 24 24"
+
+              fill="none"
+
+              stroke="currentColor"
+
+              stroke-width="2"
+            >
+
+              <path
+                d="M21 12a9 9 0 1 1-6.219-8.56"
+              />
+
+            </svg>
+
+
+            <span>
+              Đang đăng nhập...
+            </span>
+
+          } @else {
+
+            Đăng nhập
+
+          }
+
+        </button>
+
+      </form>
+
+
+      <!-- ==================================
+           DEMO ACCOUNT
+      =================================== -->
+
+      <div class="demo-section">
+
+        <p class="demo-title">
+          Tài khoản demo
+        </p>
+
+
+        <button
+          type="button"
+
+          class="demo-button"
+
+          (click)="fillDemoAccount()"
+        >
+
+          <span>
+            🎮
+          </span>
+
+          <span>
+            admin@gamezone.com
+          </span>
+
+          <span class="demo-password">
+            Admin123
+          </span>
+
+        </button>
+
+      </div>
+
+
+      <!-- ==================================
+           SOCIAL LOGIN
+      =================================== -->
+
+      <div class="social-section">
+
+        <p class="social-title">
+          Hoặc tiếp tục với
+        </p>
+
+
+        <div class="social-buttons">
+
+          <button
+            type="button"
+            class="social-button"
+          >
+
+            <span>🎮</span>
+
+            <span>
+              Steam
+            </span>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="social-button"
+          >
+
+            <span>▶</span>
+
+            <span>
+              Google
+            </span>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="social-button"
+          >
+
+            <span>⚡</span>
+
+            <span>
+              Discord
+            </span>
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
