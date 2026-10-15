@@ -78,6 +78,7 @@ export interface NewsEditorForm {
   title: string;
   category_id: number | string | null;
   author_id: number | string;
+  author_name:string | null;
   thumbnail: string;
   published_at: string;
   status: string;
@@ -197,6 +198,7 @@ private readonly destroyRef = inject(DestroyRef);
     reviewer_id: null,
     editor_note: '',
     requirement_note: '',
+    author_name:null
   };
 
   selectedTags: Array<number | string> = [];
@@ -278,7 +280,10 @@ getThumbnailUrl(thumbnail: string | null | undefined): string {
 
 
 
-onBlockImageSelected(event: Event, block: EditorBlock): void {
+onBlockImageSelected(
+  event: Event,
+  block: EditorBlock,
+): void {
   if (this.viewOnly) return;
 
   const input = event.target as HTMLInputElement;
@@ -305,10 +310,24 @@ onBlockImageSelected(event: Event, block: EditorBlock): void {
     return;
   }
 
-  // Chỉ lưu file, không đưa file vào content
-  block.imageFile = file;
-}
+  // Hủy preview cũ của chính block này
+  const oldUrl = this.blockImagePreviewUrls.get(block.id);
 
+  if (oldUrl) {
+    URL.revokeObjectURL(oldUrl);
+  }
+
+  // Gán file mới
+  block.imageFile = file;
+
+  // Tạo preview mới
+  const newUrl = URL.createObjectURL(file);
+
+  this.blockImagePreviewUrls.set(
+    block.id,
+    newUrl,
+  );
+}
 private blockImagePreviewUrls = new Map<number, string>();
 
 getBlockImagePreview(block: EditorBlock): string {
@@ -348,6 +367,7 @@ ngOnInit(): void {
   );
 
   this.initializeForm();
+
 this.loadUserNameById(this.form.author_id, 'author');
 this.loadUserNameById(this.form.reviewer_id, 'reviewer');
   // Đóng editor khi tạo hoặc cập nhật bài viết thành công
@@ -362,6 +382,7 @@ this.loadUserNameById(this.form.reviewer_id, 'reviewer');
     .subscribe(() => {
       this.closeEditor();
     });
+
     this.actions$
   .pipe(
     ofType(UserActions.loadUserByIdSuccess),
@@ -369,9 +390,10 @@ this.loadUserNameById(this.form.reviewer_id, 'reviewer');
   )
   .subscribe(({ user }) => {
     const userId = user.user_id;
-
+    
     if (this.sameId(userId, this.form.author_id)) {
       this.authorName = user.username;
+  
     }
 
     if (this.sameId(userId, this.form.reviewer_id)) {
@@ -388,6 +410,7 @@ this.loadUserNameById(this.form.reviewer_id, 'reviewer');
       title: article?.title ?? '',
       category_id: article?.category_id ?? null,
       author_id: article?.author_id ?? this.currentUser?.id ?? '',
+   author_name: article?.author?.username ?? '',
       thumbnail: article?.thumbnail ?? '',
       published_at: this.formatDateForInput(
         article?.published_at ?? '',
@@ -433,12 +456,16 @@ ngOnDestroy(): void {
 
   this.releaseThumbnailPreview();
 }
+
+//ko caanf ham nayf cos thee laay truc tiếp tại new kia
 private loadUserNameById(
   userId: number | string | null | undefined,
   type: 'author' | 'reviewer',
 ): void {
+  
   if (userId == null || String(userId).trim() === '') {
     if (type === 'author') {
+      
       this.authorName = 'Tác giả';
     } else {
       this.reviewerName = 'Chưa có biên tập viên';
@@ -676,9 +703,6 @@ getUserName(
     this.blocks = updated;
   }
 
-  // =====================================================
-  // SAVE: NG-RX DISPATCH
-  // =====================================================
 
 
 
@@ -686,6 +710,7 @@ getUserName(
 
 
 
+// cos the chuan hoas tại nest back end ko ccan phai font end nhu the này
 saveArticle(status?: string): void {
   console.log('========== SAVE ARTICLE START ==========');
 

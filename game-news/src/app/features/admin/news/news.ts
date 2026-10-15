@@ -80,14 +80,14 @@ readonly currentUser = computed(() => {
   const user = this.authUser();
 
   console.log('[AUTH] user thực tế:', user);
-  console.log('[AUTH] userId:', user?.id);
+  console.log('[AUTH] userId:', user?.userId);
   console.log('[AUTH] id:', (user as any)?.id);
   console.log('[AUTH] user_id:', (user as any)?.user_id);
 
   if (!user) return null;
 
   return {
-    id: user.id,
+    id: user.userId,
     name: user.username,
     role: user.role as NewsRole,
   };

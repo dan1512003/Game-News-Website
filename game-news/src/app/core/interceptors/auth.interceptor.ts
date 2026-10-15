@@ -1,3 +1,4 @@
+
 import { inject } from '@angular/core';
 
 import {
@@ -32,46 +33,96 @@ export const authInterceptor: HttpInterceptorFn = (
   req,
   next,
 ) => {
+  console.log('[AuthInterceptor] ========== REQUEST START ==========');
+  console.log('[AuthInterceptor] URL:', req.url);
+  console.log('[AuthInterceptor] Method:', req.method);
+  console.log('[AuthInterceptor] Headers:', req.headers.keys());
+  console.log(
+    '[AuthInterceptor] Is auth endpoint:',
+    isAuthEndpoint(req.url),
+  );
+
   const store = inject(Store<AppState>);
   const authService = inject(AuthService);
 
-  // Không xử lý các endpoint xác thực.
+
   if (isAuthEndpoint(req.url)) {
+    console.log(
+      '[AuthInterceptor] Bỏ qua endpoint xác thực:',
+      req.url,
+    );
+
     return next(req);
   }
 
-  // Lấy access token hiện tại.
+ 
   const accessToken = store.selectSignal(
     AuthSelectors.selectAccessToken,
   )();
 
-  // Không có token thì gửi request bình thường.
+  console.log(
+    '[AuthInterceptor] Có access token:',
+    !!accessToken,
+  );
+
   if (!accessToken) {
+    console.log(
+      '[AuthInterceptor] Không có access token, gửi request không thêm Authorization',
+    );
+
     return next(req);
   }
 
-  // Thêm access token.
+
   const authReq = req.clone({
     setHeaders: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
 
+  console.log(
+    '[AuthInterceptor] Đã thêm Authorization header',
+  );
+
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-        console.error('========== HTTP ERROR ==========');
-    console.error('URL:', req.url);
-    console.error('Method:', req.method);
-    console.error('Status:', error.status);
-    console.error('Response body:', error.error);
-    console.error('================================');
-      // Chỉ xử lý lỗi 401.
+      console.error(
+        '[AuthInterceptor] ========== HTTP ERROR ==========',
+      );
+      console.error('[AuthInterceptor] URL:', req.url);
+      console.error('[AuthInterceptor] Method:', req.method);
+      console.error('[AuthInterceptor] Status:', error.status);
+      console.error(
+        '[AuthInterceptor] Response body:',
+        error.error,
+      );
+      console.error(
+        '[AuthInterceptor] Request có X-Retry:',
+        req.headers.has('X-Retry'),
+      );
+      console.error(
+        '[AuthInterceptor] =================================',
+      );
+
+   
       if (error.status !== 401) {
+        console.log(
+          '[AuthInterceptor] Không phải lỗi 401, trả lỗi về caller',
+        );
+
         return throwError(() => error);
       }
 
-      // Request retry vẫn trả về 401.
+      console.warn(
+        '[AuthInterceptor] Nhận 401, kiểm tra request retry',
+      );
+
+
       if (req.headers.has('X-Retry')) {
+        console.error(
+          '[AuthInterceptor] Request retry vẫn nhận 401, không refresh lần nữa',
+        );
+
         store.dispatch(
           AuthActions.refreshFailure({
             error: error.error as ApiErrorResponse,
@@ -81,24 +132,52 @@ export const authInterceptor: HttpInterceptorFn = (
         return throwError(() => error);
       }
 
-      // Tạo một refresh request dùng chung.
+   
       if (!refreshRequest$) {
+        console.log(
+          '[AuthInterceptor] Chưa có refresh request, bắt đầu refresh',
+        );
+
         refreshRequest$ = authService.refresh();
+      } else {
+        console.log(
+          '[AuthInterceptor] Đang có refresh request, dùng chung request hiện tại',
+        );
       }
 
       return refreshRequest$.pipe(
         switchMap((response) => {
-          // Xóa refresh request dùng chung.
+          console.log(
+            '[AuthInterceptor] Refresh thành công',
+          );
+          console.log(
+            '[AuthInterceptor] Refresh response:',
+            {
+              message: response.message,
+              user: response.data.user,
+              hasAccessToken: !!response.data.accessToken,
+            },
+          );
+
+      
           refreshRequest$ = null;
 
-          // Lưu access token mới.
+          console.log(
+            '[AuthInterceptor] Đã reset refreshRequest$',
+          );
+
+       
           store.dispatch(
             AuthActions.refreshSuccess({
               response,
             }),
           );
 
-          // Gửi lại request ban đầu với token mới.
+          console.log(
+            '[AuthInterceptor] Đã dispatch refreshSuccess',
+          );
+
+     
           const retryReq = req.clone({
             setHeaders: {
               Authorization:
@@ -107,14 +186,49 @@ export const authInterceptor: HttpInterceptorFn = (
             },
           });
 
+          console.log(
+            '[AuthInterceptor] Gửi lại request với access token mới',
+          );
+          console.log(
+            '[AuthInterceptor] Retry URL:',
+            retryReq.url,
+          );
+          console.log(
+            '[AuthInterceptor] Retry method:',
+            retryReq.method,
+          );
+          console.log(
+            '[AuthInterceptor] Retry headers:',
+            retryReq.headers.keys(),
+          );
+
           return next(retryReq);
         }),
 
         catchError((refreshError: HttpErrorResponse) => {
-          // Refresh thất bại: xóa request dùng chung.
+          console.error(
+            '[AuthInterceptor] ========== REFRESH ERROR ==========',
+          );
+          console.error(
+            '[AuthInterceptor] Refresh status:',
+            refreshError.status,
+          );
+          console.error(
+            '[AuthInterceptor] Refresh message:',
+            refreshError.message,
+          );
+          console.error(
+            '[AuthInterceptor] Refresh response body:',
+            refreshError.error,
+          );
+
+      
           refreshRequest$ = null;
 
-          // Lấy nội dung lỗi từ API refresh.
+          console.log(
+            '[AuthInterceptor] Đã reset refreshRequest$ sau lỗi',
+          );
+
           const apiError =
             refreshError.error as ApiErrorResponse;
 
@@ -122,6 +236,13 @@ export const authInterceptor: HttpInterceptorFn = (
             AuthActions.refreshFailure({
               error: apiError,
             }),
+          );
+
+          console.error(
+            '[AuthInterceptor] Đã dispatch refreshFailure',
+          );
+          console.error(
+            '[AuthInterceptor] =================================',
           );
 
           return throwError(() => refreshError);
@@ -133,9 +254,14 @@ export const authInterceptor: HttpInterceptorFn = (
 
 function isAuthEndpoint(url: string): boolean {
   return (
+
+
+
     url.includes('/auth/login') ||
     url.includes('/auth/register') ||
-    url.includes('/auth/refresh') ||
-    url.includes('/auth/logout')
+    url.includes('/auth/refresh')||
+     url.includes('auth/password-reset/request') ||
+    url.includes('auth/password-reset/verify') ||
+    url.includes('auth/password-reset/reset')
   );
 }

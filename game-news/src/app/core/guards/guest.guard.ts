@@ -48,13 +48,13 @@ export const guestGuard: CanActivateFn = () => {
 
     map(({ loading, isAuthenticated, user }) => {
       // Đang loading và chưa có user: cho phép truy cập.
-      if (loading && user === null) {
+      if (loading) {
         return true;
       }
 
       // Đã đăng nhập và có user: không cho vào trang guest.
       if (isAuthenticated && user !== null) {
-        return router.createUrlTree(['/']);
+        return false;
       }
 
       // Các trường hợp còn lại: cho phép truy cập.

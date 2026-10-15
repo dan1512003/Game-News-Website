@@ -1,23 +1,83 @@
-import { Component } from '@angular/core';
+import {
+  Component,
+  inject,
+} from '@angular/core';
+
+import {
+  RouterLink,
+  RouterLinkActive,
+} from '@angular/router';
+
+import {
+  Store,
+} from '@ngrx/store';
+
+import {
+  selectAuthUser,
+} from '../../../store/auth/auth.selectors';
+
 
 @Component({
-  imports: [],
   selector: 'app-header',
-  styleUrl: './header.css',
+
+  standalone: true,
+
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+  ],
+
   templateUrl: './header.html',
+
+  styleUrl: './header.css',
 })
 export class Header {
-     activeMenu = 'dashboard';
+
+  // ==========================================
+  // DEPENDENCIES
+  // ==========================================
+
+  private readonly store =
+    inject(Store);
+
+
+  // ==========================================
+  // NGRX
+  // ==========================================
+
+  /**
+   * User hiện tại.
+   *
+   * Signal tự động cập nhật khi
+   * AuthState.user thay đổi.
+   */
+  readonly user =
+    this.store.selectSignal(
+      selectAuthUser,
+    );
+
+
+  // ==========================================
+  // UI STATE
+  // ==========================================
+
   isSideNavOpen = false;
-  setActive(menu: string, event: Event) {
-    event.preventDefault();
-    this.activeMenu = menu;
+
+
+  // ==========================================
+  // SIDEBAR
+  // ==========================================
+
+  toggleSideNav(): void {
+
+    this.isSideNavOpen =
+      !this.isSideNavOpen;
   }
 
 
+  closeSideNav(): void {
 
+    this.isSideNavOpen = false;
+  }
 
-toggleSideNav(): void {
-    this.isSideNavOpen = !this.isSideNavOpen;
-}
 }

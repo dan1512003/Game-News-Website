@@ -13,6 +13,9 @@ import { MailModule } from '../mail/mail.module.js';
 
 import { JwtStrategy } from './strategies/jwt.strategy.js';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy.js';
+import { EmailResetTokenEntity } from './entities/email-reset-token.entity/email-reset-token.entity.js';
+import { PasswordResetTokenEntity } from './entities/password-reset-token.entity/password-reset-token.entity.js';
+import { AccessTokenBlacklistEntity } from './entities/access-token-blacklist.entity/access-token-blacklist.entity.js';
 
 @Module({
   imports: [
@@ -23,6 +26,9 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy.js';
     TypeOrmModule.forFeature([
       UserEntity,
       RefreshTokenEntity,
+      EmailResetTokenEntity,
+      PasswordResetTokenEntity,
+      AccessTokenBlacklistEntity
     ]),
 
     JwtModule.registerAsync({

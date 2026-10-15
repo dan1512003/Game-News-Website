@@ -161,4 +161,216 @@ export class MailService {
       throw error;
     }
   }
+  
+
+  // ============================================================
+// GỬI OTP XÁC THỰC reset EMAIL
+// ============================================================
+
+async sendEmailResetOtp(params: {
+  email: string;
+  username: string;
+  otp: string;
+}) {
+  const {
+    email,
+    username,
+    otp,
+  } = params;
+
+  this.logger.log(
+    `Sending email verification OTP to: ${email}`,
+  );
+
+  try {
+    const info =
+      await this.transporter.sendMail({
+        from: `"My App" <${process.env.MAIL_USER}>`,
+        to: email,
+        subject: 'Mã OTP xác thực email',
+
+        text:
+          `Xin chào ${username},\n\n` +
+          `Mã OTP xác thực email của bạn là: ${otp}\n\n` +
+          `Mã có hiệu lực trong 5 phút.\n` +
+          `Không chia sẻ mã này với bất kỳ ai.`,
+
+        html: `
+          <div style="
+            font-family: Arial, sans-serif;
+            max-width: 560px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #222;
+          ">
+            <h2>Xác thực email</h2>
+
+            <p>
+              Xin chào ${username},
+            </p>
+
+            <p>
+              Sử dụng mã OTP bên dưới để xác thực
+              địa chỉ email của bạn.
+            </p>
+
+            <div style="
+              margin: 24px 0;
+              padding: 20px;
+              background: #f3f4f6;
+              border-radius: 8px;
+              text-align: center;
+            ">
+              <div style="
+                font-size: 32px;
+                font-weight: bold;
+                letter-spacing: 8px;
+                color: #2563eb;
+              ">
+                ${otp}
+              </div>
+            </div>
+
+            <p>
+              Mã OTP có hiệu lực trong
+              <strong>5 phút</strong>.
+            </p>
+
+            <p>
+              Không chia sẻ mã này với bất kỳ ai.
+            </p>
+
+            <p>
+              Nếu bạn không yêu cầu xác thực email,
+              hãy bỏ qua thư này.
+            </p>
+          </div>
+        `,
+      });
+
+    this.logger.log(
+      `Email verification OTP sent: ${info.messageId}`,
+    );
+
+    return info;
+  } catch (error) {
+    this.logger.error(
+      'Failed to send email verification OTP',
+      error instanceof Error
+        ? error.stack
+        : undefined,
+    );
+
+    throw error;
+  }
+}
+
+// ============================================================
+// GỬI OTP ĐẶT LẠI MẬT KHẨU
+// ============================================================
+
+async sendPasswordResetOtp(params: {
+  email: string;
+  username: string;
+  otp: string;
+}) {
+  const {
+    email,
+    username,
+    otp,
+  } = params;
+
+  this.logger.log(
+    `Sending password reset OTP to: ${email}`,
+  );
+
+  try {
+    const info =
+      await this.transporter.sendMail({
+        from: `"My App" <${process.env.MAIL_USER}>`,
+        to: email,
+        subject: 'Mã OTP đặt lại mật khẩu',
+
+        text:
+          `Xin chào ${username},\n\n` +
+          `Mã OTP đặt lại mật khẩu của bạn là: ${otp}\n\n` +
+          `Mã có hiệu lực trong 5 phút.\n` +
+          `Không chia sẻ mã này với bất kỳ ai.\n\n` +
+          `Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.`,
+
+        html: `
+          <div style="
+            font-family: Arial, sans-serif;
+            max-width: 560px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #222;
+          ">
+            <h2>Đặt lại mật khẩu</h2>
+
+            <p>
+              Xin chào ${username},
+            </p>
+
+            <p>
+              Chúng tôi nhận được yêu cầu đặt lại
+              mật khẩu cho tài khoản của bạn.
+            </p>
+
+            <p>
+              Sử dụng mã OTP bên dưới để tiếp tục:
+            </p>
+
+            <div style="
+              margin: 24px 0;
+              padding: 20px;
+              background: #f3f4f6;
+              border-radius: 8px;
+              text-align: center;
+            ">
+              <div style="
+                font-size: 32px;
+                font-weight: bold;
+                letter-spacing: 8px;
+                color: #dc2626;
+              ">
+                ${otp}
+              </div>
+            </div>
+
+            <p>
+              Mã OTP có hiệu lực trong
+              <strong>5 phút</strong>.
+            </p>
+
+            <p>
+              Không chia sẻ mã này với bất kỳ ai.
+            </p>
+
+            <p>
+              Nếu bạn không yêu cầu đặt lại mật khẩu,
+              hãy bỏ qua email này.
+            </p>
+          </div>
+        `,
+      });
+
+    this.logger.log(
+      `Password reset OTP sent: ${info.messageId}`,
+    );
+
+    return info;
+  } catch (error) {
+    this.logger.error(
+      'Failed to send password reset OTP',
+      error instanceof Error
+        ? error.stack
+        : undefined,
+    );
+
+    throw error;
+  }
+}
+
+
 }

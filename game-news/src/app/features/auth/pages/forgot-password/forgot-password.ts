@@ -1,276 +1,868 @@
+import {
+  Component,
+  DestroyRef,
+  inject,
+} from '@angular/core';
 
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import {
+  CommonModule,
+} from '@angular/common';
 
-type Step = 'email' | 'code' | 'password' | 'success';
+import {
+  FormsModule,
+} from '@angular/forms';
+
+import {
+  RouterLink,
+} from '@angular/router';
+
+import {
+  Store,
+} from '@ngrx/store';
+
+import {
+  Actions,
+  ofType,
+} from '@ngrx/effects';
+
+import {
+  takeUntilDestroyed,
+} from '@angular/core/rxjs-interop';
+
+import * as AuthActions
+  from '../../../../store/auth/auth.actions';
+
+import {
+  selectLoading,
+} from '../../../../store/auth/auth.selectors';
+
+import {
+  ApiErrorResponse,
+} from '../../../../shared/models/auth/auth.model';
+
+
+// =====================================================
+// TYPES
+// =====================================================
+
+type Step =
+  | 'email'
+  | 'code'
+  | 'password'
+  | 'success';
+
 
 type PasswordErrors = Partial<
-  Record<'password' | 'confirm' | 'form', string>
+  Record<
+    'password' | 'confirm' | 'form',
+    string
+  >
 >;
 
-interface MockUser {
-  id: number;
-  email: string;
-  password: string;
-}
+
+// =====================================================
+// COMPONENT
+// =====================================================
 
 @Component({
   selector: 'app-forgot-password',
+
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+  ],
+
   templateUrl: './forgot-password.html',
+
   styleUrl: './forgot-password.css',
 })
 export class ForgotPassword {
-  // Mock dữ liệu tài khoản ngay trong file TS
-  private mockUsers: MockUser[] = [
-    {
-      id: 1,
-      email: 'an@example.com',
-      password: 'Password123',
-    },
-    {
-      id: 2,
-      email: 'admin@example.com',
-      password: 'Admin1234',
-    },
-    {
-      id: 3,
-      email: 'binh@example.com',
-      password: 'Password123',
-    },
-  ];
+
+  // =====================================================
+  // DEPENDENCIES
+  // =====================================================
+
+  private readonly store = inject(Store);
+
+  private readonly actions$ = inject(Actions);
+
+  private readonly destroyRef =
+    inject(DestroyRef);
+
+
+  // =====================================================
+  // NGRX SIGNALS
+  // =====================================================
+
+  readonly loading =
+    this.store.selectSignal(selectLoading);
+
+
+  // =====================================================
+  // STATE
+  // =====================================================
 
   step: Step = 'email';
 
   email = '';
+
+  /**
+   * Session ID của password reset flow.
+   *
+   * Backend tạo session mới khi request gửi OTP
+   * thành công.
+   *
+   * SessionId này được dùng để verify OTP.
+   */
+  sessionId = '';
+
   code = '';
-  demoCode = '';
 
   password = '';
+
   confirm = '';
 
   showPassword = false;
+
   showConfirm = false;
 
+
+  // =====================================================
+  // GENERAL ERROR
+  // =====================================================
+
   error = '';
+
+
+  // =====================================================
+  // PASSWORD ERRORS
+  // =====================================================
+
   passwordErrors: PasswordErrors = {};
 
-  loading = false;
 
-  private codeExpiresAt = 0;
-  private readonly CODE_EXPIRY_MS = 10 * 60 * 1000;
+  // =====================================================
+  // VALIDATION
+  // =====================================================
 
   private readonly EMAIL_PATTERN =
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  // Kiểm tra độ mạnh mật khẩu
-  private getPasswordError(password: string): string {
+
+  // =====================================================
+  // CONSTRUCTOR
+  // =====================================================
+
+  constructor() {
+
+    this.listenAuthActions();
+  }
+
+
+  // =====================================================
+  // AUTH ACTION LISTENERS
+  // =====================================================
+
+  private listenAuthActions(): void {
+
+    // ===================================================
+    // REQUEST PASSWORD RESET SUCCESS
+    // ===================================================
+
+    this.actions$
+      .pipe(
+        ofType(
+          AuthActions.requestPasswordResetSuccess,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(({ response }) => {
+
+        this.error = '';
+
+        this.code = '';
+
+        this.password = '';
+
+        this.confirm = '';
+
+        this.passwordErrors = {};
+
+        this.showPassword = false;
+
+        this.showConfirm = false;
+
+
+        // -----------------------------------------------
+        // SAVE SESSION ID
+        // -----------------------------------------------
+
+        this.sessionId =
+          response.data.sessionId;
+
+
+        // -----------------------------------------------
+        // GO TO OTP STEP
+        // -----------------------------------------------
+
+        this.step = 'code';
+      });
+
+
+    // ===================================================
+    // REQUEST PASSWORD RESET FAILURE
+    // ===================================================
+
+    this.actions$
+      .pipe(
+        ofType(
+          AuthActions.requestPasswordResetFailure,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(({ error }) => {
+
+        this.error =
+          this.getErrorMessage(error);
+      });
+
+
+    // ===================================================
+    // VERIFY PASSWORD RESET OTP SUCCESS
+    // ===================================================
+
+    this.actions$
+      .pipe(
+        ofType(
+          AuthActions.verifyPasswordResetOtpSuccess,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+
+        this.error = '';
+
+        this.code = '';
+
+        this.password = '';
+
+        this.confirm = '';
+
+        this.passwordErrors = {};
+
+        this.showPassword = false;
+
+        this.showConfirm = false;
+
+        this.step = 'password';
+      });
+
+
+    // ===================================================
+    // VERIFY PASSWORD RESET OTP FAILURE
+    // ===================================================
+
+    this.actions$
+      .pipe(
+        ofType(
+          AuthActions.verifyPasswordResetOtpFailure,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(({ error }) => {
+
+        this.error =
+          this.getErrorMessage(error);
+      });
+
+
+    // ===================================================
+    // RESET PASSWORD SUCCESS
+    // ===================================================
+
+    this.actions$
+      .pipe(
+        ofType(
+          AuthActions.resetPasswordSuccess,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+
+        this.error = '';
+
+        this.passwordErrors = {};
+
+        this.password = '';
+
+        this.confirm = '';
+
+        this.showPassword = false;
+
+        this.showConfirm = false;
+
+        this.sessionId = '';
+
+        this.code = '';
+
+        this.step = 'success';
+      });
+
+
+    // ===================================================
+    // RESET PASSWORD FAILURE
+    // ===================================================
+
+    this.actions$
+      .pipe(
+        ofType(
+          AuthActions.resetPasswordFailure,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(({ error }) => {
+
+        const message =
+          this.getErrorMessage(error);
+
+        this.passwordErrors = {
+          ...this.passwordErrors,
+
+          form: message,
+        };
+
+        this.error = '';
+      });
+  }
+
+
+  // =====================================================
+  // PASSWORD VALIDATION
+  // =====================================================
+
+  private getPasswordError(
+    password: string,
+  ): string {
+
     if (!password) {
+
       return 'Vui lòng nhập mật khẩu mới.';
     }
 
+
     if (password.length < 8) {
+
       return 'Mật khẩu phải có ít nhất 8 ký tự.';
     }
 
+
     if (!/[A-Z]/.test(password)) {
+
       return 'Mật khẩu phải có ít nhất một chữ hoa.';
     }
 
+
     if (!/[a-z]/.test(password)) {
+
       return 'Mật khẩu phải có ít nhất một chữ thường.';
     }
+
+
+    if (!/\d/.test(password)) {
+
+      return 'Mật khẩu phải có ít nhất một chữ số.';
+    }
+
 
     return '';
   }
 
-  // Mô phỏng gửi mã xác nhận
-  private sendCode(): void {
-    if (this.loading) return;
 
-    this.loading = true;
-    this.error = '';
+  // =====================================================
+  // BƯỚC 1
+  // REQUEST PASSWORD RESET
+  // =====================================================
 
-    window.setTimeout(() => {
-      const normalizedEmail = this.email.trim().toLowerCase();
+  handleEmailSubmit(
+    event: Event,
+  ): void {
 
-      const userExists = this.mockUsers.some(
-        user => user.email.toLowerCase() === normalizedEmail
-      );
-
-      if (!userExists) {
-        this.error =
-          'Email chưa được đăng ký. Vui lòng kiểm tra lại email.';
-        this.loading = false;
-        return;
-      }
-
-      // Sinh mã xác nhận mô phỏng gồm 6 chữ số
-      this.demoCode = String(
-        Math.floor(100000 + Math.random() * 900000)
-      );
-
-      this.codeExpiresAt = Date.now() + this.CODE_EXPIRY_MS;
-      this.code = '';
-      this.loading = false;
-      this.step = 'code';
-    }, 700);
-  }
-
-  // Bước 1: kiểm tra email
-  handleEmailSubmit(event: Event): void {
     event.preventDefault();
 
-    const value = this.email.trim().toLowerCase();
+
+    // ---------------------------------------------------
+    // PREVENT DOUBLE SUBMIT
+    // ---------------------------------------------------
+
+    if (this.loading()) {
+
+      return;
+    }
+
+
+    // ---------------------------------------------------
+    // CLEAR ERROR
+    // ---------------------------------------------------
+
+    this.error = '';
+
+
+    // ---------------------------------------------------
+    // NORMALIZE EMAIL
+    // ---------------------------------------------------
+
+    const value =
+      this.email
+        .trim()
+        .toLowerCase();
+
+
+    // ---------------------------------------------------
+    // EMPTY
+    // ---------------------------------------------------
 
     if (!value) {
-      this.error = 'Vui lòng nhập email đã đăng ký.';
+
+      this.error =
+        'Vui lòng nhập email đã đăng ký.';
+
       return;
     }
 
-    if (!this.EMAIL_PATTERN.test(value)) {
-      this.error = 'Email không đúng định dạng.';
+
+    // ---------------------------------------------------
+    // EMAIL FORMAT
+    // ---------------------------------------------------
+
+    if (
+      !this.EMAIL_PATTERN.test(value)
+    ) {
+
+      this.error =
+        'Email không đúng định dạng.';
+
       return;
     }
+
+
+    // ---------------------------------------------------
+    // SAVE EMAIL
+    // ---------------------------------------------------
 
     this.email = value;
-    this.error = '';
-    this.sendCode();
+
+
+    // ---------------------------------------------------
+    // CLEAR OLD SESSION
+    // ---------------------------------------------------
+
+    this.sessionId = '';
+
+
+    // ---------------------------------------------------
+    // DISPATCH
+    // ---------------------------------------------------
+
+    this.store.dispatch(
+      AuthActions.requestPasswordReset({
+        data: {
+          email: value,
+        },
+      }),
+    );
   }
+
+
+  // =====================================================
+  // EMAIL CHANGE
+  // =====================================================
 
   onEmailChange(): void {
+
     this.error = '';
+
+    this.sessionId = '';
   }
 
-  // Bước 2: kiểm tra mã xác nhận
-  handleCodeSubmit(event: Event): void {
+
+  // =====================================================
+  // BƯỚC 2
+  // VERIFY OTP
+  // =====================================================
+
+  handleCodeSubmit(
+    event: Event,
+  ): void {
+
     event.preventDefault();
 
-    if (!/^\d{6}$/.test(this.code)) {
-      this.error = 'Vui lòng nhập đủ mã xác nhận gồm 6 số.';
+
+    // ---------------------------------------------------
+    // PREVENT DOUBLE SUBMIT
+    // ---------------------------------------------------
+
+    if (this.loading()) {
+
       return;
     }
 
-    if (Date.now() > this.codeExpiresAt) {
-      this.error = 'Mã xác nhận đã hết hạn. Vui lòng gửi lại mã.';
+
+    // ---------------------------------------------------
+    // CHECK SESSION
+    // ---------------------------------------------------
+
+    if (!this.sessionId) {
+
+      this.error =
+        'Phiên xác nhận không hợp lệ. Vui lòng yêu cầu mã mới.';
+
       return;
     }
 
-    if (this.code !== this.demoCode) {
-      this.error = 'Mã xác nhận không đúng hoặc đã hết hạn.';
+
+    // ---------------------------------------------------
+    // NORMALIZE OTP
+    // ---------------------------------------------------
+
+    const otp =
+      this.code
+        .trim();
+
+
+    // ---------------------------------------------------
+    // VALIDATE OTP
+    // ---------------------------------------------------
+
+    if (
+      !/^\d{6}$/.test(otp)
+    ) {
+
+      this.error =
+        'Vui lòng nhập đủ mã xác nhận gồm 6 số.';
+
       return;
     }
+
+
+    // ---------------------------------------------------
+    // CLEAR ERROR
+    // ---------------------------------------------------
 
     this.error = '';
-    this.passwordErrors = {};
-    this.step = 'password';
+
+
+    // ---------------------------------------------------
+    // DISPATCH
+    // ---------------------------------------------------
+
+    this.store.dispatch(
+      AuthActions.verifyPasswordResetOtp({
+        data: {
+          email: this.email,
+
+          otp,
+
+          sessionId: this.sessionId,
+        },
+      }),
+    );
   }
+
+
+  // =====================================================
+  // OTP CHANGE
+  // =====================================================
 
   onCodeChange(): void {
-    this.code = this.code.replace(/\D/g, '').slice(0, 6);
+
+    this.code =
+      this.code
+        .replace(/\D/g, '')
+        .slice(0, 6);
+
     this.error = '';
   }
 
-  // Quay lại để sửa email
+
+  // =====================================================
+  // CHANGE EMAIL
+  // =====================================================
+
   changeEmail(): void {
+
+    if (this.loading()) {
+
+      return;
+    }
+
+
     this.error = '';
+
+    this.email = '';
+
+    this.sessionId = '';
+
     this.code = '';
-    this.demoCode = '';
-    this.codeExpiresAt = 0;
+
+    this.password = '';
+
+    this.confirm = '';
+
+    this.passwordErrors = {};
+
+    this.showPassword = false;
+
+    this.showConfirm = false;
+
     this.step = 'email';
   }
 
-  // Gửi lại mã xác nhận
+
+  // =====================================================
+  // RESEND OTP
+  // =====================================================
+
   resendCode(): void {
+
+    if (this.loading()) {
+
+      return;
+    }
+
+
+    // ---------------------------------------------------
+    // EMAIL IS REQUIRED
+    // ---------------------------------------------------
+
+    if (!this.email) {
+
+      this.sessionId = '';
+
+      this.step = 'email';
+
+      return;
+    }
+
+
+    // ---------------------------------------------------
+    // CLEAR OLD STATE
+    // ---------------------------------------------------
+
     this.error = '';
+
     this.code = '';
-    this.sendCode();
+
+
+    // ---------------------------------------------------
+    // REQUEST NEW OTP
+    // ---------------------------------------------------
+    //
+    // Backend sẽ tạo sessionId mới.
+    //
+    // requestPasswordResetSuccess nhận response mới
+    // và ghi đè this.sessionId.
+    // ---------------------------------------------------
+
+    this.store.dispatch(
+      AuthActions.requestPasswordReset({
+        data: {
+          email: this.email,
+        },
+      }),
+    );
   }
 
-  // Bước 3: đổi mật khẩu
-  handlePasswordSubmit(event: Event): void {
+
+  // =====================================================
+  // BƯỚC 3
+  // RESET PASSWORD
+  // =====================================================
+
+  handlePasswordSubmit(
+    event: Event,
+  ): void {
+
     event.preventDefault();
+
+
+    // ---------------------------------------------------
+    // PREVENT DOUBLE SUBMIT
+    // ---------------------------------------------------
+
+    if (this.loading()) {
+
+      return;
+    }
+
+
+    // ---------------------------------------------------
+    // CLEAR OLD ERRORS
+    // ---------------------------------------------------
+
+    this.error = '';
 
     const nextErrors: PasswordErrors = {};
 
-    const passwordError = this.getPasswordError(this.password);
+
+    // ---------------------------------------------------
+    // PASSWORD
+    // ---------------------------------------------------
+
+    const passwordError =
+      this.getPasswordError(
+        this.password,
+      );
+
 
     if (passwordError) {
-      nextErrors.password = passwordError;
+
+      nextErrors.password =
+        passwordError;
     }
+
+
+    // ---------------------------------------------------
+    // CONFIRM PASSWORD
+    // ---------------------------------------------------
 
     if (!this.confirm) {
-      nextErrors.confirm = 'Vui lòng xác nhận mật khẩu mới.';
-    } else if (this.password !== this.confirm) {
-      nextErrors.confirm = 'Mật khẩu xác nhận không khớp.';
-    }
 
-    if (Object.keys(nextErrors).length > 0) {
-      this.passwordErrors = nextErrors;
-      return;
-    }
+      nextErrors.confirm =
+        'Vui lòng xác nhận mật khẩu mới.';
 
-    // Kiểm tra mã vẫn còn hiệu lực khi đổi mật khẩu
-    if (
-      !this.demoCode ||
-      Date.now() > this.codeExpiresAt ||
-      this.code !== this.demoCode
+    } else if (
+      this.password !== this.confirm
     ) {
-      this.passwordErrors = {
-        form: 'Phiên xác nhận đã hết hạn. Vui lòng gửi lại mã.',
-      };
+
+      nextErrors.confirm =
+        'Mật khẩu xác nhận không khớp.';
+    }
+
+
+    // ---------------------------------------------------
+    // LOCAL VALIDATION FAILED
+    // ---------------------------------------------------
+
+    if (
+      Object.keys(nextErrors).length > 0
+    ) {
+
+      this.passwordErrors =
+        nextErrors;
+
       return;
     }
 
-    const userIndex = this.mockUsers.findIndex(
-      user => user.email.toLowerCase() === this.email.toLowerCase()
-    );
 
-    if (userIndex === -1) {
-      this.passwordErrors = {
-        form: 'Không tìm thấy tài khoản. Vui lòng thử lại.',
-      };
-      return;
-    }
-
-    // Cập nhật tài khoản mock
-    this.mockUsers[userIndex] = {
-      ...this.mockUsers[userIndex],
-      password: this.password,
-    };
+    // ---------------------------------------------------
+    // CLEAR ERRORS
+    // ---------------------------------------------------
 
     this.passwordErrors = {};
-    this.step = 'success';
 
-    // Vô hiệu hóa mã sau khi sử dụng
-    this.demoCode = '';
-    this.codeExpiresAt = 0;
+
+    // ---------------------------------------------------
+    // DISPATCH
+    // ---------------------------------------------------
+
+this.store.dispatch(
+  AuthActions.resetPassword({
+    data: {
+      email: this.email,
+
+      sessionId: this.sessionId,
+
+      newPassword: this.password,
+
+      confirmPassword: this.confirm,
+    },
+  }),
+);
   }
+
+
+  // =====================================================
+  // PASSWORD CHANGE
+  // =====================================================
 
   onPasswordChange(): void {
+
     this.passwordErrors = {
       ...this.passwordErrors,
+
       password: undefined,
+
       form: undefined,
     };
+
+    this.error = '';
   }
+
+
+  // =====================================================
+  // CONFIRM PASSWORD CHANGE
+  // =====================================================
 
   onConfirmChange(): void {
+
     this.passwordErrors = {
       ...this.passwordErrors,
+
       confirm: undefined,
+
       form: undefined,
     };
+
+    this.error = '';
   }
+
+
+  // =====================================================
+  // TOGGLE PASSWORD
+  // =====================================================
 
   togglePassword(): void {
-    this.showPassword = !this.showPassword;
+
+    this.showPassword =
+      !this.showPassword;
   }
 
+
+  // =====================================================
+  // TOGGLE CONFIRM PASSWORD
+  // =====================================================
+
   toggleConfirm(): void {
-    this.showConfirm = !this.showConfirm;
+
+    this.showConfirm =
+      !this.showConfirm;
+  }
+
+
+  // =====================================================
+  // ERROR HELPER
+  // =====================================================
+
+  private getErrorMessage(
+    error: ApiErrorResponse,
+  ): string {
+
+    if (error?.errors?.length) {
+
+      return error.errors
+        .flatMap(
+          (item) => item.messages,
+        )
+        .join(' ');
+    }
+
+
+    return (
+      error?.message ||
+      'Đã xảy ra lỗi. Vui lòng thử lại.'
+    );
   }
 }

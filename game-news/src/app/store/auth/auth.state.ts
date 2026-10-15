@@ -1,76 +1,83 @@
+
 import {
   ApiErrorResponse,
-  LoginUser,
   RegisterResponse,
+  UserLogin,
 } from '../../shared/models/auth/auth.model';
 
 
-// =====================================================
-// AUTH STATE
-// =====================================================
-
 export interface AuthState {
-
-  // -----------------------------------------------
-  // GLOBAL
-  // -----------------------------------------------
 
   loading: boolean;
 
-  // -----------------------------------------------
-  // AUTH INITIALIZATION
-  // -----------------------------------------------
-
-  /*
-   * false:
-   * Angular chưa kiểm tra session.
-   *
-   * true:
-   * Đã kiểm tra refresh session xong.
-   */
   initialized: boolean;
 
-  // -----------------------------------------------
-  // AUTHENTICATED USER
-  // -----------------------------------------------
 
-  user: LoginUser | null;
+  // ==========================================
+  // AUTH
+  // ==========================================
+
+  user: UserLogin | null;
 
   accessToken: string | null;
 
   isAuthenticated: boolean;
 
-  // -----------------------------------------------
-  // REGISTER
-  // -----------------------------------------------
+
+  // ==========================================
+  // AUTH FLAGS
+  // ==========================================
 
   registerSuccess: boolean;
 
-  registerResponse: RegisterResponse | null;
-
-  // -----------------------------------------------
-  // LOGIN
-  // -----------------------------------------------
+  registerResponse:
+    RegisterResponse | null;
 
   loginSuccess: boolean;
 
-  // -----------------------------------------------
-  // LOGOUT
-  // -----------------------------------------------
-
   logoutSuccess: boolean;
 
-  // -----------------------------------------------
+
+  // ==========================================
+  // ACCOUNT OPERATIONS
+  // ==========================================
+
+  updateUsernameSuccess: boolean;
+
+  changePasswordSuccess: boolean;
+
+
+  // ==========================================
+  // EMAIL RESET
+  // ==========================================
+
+  sendEmailResetOtpSuccess: boolean;
+
+  resetEmailSuccess: boolean;
+
+  emailResetSessionId: string | null;
+
+
+  // ==========================================
+  // PASSWORD RESET
+  // ==========================================
+
+  requestPasswordResetSuccess: boolean;
+
+  verifyPasswordResetOtpSuccess: boolean;
+
+  resetPasswordSuccess: boolean;
+
+  passwordResetSessionId: string | null;
+
+
+  // ==========================================
   // ERROR
-  // -----------------------------------------------
+  // ==========================================
 
   error: ApiErrorResponse | null;
 }
 
-
-// =====================================================
-// INITIAL STATE
-// =====================================================
 
 export const initialAuthState: AuthState = {
 
@@ -78,11 +85,21 @@ export const initialAuthState: AuthState = {
 
   initialized: false,
 
+
+  // ==========================================
+  // AUTH
+  // ==========================================
+
   user: null,
 
   accessToken: null,
 
   isAuthenticated: false,
+
+
+  // ==========================================
+  // AUTH FLAGS
+  // ==========================================
 
   registerSuccess: false,
 
@@ -92,6 +109,43 @@ export const initialAuthState: AuthState = {
 
   logoutSuccess: false,
 
-  error: null,
 
+  // ==========================================
+  // ACCOUNT OPERATIONS
+  // ==========================================
+
+  updateUsernameSuccess: false,
+
+  changePasswordSuccess: false,
+
+
+  // ==========================================
+  // EMAIL RESET
+  // ==========================================
+
+  sendEmailResetOtpSuccess: false,
+
+  resetEmailSuccess: false,
+
+  emailResetSessionId: null,
+
+
+  // ==========================================
+  // PASSWORD RESET
+  // ==========================================
+
+  requestPasswordResetSuccess: false,
+
+  verifyPasswordResetOtpSuccess: false,
+
+  resetPasswordSuccess: false,
+
+  passwordResetSessionId: null,
+
+
+  // ==========================================
+  // ERROR
+  // ==========================================
+
+  error: null,
 };

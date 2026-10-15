@@ -11,6 +11,7 @@ import {
   catchError,
   exhaustMap,
   map,
+  mergeMap,
   of,
   switchMap,
 } from 'rxjs';
@@ -83,7 +84,7 @@ export class UserEffects {
   loadUserById$ = createEffect(() =>
     this.actions$.pipe(
       ofType(UserActions.loadUserById),
-      switchMap(({ id }) =>
+      mergeMap(({ id }) =>
         this.userService.getById(id).pipe(
           map((user) =>
             UserActions.loadUserByIdSuccess({ user }),

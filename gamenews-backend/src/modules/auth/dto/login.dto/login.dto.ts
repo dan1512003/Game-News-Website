@@ -28,4 +28,5 @@ export class LoginDto {
     message: 'Remember phải là boolean',
   })
   remember: boolean;
+
 }

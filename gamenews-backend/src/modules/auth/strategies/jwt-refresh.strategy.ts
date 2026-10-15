@@ -124,13 +124,7 @@ export class JwtRefreshStrategy
     // 4. RETURN
     // =================================================
 
-    return {
-
-      ...payload,
-
-      refreshToken,
-
-    };
+    return { id: payload.sub, email: payload.email ,refreshToken:refreshToken};
 
   }
 }

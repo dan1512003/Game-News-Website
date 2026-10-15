@@ -1,13 +1,31 @@
+
 // ==========================================
 // REGISTER FIELD
 // ==========================================
 
 import { CommonModule } from '@angular/common';
-import { Component, effect, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { Store } from '@ngrx/store';
 
-import { AppState } from '../../../../app.state';
+import {
+  Component,
+  effect,
+  inject,
+} from '@angular/core';
+
+import {
+  FormsModule,
+} from '@angular/forms';
+
+import {
+  Router,
+} from '@angular/router';
+
+import {
+  Store,
+} from '@ngrx/store';
+
+import {
+  AppState,
+} from '../../../../app.state';
 
 import * as AuthActions
   from '../../../../store/auth/auth.actions';
@@ -15,8 +33,9 @@ import * as AuthActions
 import * as AuthSelectors
   from '../../../../store/auth/auth.selectors';
 
-import { RegisterRequest }
-  from '../../../../shared/models/auth/auth.model';
+import {
+  RegisterRequest,
+} from '../../../../shared/models/auth/auth.model';
 
 
 // ==========================================
@@ -78,6 +97,14 @@ export class Register {
 
 
   // ==========================================
+  // ROUTER
+  // ==========================================
+
+  private readonly router =
+    inject(Router);
+
+
+  // ==========================================
   // FORM
   // ==========================================
 
@@ -103,7 +130,6 @@ export class Register {
   agreed = false;
 
 
-
   errors: RegisterErrors = {};
 
 
@@ -123,33 +149,50 @@ export class Register {
     );
 
 
+  private readonly registerSuccessSignal =
+    this.store.selectSignal(
+      AuthSelectors.selectRegisterSuccess,
+    );
+
+
   // ==========================================
   // CONSTRUCTOR
   // ==========================================
 
-constructor() {
+  constructor() {
+
+  
+
+    effect(() => {
+
+      const error =
+        this.authErrorSignal();
+
+
+      console.log(
+        '🔥 COMPONENT ERROR:',
+        error,
+      );
+
+
+      if (!error) {
+
+        return;
+
+      }
+
+
+      this.handleServerError(
+        error,
+      );
+
+    });
 
 
 
+  
 
-  effect(() => {
-
-    const error =
-      this.authErrorSignal();
-
-    console.log(
-      '🔥 COMPONENT ERROR:',
-      error,
-    );
-
-    if (!error) {
-      return;
-    }
-
-    this.handleServerError(error);
-  });
-
-}
+  }
 
 
   // ==========================================
@@ -176,9 +219,7 @@ constructor() {
     };
 
 
-    // ----------------------------------------
-    // XÓA LỖI FIELD
-    // ----------------------------------------
+
 
     if (this.errors[field]) {
 
@@ -195,9 +236,7 @@ constructor() {
     }
 
 
-    // ----------------------------------------
-    // XÓA SERVER ERROR
-    // ----------------------------------------
+
 
     if (this.authErrorSignal()) {
 
@@ -235,9 +274,7 @@ constructor() {
     }
 
 
-    // ----------------------------------------
-    // XÓA SERVER ERROR
-    // ----------------------------------------
+
 
     if (this.authErrorSignal()) {
 
@@ -318,10 +355,13 @@ constructor() {
   private handleServerError(
     error: any,
   ): void {
-console.log(
-    '🔥 AUTH ERROR FROM STORE:',
-    error,
-  );
+
+    console.log(
+      '🔥 AUTH ERROR FROM STORE:',
+      error,
+    );
+
+
     const nextErrors:
       RegisterErrors = {};
 
@@ -434,10 +474,13 @@ console.log(
 
     this.errors =
       nextErrors;
-console.log(
-  '🔥 UI ERRORS:',
-  this.errors,
-);
+
+
+    console.log(
+      '🔥 UI ERRORS:',
+      this.errors,
+    );
+
   }
 
 

@@ -1,3 +1,4 @@
+
 import {
   createFeatureSelector,
   createSelector,
@@ -8,10 +9,6 @@ import {
 } from './auth.state';
 
 
-// =====================================================
-// AUTH STATE
-// =====================================================
-
 export const selectAuthState =
   createFeatureSelector<AuthState>(
     'auth',
@@ -19,22 +16,24 @@ export const selectAuthState =
 
 
 // =====================================================
-// LOADING
+// GENERAL
 // =====================================================
 
 export const selectLoading =
   createSelector(
-
     selectAuthState,
-
     (state) =>
       state.loading,
-
   );
-export const selectAuthInitialized = createSelector(
-  selectAuthState,
-  (state) => state.initialized,
-);
+
+
+export const selectAuthInitialized =
+  createSelector(
+    selectAuthState,
+    (state) =>
+      state.initialized,
+  );
+
 
 // =====================================================
 // USER
@@ -42,42 +41,25 @@ export const selectAuthInitialized = createSelector(
 
 export const selectAuthUser =
   createSelector(
-
     selectAuthState,
-
     (state) =>
       state.user,
-
   );
 
-
-// =====================================================
-// ACCESS TOKEN
-// =====================================================
 
 export const selectAccessToken =
   createSelector(
-
     selectAuthState,
-
     (state) =>
       state.accessToken,
-
   );
 
 
-// =====================================================
-// AUTHENTICATED
-// =====================================================
-
 export const selectIsAuthenticated =
   createSelector(
-
     selectAuthState,
-
     (state) =>
       state.isAuthenticated,
-
   );
 
 
@@ -87,12 +69,9 @@ export const selectIsAuthenticated =
 
 export const selectLoginSuccess =
   createSelector(
-
     selectAuthState,
-
     (state) =>
       state.loginSuccess,
-
   );
 
 
@@ -102,23 +81,17 @@ export const selectLoginSuccess =
 
 export const selectRegisterSuccess =
   createSelector(
-
     selectAuthState,
-
     (state) =>
       state.registerSuccess,
-
   );
 
 
 export const selectRegisterResponse =
   createSelector(
-
     selectAuthState,
-
     (state) =>
       state.registerResponse,
-
   );
 
 
@@ -128,12 +101,9 @@ export const selectRegisterResponse =
 
 export const selectLogoutSuccess =
   createSelector(
-
     selectAuthState,
-
     (state) =>
       state.logoutSuccess,
-
   );
 
 
@@ -143,70 +113,107 @@ export const selectLogoutSuccess =
 
 export const selectAuthError =
   createSelector(
-
     selectAuthState,
-
     (state) =>
       state.error,
-
   );
 
-
-// =====================================================
-// ERROR MESSAGE
-// =====================================================
 
 export const selectAuthErrorMessage =
   createSelector(
-
     selectAuthState,
-
     (state) =>
       state.error?.message ?? null,
-
   );
 
-
-// =====================================================
-// FIELD ERRORS
-// =====================================================
 
 export const selectAuthFieldErrors =
   createSelector(
-
     selectAuthState,
-
     (state) =>
       state.error?.errors ?? [],
-
   );
 
 
 // =====================================================
-// REGISTER ERRORS
+// ACCOUNT OPERATIONS
 // =====================================================
 
-export const selectRegisterErrors =
+export const selectUpdateUsernameSuccess =
   createSelector(
-
     selectAuthState,
-
     (state) =>
-      state.error?.errors ?? [],
+      state.updateUsernameSuccess,
+  );
 
+
+export const selectChangePasswordSuccess =
+  createSelector(
+    selectAuthState,
+    (state) =>
+      state.changePasswordSuccess,
   );
 
 
 // =====================================================
-// LOGIN ERRORS
+// EMAIL RESET
 // =====================================================
 
-export const selectLoginErrors =
+export const selectSendEmailResetOtpSuccess =
   createSelector(
-
     selectAuthState,
-
     (state) =>
-      state.error?.errors ?? [],
+      state.sendEmailResetOtpSuccess,
+  );
 
+
+export const selectResetEmailSuccess =
+  createSelector(
+    selectAuthState,
+    (state) =>
+      state.resetEmailSuccess,
+  );
+
+
+export const selectEmailResetSessionId =
+  createSelector(
+    selectAuthState,
+    (state) =>
+      state.emailResetSessionId,
+  );
+
+
+// =====================================================
+// PASSWORD RESET
+// =====================================================
+
+export const selectRequestPasswordResetSuccess =
+  createSelector(
+    selectAuthState,
+    (state) =>
+      state.requestPasswordResetSuccess,
+  );
+
+
+export const selectVerifyPasswordResetOtpSuccess =
+  createSelector(
+    selectAuthState,
+    (state) =>
+      state.verifyPasswordResetOtpSuccess,
+  );
+
+
+export const selectResetPasswordSuccess =
+  createSelector(
+    selectAuthState,
+    (state) =>
+      state.resetPasswordSuccess,
+  );
+
+
+export const selectPasswordResetSessionId =
+  createSelector(
+    selectAuthState,
+    (state) =>
+      state.passwordResetSessionId,
   );

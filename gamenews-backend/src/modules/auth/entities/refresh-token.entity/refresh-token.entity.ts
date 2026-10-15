@@ -150,6 +150,12 @@ export class RefreshTokenEntity {
   })
   createdAt: Date;
 
+  @Column({ 
+    name: 'remember_me', 
+    type: 'boolean', 
+    default: false,
+   }) 
+  rememberMe: boolean;
 
   // =====================================================
   // RELATIONSHIP

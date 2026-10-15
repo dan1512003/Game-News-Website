@@ -570,11 +570,7 @@ export class NewsService {
       const tagRepo = manager.getRepository(NewsTagEntity);
       const blockRepo = manager.getRepository(ContentBlockEntity);
 
-      const initialStatus =
-        user.role === 'author'
-          ? 'draft'
-          : (dto.status ?? 'draft');
-
+     const initialStatus = dto.status ?? 'draft';
       const news = newsRepo.create({
         title: dto.title,
         slug: dto.slug,

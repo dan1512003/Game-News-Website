@@ -605,6 +605,27 @@
 
           <div class="block-input">
 
+             @if (block.type === 'image') {
+
+  @if (block.imageFile) {
+
+    <!-- Ưu tiên ảnh mới vừa chọn -->
+    <img
+      [src]="getBlockImagePreview(block)"
+      alt="Ảnh nội dung"
+      class="block-image">
+
+  } @else if (block.content) {
+
+    <!-- Nếu chưa chọn ảnh mới thì dùng ảnh đã lưu -->
+    <img
+      [src]="getThumbnailUrl(block.content)"
+      alt="Ảnh nội dung"
+      class="block-image">
+
+  }
+
+}
             @if (block.type === 'image') {
 
               <!-- Chỉ chọn file, không hiển thị ảnh -->
@@ -614,11 +635,7 @@
                 [disabled]="viewOnly"
                 (change)="onBlockImageSelected($event, block)">
 
-              @if (block.imageFile) {
-                <small>
-                  Đã chọn: {{ block.imageFile.name }}
-                </small>
-              }
+            
 
             } @else {
 
@@ -872,9 +889,9 @@
 
             </div>
 
-            @if (form.thumbnail) {
+            @if (form.thumbnail||thumbnailPreview ) {
               <img
-                [src]="form.thumbnail"
+              [src]="thumbnailPreview || getThumbnailUrl(form.thumbnail)"
                 class="hero-image"
                 alt="Ảnh đại diện bài viết">
             }
@@ -896,21 +913,27 @@
       <h3>{{ block.content }}</h3>
     }
 
-    @if (block.type === 'image') {
-      @if (block.content) {
-        <!-- Ảnh đã lưu khi update -->
-        <img
-          [src]="getThumbnailUrl(block.content)"
-          alt="Ảnh nội dung"
-          class="article-image">
-      } @else if (block.imageFile) {
-        <!-- Ảnh mới chọn từ máy tính -->
-        <img
-          [src]="getBlockImagePreview(block)"
-          alt="Ảnh nội dung"
-          class="article-image">
-      }
-    }
+ @if (block.type === 'image') {
+
+  @if (block.imageFile) {
+
+    <!-- Ưu tiên ảnh mới vừa chọn -->
+    <img
+      [src]="getBlockImagePreview(block)"
+      alt="Ảnh nội dung"
+      class="article-image">
+
+  } @else if (block.content) {
+
+    <!-- Nếu chưa chọn ảnh mới thì dùng ảnh đã lưu -->
+    <img
+      [src]="getThumbnailUrl(block.content)"
+      alt="Ảnh nội dung"
+      class="article-image">
+
+  }
+
+}
 
     @if (block.type === 'quote') {
       <blockquote>{{ block.content }}</blockquote>

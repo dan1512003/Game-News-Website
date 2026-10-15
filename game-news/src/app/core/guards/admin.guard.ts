@@ -66,7 +66,7 @@ export const adminGuard: CanActivateFn = () => {
 
       // Đã xác thực nhưng không có user hợp lệ.
       if (user === null) {
-        return router.createUrlTree(['/forbidden']);
+        return true;
       }
 
       // Kiểm tra quyền truy cập.

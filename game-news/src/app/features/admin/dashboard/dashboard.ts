@@ -183,7 +183,25 @@ export class Dashboard implements OnInit {
       this.days.push(date);
     }
   }
+ private readonly API_URL = 'http://localhost:3001';
 
+  getThumbnailUrl(
+    thumbnail: string | null | undefined,
+  ): string {
+    if (!thumbnail?.trim()) {
+      return '';
+    }
+
+    const path = thumbnail.trim();
+
+    // URL đầy đủ thì giữ nguyên.
+    if (/^https?:\/\//i.test(path)) {
+      return path;
+    }
+
+    // Ghép URL backend với đường dẫn ảnh.
+    return `${this.API_URL}/${path.replace(/^\/+/, '')}`;
+  }
   // ============================================================
   // BIỂU ĐỒ - GIỮ NGUYÊN LOGIC
   // ============================================================

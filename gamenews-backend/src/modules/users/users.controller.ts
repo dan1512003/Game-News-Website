@@ -26,30 +26,35 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
+
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'super_admin')
+
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
   ) {}
+  @Roles('admin', 'super_admin','author','editor')
  @Get('dashboard-stats')
   getDashboardStats() {
     return this.usersService.getDashboardStats();
   }
   // Danh sách người dùng
+  @Roles('admin', 'super_admin','author','editor')
   @Get()
   findAll(@Query() query: QueryUsersDto) {
     return this.usersService.findAll(query);
   }
 
   // Chi tiết người dùng
+  @Roles('admin', 'super_admin','author','editor')
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
   // Cập nhật role và status
+  @Roles('admin', 'super_admin')
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -62,7 +67,7 @@ export class UsersController {
       req.user,
     );
   }
-
+@Roles('admin', 'super_admin')
   // Xóa người dùng
   @Delete(':id')
   remove(@Param('id') id: string) {

@@ -4,17 +4,17 @@
     gap: 12px;
     border-bottom: 1px solid #1A1A1A;
     padding: 16px 0px;
-    justify-content: space-between;
+  justify-content: flex-end;
 }
 .header-left{
-    display: flex;
+     display: none;
     gap: 5px;
     align-items: center;
     justify-content: center;
   
 }
 .header-menu-button{
-    display: flex;
+  display: flex;
     align-items: center;
     border: none;
     background: none;
@@ -258,4 +258,14 @@ margin: 0;
     line-height: 18px;
     font-size: 15px;
 color: #4A4540;
+}
+@media (max-width: 1024px) {
+   .header-left{
+display: flex;
+   
+}
+.header{
+
+  justify-content:space-between;
+}
 }

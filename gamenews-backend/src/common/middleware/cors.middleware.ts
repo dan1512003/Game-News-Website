@@ -1,3 +1,4 @@
+
 import {
   Injectable,
   NestMiddleware,
@@ -8,7 +9,6 @@ import {
   Response,
   NextFunction,
 } from 'express';
-
 
 @Injectable()
 export class CorsMiddleware
@@ -23,7 +23,6 @@ export class CorsMiddleware
     const origin =
       req.headers.origin;
 
-
     // =====================================================
     // ALLOWED ORIGINS
     // =====================================================
@@ -31,7 +30,6 @@ export class CorsMiddleware
     const allowedOrigins = [
       'http://localhost:4200',
     ];
-
 
     // =====================================================
     // ALLOW ORIGIN
@@ -49,7 +47,6 @@ export class CorsMiddleware
 
     }
 
-
     // =====================================================
     // CREDENTIALS
     // =====================================================
@@ -59,7 +56,6 @@ export class CorsMiddleware
       'true',
     );
 
-
     // =====================================================
     // METHODS
     // =====================================================
@@ -68,7 +64,6 @@ export class CorsMiddleware
       'Access-Control-Allow-Methods',
       'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     );
-
 
     // =====================================================
     // HEADERS
@@ -82,9 +77,9 @@ export class CorsMiddleware
         'Content-Type',
         'Accept',
         'Authorization',
+        'X-Retry',
       ].join(', '),
     );
-
 
     // =====================================================
     // VARY
@@ -94,7 +89,6 @@ export class CorsMiddleware
       'Vary',
       'Origin',
     );
-
 
     // =====================================================
     // PREFLIGHT
@@ -110,9 +104,6 @@ export class CorsMiddleware
 
     }
 
-
     next();
-
   }
-
 }

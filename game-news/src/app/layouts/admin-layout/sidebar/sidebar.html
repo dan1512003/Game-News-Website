@@ -1,4 +1,9 @@
 <div class="sidebar">
+
+    <!-- ============================== -->
+    <!-- Header -->
+    <!-- ============================== -->
+
     <div class="sidebar-header">
 
         <div class="sidebar-logo">
@@ -6,33 +11,67 @@
         </div>
 
         <div class="sidebar-brand">
+
             <span class="sidebar-title">
-                <span class="sidebar-title-1">GAME</span>
-                <span class="sidebar-title-2">ZONE</span>
+
+                <span class="sidebar-title-1">
+                    GAME
+                </span>
+
+                <span class="sidebar-title-2">
+                    ZONE
+                </span>
+
             </span>
 
-            <span class="sidebar-role">Admin</span>
+            <span class="sidebar-role">
+                Admin
+            </span>
+
         </div>
 
     </div>
 
+
+    <!-- ============================== -->
+    <!-- Navigation -->
+    <!-- ============================== -->
+
     <nav class="sidebar-nav">
 
+
+        <!-- ========================== -->
         <!-- Tổng quan -->
+        <!-- ========================== -->
+
         <div class="sidebar-menu-item">
+
             <a
-                routerLink=""
-                class="sidebar-menu-link"
-                [class.active]="activeMenu === 'dashboard'"
-                (click)="setActive('dashboard', $event)">
+                routerLink="/"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{
+                    exact: true
+                }"
+                class="sidebar-menu-link">
 
                 <span class="sidebar-menu-active"></span>
-                <span class="sidebar-menu-icon">📊</span>
-                <span class="sidebar-menu-text">Tổng quan</span>
+
+                <span class="sidebar-menu-icon">
+                    📊
+                </span>
+
+                <span class="sidebar-menu-text">
+                    Tổng quan
+                </span>
 
             </a>
+
         </div>
 
+
+        <!-- ========================== -->
+        <!-- Nội dung -->
+        <!-- ========================== -->
 
         <div class="sidebar-section">
 
@@ -41,73 +80,128 @@
             </p>
 
 
+            <!-- ====================== -->
             <!-- Tin tức -->
+            <!-- ====================== -->
+
             <div class="sidebar-menu-item">
+
                 <a
                     routerLink="/news"
-                    class="sidebar-menu-link"
-                    [class.active]="activeMenu === 'news'"
-                    (click)="setActive('news', $event)">
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{
+                        exact: false
+                    }"
+                    class="sidebar-menu-link">
 
                     <span class="sidebar-menu-active"></span>
-                    <span class="sidebar-menu-icon">📰</span>
-                    <span class="sidebar-menu-text">Tin tức</span>
+
+                    <span class="sidebar-menu-icon">
+                        📰
+                    </span>
+
+                    <span class="sidebar-menu-text">
+                        Tin tức
+                    </span>
 
                 </a>
+
             </div>
 
 
+            <!-- ====================== -->
             <!-- Danh mục -->
+            <!-- ====================== -->
+
             <div class="sidebar-menu-item">
+
                 <a
                     routerLink="/category"
-                    class="sidebar-menu-link"
-                    [class.active]="activeMenu === 'category'"
-                    (click)="setActive('category', $event)">
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{
+                        exact: false
+                    }"
+                    class="sidebar-menu-link">
 
                     <span class="sidebar-menu-active"></span>
-                    <span class="sidebar-menu-icon">🗂️</span>
-                    <span class="sidebar-menu-text">Danh mục</span>
+
+                    <span class="sidebar-menu-icon">
+                        🗂️
+                    </span>
+
+                    <span class="sidebar-menu-text">
+                        Danh mục
+                    </span>
 
                 </a>
+
             </div>
 
 
+            <!-- ====================== -->
             <!-- Thẻ -->
+            <!-- ====================== -->
+
             <div class="sidebar-menu-item">
+
                 <a
                     routerLink="/tags"
-                    class="sidebar-menu-link"
-                    [class.active]="activeMenu === 'tag'"
-                    (click)="setActive('tag', $event)">
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{
+                        exact: false
+                    }"
+                    class="sidebar-menu-link">
 
                     <span class="sidebar-menu-active"></span>
-                    <span class="sidebar-menu-icon">🏷️</span>
-                    <span class="sidebar-menu-text">Thẻ</span>
+
+                    <span class="sidebar-menu-icon">
+                        🏷️
+                    </span>
+
+                    <span class="sidebar-menu-text">
+                        Thẻ
+                    </span>
 
                 </a>
+
             </div>
 
 
+            <!-- ====================== -->
             <!-- Bình luận -->
+            <!-- ====================== -->
+
             <div class="sidebar-menu-item">
+
                 <a
                     routerLink="/comment"
-                    class="sidebar-menu-link"
-                    [class.active]="activeMenu === 'comment'"
-                    (click)="setActive('comment', $event)">
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{
+                        exact: false
+                    }"
+                    class="sidebar-menu-link">
 
                     <span class="sidebar-menu-active"></span>
-                    <span class="sidebar-menu-icon">💬</span>
-                    <span class="sidebar-menu-text">Bình luận</span>
+
+                    <span class="sidebar-menu-icon">
+                        💬
+                    </span>
+
+                    <span class="sidebar-menu-text">
+                        Bình luận
+                    </span>
 
                 </a>
+
             </div>
 
         </div>
 
 
+        <!-- ========================== -->
         <!-- Hệ thống -->
+        <!-- ========================== -->
+
         <div class="sidebar-section">
 
             <p class="sidebar-section-title">
@@ -115,41 +209,71 @@
             </p>
 
 
+            <!-- ====================== -->
             <!-- Người dùng -->
+            <!-- ====================== -->
+
             <div class="sidebar-menu-item">
+
                 <a
                     routerLink="/users"
-                    class="sidebar-menu-link"
-                    [class.active]="activeMenu === 'user'"
-                    (click)="setActive('user', $event)">
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{
+                        exact: false
+                    }"
+                    class="sidebar-menu-link">
 
                     <span class="sidebar-menu-active"></span>
-                    <span class="sidebar-menu-icon">👤</span>
-                    <span class="sidebar-menu-text">Người dùng</span>
+
+                    <span class="sidebar-menu-icon">
+                        👤
+                    </span>
+
+                    <span class="sidebar-menu-text">
+                        Người dùng
+                    </span>
 
                 </a>
+
             </div>
 
 
-                 <!-- Người dùng -->
+            <!-- ====================== -->
+            <!-- Hồ sơ -->
+            <!-- ====================== -->
+
             <div class="sidebar-menu-item">
+
                 <a
                     routerLink="/profile"
-                    class="sidebar-menu-link"
-                    [class.active]="activeMenu === 'profile'"
-                    (click)="setActive('profile', $event)">
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{
+                        exact: false
+                    }"
+                    class="sidebar-menu-link">
 
                     <span class="sidebar-menu-active"></span>
-                    <span class="sidebar-menu-icon">⚙</span>
-                    <span class="sidebar-menu-text">Hồ sơ của tôi</span>
+
+                    <span class="sidebar-menu-icon">
+                        ⚙
+                    </span>
+
+                    <span class="sidebar-menu-text">
+                        Hồ sơ của tôi
+                    </span>
 
                 </a>
+
             </div>
 
         </div>
 
     </nav>
 
+
+    <!-- ============================== -->
+    <!-- Footer -->
+    <!-- ============================== -->
 
     <div class="sidebar-footer">
 

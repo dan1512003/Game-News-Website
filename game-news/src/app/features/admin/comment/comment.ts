@@ -64,7 +64,7 @@ export class Comment {
     }
 
     return {
-      id: user.id,
+      id: user.userId,
       name: user.username,
       role: user.role,
     };
@@ -583,8 +583,7 @@ mark(
         return 'status-approved';
 
       case 'spam':
-      case 'rejected':
-        return 'status-rejected';
+     return 'status-spam';
 
       default:
         return '';

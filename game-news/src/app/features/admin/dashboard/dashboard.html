@@ -457,7 +457,7 @@
               <div class="dashboard-thumbnail">
                 @if (news.thumbnail) {
                   <img
-                    [src]="news.thumbnail"
+                    [src]="getThumbnailUrl(news.thumbnail)"
                     [alt]="news.title"
                   />
                 } @else {

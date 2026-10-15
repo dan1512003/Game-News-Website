@@ -122,6 +122,9 @@ import {
 import {
   CookieParserMiddleware,
 } from './common/middleware/cookie-parser.middleware.js';
+import { PasswordResetTokenEntity } from './modules/auth/entities/password-reset-token.entity/password-reset-token.entity.js';
+import { EmailResetTokenEntity } from './modules/auth/entities/email-reset-token.entity/email-reset-token.entity.js';
+import { AccessTokenBlacklistEntity } from './modules/auth/entities/access-token-blacklist.entity/access-token-blacklist.entity.js';
 
 
 // =====================================================
@@ -224,6 +227,9 @@ export const {
           NewsTagEntity,
 
           RefreshTokenEntity,
+            EmailResetTokenEntity,
+            PasswordResetTokenEntity,
+          AccessTokenBlacklistEntity,
 
         ],
 

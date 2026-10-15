@@ -582,19 +582,19 @@ export class Login {
   // DEMO ACCOUNT
   // =====================================================
 
-  fillDemoAccount(): void {
+  // fillDemoAccount(): void {
 
-    this.email =
-      'admin@gamezone.com';
+  //   this.email =
+  //     'admin@gamezone.com';
 
-    this.password =
-      'Admin123';
+  //   this.password =
+  //     'Admin123';
 
-    this.remember =
-      false;
+  //   this.remember =
+  //     false;
 
-    this.errors = {};
+  //   this.errors = {};
 
-  }
+  // }
 
 }

@@ -12,6 +12,10 @@ import type { Relation } from 'typeorm';
 import { NewsEntity } from '../../../news/entities/news.entity/news.entity.js';
 import { CommentEntity } from '../../../comments/entities/comment.entity/comment.entity.js';
 import { RefreshTokenEntity } from '../../../auth/entities/refresh-token.entity/refresh-token.entity.js';
+import { EmailResetTokenEntity } from '../../../auth/entities/email-reset-token.entity/email-reset-token.entity.js';
+import { PasswordResetTokenEntity } from '../../../auth/entities/password-reset-token.entity/password-reset-token.entity.js';
+
+
 
 @Entity('users')
 export class UserEntity {
@@ -124,4 +128,16 @@ export class UserEntity {
     (refreshToken) => refreshToken.user,
   )
   refreshTokens: Relation<RefreshTokenEntity>[];
+
+    // User có nhiều OTP reset email
+  @OneToMany(
+    () => EmailResetTokenEntity,
+    (emailResetToken) => emailResetToken.user,
+  )
+  emailResetTokens: Relation<EmailResetTokenEntity>[];
+@OneToMany(
+  () => PasswordResetTokenEntity,
+  (token) => token.user,
+)
+passwordResetTokens: Relation<PasswordResetTokenEntity[]>;
 }
