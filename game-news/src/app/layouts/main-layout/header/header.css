@@ -1,0 +1,491 @@
+:host {
+  display: block;
+
+  --orange: #ff5c00;
+  --orange-dark: #e05200;
+
+  --bg: #080808;
+  --bg-light: #111111;
+
+  --border: #242424;
+
+  --text: #f0ede8;
+  --muted: #6b6560;
+
+  --font-display: "Arial Black", sans-serif;
+  --font-body: Arial, sans-serif;
+  --font-mono: "Courier New", monospace;
+}
+
+
+
+.breaking-ticker {
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+
+  overflow: hidden;
+
+  background: var(--orange);
+  color: white;
+}
+
+.breaking-label {
+  flex-shrink: 0;
+
+  padding: 6px 16px;
+
+  background: white;
+  color: var(--orange);
+
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 900;
+
+  letter-spacing: 0.12em;
+
+  margin-right: 16px;
+}
+
+.breaking-content {
+  position: relative;
+
+  flex: 1;
+
+  overflow: hidden;
+}
+
+.breaking-track {
+  display: flex;
+  align-items: center;
+
+  gap: 64px;
+
+  width: max-content;
+
+  white-space: nowrap;
+
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+
+  animation: ticker 28s linear infinite;
+}
+
+@keyframes ticker {
+
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+
+}
+
+
+
+.header {
+  position: sticky;
+  top: 0;
+
+  z-index: 50;
+
+  background: rgba(8, 8, 8, 0.95);
+
+  border-bottom: 1px solid var(--border);
+
+  backdrop-filter: blur(6px);
+
+  color: var(--text);
+}
+
+.header-container {
+  width: 100%;
+  max-width: 1280px;
+
+  margin: 0 auto;
+
+  padding: 0 16px;
+}
+
+
+
+.header-top {
+  height: 64px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  color: var(--text);
+
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--orange);
+}
+
+.logo-text {
+  font-family: var(--font-display);
+
+  font-size: 26px;
+  font-weight: 900;
+
+  letter-spacing: -0.02em;
+}
+
+.logo-text span {
+  color: var(--orange);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+}
+
+
+.search-box {
+  width: 220px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 6px 12px;
+
+  border: 1px solid var(--border);
+
+  background: var(--bg-light);
+
+  color: var(--muted);
+}
+
+.search-box input {
+  width: 100%;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: var(--text);
+
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+.search-box input::placeholder {
+  color: var(--muted);
+}
+
+
+.login-button,
+.register-button,
+.admin-button {
+  text-decoration: none;
+
+  transition: 0.2s;
+}
+
+.login-button {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 6px 12px;
+
+  border: 1px solid var(--border);
+
+  color: var(--muted);
+
+  font-family: var(--font-mono);
+
+  font-size: 10px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.1em;
+}
+
+.login-button:hover {
+  color: var(--text);
+
+  border-color: rgba(255, 92, 0, 0.5);
+}
+
+.register-button {
+  display: flex;
+  align-items: center;
+
+  padding: 7px 16px;
+
+  background: var(--orange);
+
+  color: white;
+
+  font-family: var(--font-display);
+
+  font-size: 13px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.1em;
+}
+
+.register-button:hover {
+  background: var(--orange-dark);
+}
+
+
+
+.admin-button {
+  display: flex;
+  align-items: center;
+
+  padding: 7px 10px;
+
+  border: 1px solid #1a1a1a;
+
+  color: #3a3530;
+}
+
+.admin-button:hover {
+  color: var(--orange);
+
+  border-color: rgba(255, 92, 0, 0.3);
+}
+
+
+.desktop-nav {
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+
+  border-top: 1px solid #161616;
+}
+
+.nav-item {
+  position: relative;
+
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 16px;
+
+  color: var(--muted);
+
+  text-decoration: none;
+
+  font-family: var(--font-display);
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.12em;
+
+  text-transform: uppercase;
+
+  transition: 0.2s;
+}
+
+.nav-item:hover {
+  color: var(--text);
+}
+
+.nav-item.active {
+  color: var(--orange);
+}
+
+.nav-active {
+  position: absolute;
+
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  height: 2px;
+
+  background: var(--orange);
+}
+
+.social-links {
+  margin-left: auto;
+
+  display: flex;
+  align-items: center;
+
+  gap: 16px;
+
+  padding-right: 8px;
+}
+
+.social-links a {
+  color: #4a4540;
+
+  text-decoration: none;
+
+  font-family: var(--font-mono);
+
+  font-size: 10px;
+
+  text-transform: lowercase;
+}
+
+.social-links a:hover {
+  color: var(--orange);
+}
+
+
+
+.mobile-menu-button {
+  display: none;
+
+  border: none;
+
+  background: transparent;
+
+  color: var(--text);
+
+  padding: 8px;
+
+  cursor: pointer;
+}
+
+.mobile-nav {
+  display: none;
+}
+
+
+@media screen and (max-width: 900px) {
+
+  .search-box {
+    display: none;
+  }
+
+  .login-button,
+  .register-button,
+  .admin-button,
+  .desktop-nav {
+    display: none;
+  }
+
+  .mobile-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-nav {
+    display: block;
+
+    border-top: 1px solid var(--border);
+
+    padding: 8px 0;
+  }
+
+  .mobile-nav-item {
+    display: block;
+
+    width: 100%;
+
+    padding: 10px 16px;
+
+    border-bottom: 1px solid #161616;
+
+    color: #a8a29e;
+
+    text-decoration: none;
+
+    font-family: var(--font-body);
+
+    font-size: 14px;
+  }
+
+  .mobile-nav-item:hover,
+  .mobile-nav-item.active {
+    color: var(--orange);
+  }
+
+  .mobile-auth {
+    display: flex;
+
+    gap: 8px;
+
+    padding: 12px 16px 8px;
+  }
+
+  .mobile-login,
+  .mobile-register {
+    flex: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 10px;
+
+    text-decoration: none;
+
+    font-family: var(--font-display);
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.08em;
+  }
+
+  .mobile-login {
+    border: 1px solid var(--border);
+
+    color: #a8a29e;
+  }
+
+  .mobile-register {
+    background: var(--orange);
+
+    color: white;
+  }
+
+}
+
+@media screen and (max-width: 500px) {
+
+  .header-container {
+    padding: 0 12px;
+  }
+
+  .logo-text {
+    font-size: 22px;
+  }
+
+}

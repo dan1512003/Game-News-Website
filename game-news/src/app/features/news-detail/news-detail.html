@@ -1,0 +1,1071 @@
+@if (article; as article) {
+
+  <main class="article-page">
+
+
+    <nav class="breadcrumb">
+
+      <a routerLink="/">
+        Trang chủ
+      </a>
+
+      <span>/</span>
+
+      <a
+        [routerLink]="getCategoryUrl(article.category)">
+        {{ article.category }}
+      </a>
+
+      <span>/</span>
+
+      <span class="breadcrumb-current">
+        {{ article.title }}
+      </span>
+
+    </nav>
+
+
+
+    <div class="article-layout">
+
+  
+
+      <article class="article-main">
+
+        <header class="article-header">
+
+          <div class="article-category-row">
+
+            <span class="category-badge">
+              {{ article.category }}
+            </span>
+
+            @if (article.hot) {
+
+              <span class="hot">
+
+                <span class="hot-dot"></span>
+
+                HOT
+
+              </span>
+
+            }
+
+          </div>
+
+
+          <h1>
+            {{ article.title }}
+          </h1>
+
+
+          <p class="article-excerpt">
+            {{ article.excerpt }}
+          </p>
+
+
+          <div class="article-meta">
+
+            <div class="author-meta">
+
+              <div
+                class="avatar avatar-small"
+                [style.background]="
+                  article.author
+                    ? '#ff5c00'
+                    : '#555'
+                ">
+
+                {{ getAvatarLetter(article.author) }}
+
+              </div>
+
+              <div>
+
+                <p class="author-name">
+                  {{ article.author }}
+                </p>
+
+                <p class="author-role">
+                  Biên tập viên
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="meta-divider"></div>
+
+
+            <div class="meta-info">
+
+              <span>
+
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+
+                  <rect
+                    width="18"
+                    height="18"
+                    x="3"
+                    y="4"
+                    rx="2">
+                  </rect>
+
+                  <line
+                    x1="16"
+                    x2="16"
+                    y1="2"
+                    y2="6">
+                  </line>
+
+                  <line
+                    x1="8"
+                    x2="8"
+                    y1="2"
+                    y2="6">
+                  </line>
+
+                  <line
+                    x1="3"
+                    x2="21"
+                    y1="10"
+                    y2="10">
+                  </line>
+
+                </svg>
+
+                {{ article.date }}
+
+              </span>
+
+
+              <span>
+
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10">
+                  </circle>
+
+                  <polyline
+                    points="12 6 12 12 16 14">
+                  </polyline>
+
+                </svg>
+
+                {{ article.readTime }}
+
+              </span>
+
+
+              <span>
+
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+
+                  <path
+                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
+                  </path>
+
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3">
+                  </circle>
+
+                </svg>
+
+                {{ article.views || '—' }}
+
+              </span>
+
+            </div>
+
+
+            <div class="share-buttons">
+
+              <button
+                type="button"
+                (click)="share('Twitter')">
+
+                Twitter
+
+              </button>
+
+              <button
+                type="button"
+                (click)="share('Facebook')">
+
+                Facebook
+
+              </button>
+
+              <button
+                type="button"
+                (click)="share('Copy')">
+
+                Copy
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </header>
+
+
+
+        <div class="hero-image">
+
+          <img
+            [src]="article.image"
+            [alt]="article.title">
+
+          @if (
+            article.score !== null &&
+            article.score !== undefined
+          ) {
+
+            <div class="score">
+
+              <strong>
+                {{ article.score }}
+              </strong>
+
+              <span>/10</span>
+
+            </div>
+
+          }
+
+        </div>
+
+
+
+        <div class="article-content">
+
+          @for (
+            paragraph of article.content;
+            track $index
+          ) {
+
+            @if ($index === 2) {
+
+              <div class="article-quote">
+
+                "{{ paragraph.slice(0, 120) }}..."
+
+              </div>
+
+            }
+
+            @if ($index !== 2) {
+
+              <p>
+                {{ paragraph }}
+              </p>
+
+            }
+
+          }
+
+        </div>
+
+
+    
+
+        <div class="tags">
+
+          <span class="tags-label">
+            Tags:
+          </span>
+
+          <span class="tag">
+            #{{ article.category }}
+          </span>
+
+          <span class="tag">
+            #GameZone
+          </span>
+
+          <span class="tag">
+            #2026
+          </span>
+
+          <span class="tag">
+            #Tin tức
+          </span>
+
+        </div>
+
+
+
+        <div class="author-box">
+
+          <div class="avatar avatar-large">
+
+            {{ getAvatarLetter(article.author) }}
+
+          </div>
+
+          <div class="author-box-content">
+
+            <div class="author-box-title">
+
+              <strong>
+                {{ article.author }}
+              </strong>
+
+              <span>
+                Biên tập viên
+              </span>
+
+            </div>
+
+            <p>
+              Biên tập viên kỳ cựu tại GameZone với
+              8 năm kinh nghiệm tường thuật các giải
+              đấu esports lớn. Chuyên gia về
+              {{ article.category }} và văn hóa gaming.
+            </p>
+
+            <div class="author-social">
+
+              <a href="#">
+                Twitter
+              </a>
+
+              <a href="#">
+                Facebook
+              </a>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <section
+          id="comments"
+          class="comments-section">
+
+
+
+          <div class="comments-header">
+
+            <h2>
+
+              <span></span>
+
+              Bình Luận
+
+              <b>
+                ({{ comments.length }})
+              </b>
+
+            </h2>
+
+            <div class="comments-line"></div>
+
+            <div class="sort-buttons">
+
+              <button
+                type="button"
+                [class.active]="sortBy === 'newest'"
+                (click)="sortBy = 'newest'">
+
+                Mới nhất
+
+              </button>
+
+              <button
+                type="button"
+                [class.active]="sortBy === 'popular'"
+                (click)="sortBy = 'popular'">
+
+                Nổi bật
+
+              </button>
+
+            </div>
+
+          </div>
+
+
+
+          <div class="comment-form">
+
+            <h3>
+              Để lại bình luận
+            </h3>
+
+            <div class="form-row">
+
+              <input
+                type="text"
+                [(ngModel)]="newName"
+                placeholder="Tên của bạn *">
+
+              <input
+                type="email"
+                placeholder="Email (không bắt buộc)">
+
+            </div>
+
+
+            <textarea
+              rows="4"
+              [(ngModel)]="newComment"
+              placeholder="Chia sẻ suy nghĩ của bạn về bài viết...">
+            </textarea>
+
+
+            <div class="form-footer">
+
+              <p>
+                * Bình luận sẽ được kiểm duyệt trước khi hiển thị
+              </p>
+
+              <button
+                type="button"
+                [disabled]="
+                  !newComment.trim() ||
+                  !newName.trim()
+                "
+                (click)="submitComment()">
+
+                Gửi Bình Luận
+
+              </button>
+
+            </div>
+
+          </div>
+
+
+
+          <div class="comment-list">
+
+            @for (
+              comment of sortedComments;
+              track comment.id
+            ) {
+
+            
+
+              <div class="comment-card">
+
+                <div class="comment-item">
+
+
+                  <div
+                    class="avatar comment-avatar"
+                    [style.background]="comment.avatarColor">
+
+                    {{ getAvatarLetter(comment.name) }}
+
+                  </div>
+
+
+                  <div class="comment-content">
+
+                 
+
+                    <div class="comment-name-row">
+
+                      <strong>
+                        {{ comment.name }}
+                      </strong>
+
+                      @if (
+                        comment.name.includes('Tác giả')
+                      ) {
+
+                        <span class="author-label">
+                          Tác giả
+                        </span>
+
+                      }
+
+                      <small>
+                        {{ comment.time }}
+                      </small>
+
+                    </div>
+
+
+                  
+
+                    <p class="comment-text">
+
+                      {{ getVisibleCommentContent(comment) }}
+
+                    </p>
+
+
+                    @if (
+                      isLongComment(comment)
+                    ) {
+
+                      <button
+                        type="button"
+                        class="show-more"
+                        (click)="
+                          toggleCommentContent(comment.id)
+                        ">
+
+                        @if (
+                          expandedComments[comment.id]
+                        ) {
+
+                          Thu gọn nội dung
+
+                        } @else {
+
+                          Xem thêm
+
+                        }
+
+                      </button>
+
+                    }
+
+
+
+                    <div class="comment-actions">
+
+                      <button
+                        type="button"
+                        [class.liked]="comment.liked"
+                        (click)="
+                          likeComment(comment.id)
+                        ">
+
+                        <svg viewBox="0 0 24 24">
+
+                          <path
+                            d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3">
+                          </path>
+
+                        </svg>
+
+                        {{ comment.likes }}
+
+                      </button>
+
+
+                      <button
+                        type="button"
+                        (click)="
+                          toggleReply(comment.id)
+                        ">
+
+                        <svg viewBox="0 0 24 24">
+
+                          <path
+                            d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z">
+                          </path>
+
+                        </svg>
+
+                        @if (
+                          replyOpen[comment.id]
+                        ) {
+
+                          Hủy trả lời
+
+                        } @else {
+
+                          Trả lời
+
+                        }
+
+                      </button>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         ROOT REPLY FORM
+                    ================================================== -->
+
+                    @if (
+                      replyOpen[comment.id]
+                    ) {
+
+                      <div class="reply-form">
+
+                        <input
+                          type="text"
+                          [(ngModel)]="
+                            replyNames[comment.id]
+                          "
+                          placeholder="Tên của bạn">
+
+                        <input
+                          type="text"
+                          [(ngModel)]="
+                            replyTexts[comment.id]
+                          "
+                          placeholder="Trả lời bình luận...">
+
+                        <button
+                          type="button"
+                          [disabled]="
+                            !replyNames[comment.id]?.trim() ||
+                            !replyTexts[comment.id]?.trim()
+                          "
+                          (click)="
+                            submitReply(comment)
+                          ">
+
+                          Gửi
+
+                        </button>
+
+                      </div>
+
+                    }
+
+                  </div>
+
+                </div>
+
+
+           
+
+                @if (
+                  countReplies(comment) > 0 &&
+                  shouldCollapseReplies(comment)
+                ) {
+
+                  <button
+                    type="button"
+                    class="replies-toggle"
+                    (click)="
+                      toggleReplies(comment.rootId)
+                    ">
+
+                    <span></span>
+
+                    @if (
+                      shouldShowReplies(comment)
+                    ) {
+
+                      Ẩn
+                      {{ countReplies(comment) }}
+                      phản hồi
+
+                    } @else {
+
+                      Xem
+                      {{ countReplies(comment) }}
+                      phản hồi
+
+                    }
+
+                  </button>
+
+                }
+
+
+
+                @if (
+                  shouldShowReplies(comment) &&
+                  countReplies(comment) > 0
+                ) {
+
+                  <div class="replies">
+
+                    @for (
+                      reply of getReplies(comment.rootId);
+                      track reply.id
+                    ) {
+
+                      <div class="reply-item">
+
+                        <!-- AVATAR -->
+
+                        <div
+                          class="avatar reply-avatar"
+                          [style.background]="reply.avatarColor">
+
+                          {{ getAvatarLetter(reply.name) }}
+
+                        </div>
+
+
+                        <div class="reply-content">
+
+                          <!-- NAME -->
+
+                          <div class="comment-name-row">
+
+                            <strong>
+                              {{ reply.name }}
+                            </strong>
+
+                            @if (
+                              reply.name.includes('Tác giả')
+                            ) {
+
+                              <span class="author-label">
+                                Tác giả
+                              </span>
+
+                            }
+
+                            <small>
+                              {{ reply.time }}
+                            </small>
+
+                          </div>
+
+
+                          <!-- =================================================
+                               REPLY CONTENT
+                          ================================================== -->
+
+                          <p class="comment-text">
+
+                            @if (
+                              shouldShowReplyMention(reply)
+                            ) {
+
+                              <span class="reply-to">
+                                @{{ getParentName(reply) }}
+                              </span>
+
+                            }
+
+                            {{ getVisibleCommentContent(reply) }}
+
+                          </p>
+
+
+                          <!-- SHOW MORE -->
+
+                          @if (
+                            isLongComment(reply)
+                          ) {
+
+                            <button
+                              type="button"
+                              class="show-more"
+                              (click)="
+                                toggleCommentContent(reply.id)
+                              ">
+
+                              @if (
+                                expandedComments[reply.id]
+                              ) {
+
+                                Thu gọn nội dung
+
+                              } @else {
+
+                                Xem thêm
+
+                              }
+
+                            </button>
+
+                          }
+
+
+                          <!-- ACTIONS -->
+
+                          <div class="comment-actions">
+
+                            <button
+                              type="button"
+                              [class.liked]="reply.liked"
+                              (click)="
+                                likeComment(reply.id)
+                              ">
+
+                              <svg viewBox="0 0 24 24">
+
+                                <path
+                                  d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0 2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3">
+                                </path>
+
+                              </svg>
+
+                              {{ reply.likes }}
+
+                            </button>
+
+
+                            <button
+                              type="button"
+                              (click)="
+                                toggleReply(reply.id)
+                              ">
+
+                              <svg viewBox="0 0 24 24">
+
+                                <path
+                                  d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z">
+                                </path>
+
+                              </svg>
+
+                              @if (
+                                replyOpen[reply.id]
+                              ) {
+
+                                Hủy trả lời
+
+                              } @else {
+
+                                Trả lời
+
+                              }
+
+                            </button>
+
+                          </div>
+
+
+                          <!-- =================================================
+                               REPLY FORM
+                          ================================================== -->
+
+                          @if (
+                            replyOpen[reply.id]
+                          ) {
+
+                            <div class="reply-form">
+
+                              <input
+                                type="text"
+                                [(ngModel)]="
+                                  replyNames[reply.id]
+                                "
+                                placeholder="Tên của bạn">
+
+                              <input
+                                type="text"
+                                [(ngModel)]="
+                                  replyTexts[reply.id]
+                                "
+                                [placeholder]="
+                                  'Trả lời @' + reply.name + '...'
+                                ">
+
+                              <button
+                                type="button"
+                                [disabled]="
+                                  !replyNames[reply.id]?.trim() ||
+                                  !replyTexts[reply.id]?.trim()
+                                "
+                                (click)="
+                                  submitReply(reply)
+                                ">
+
+                                Gửi
+
+                              </button>
+
+                            </div>
+
+                          }
+
+                        </div>
+
+                      </div>
+
+                    }
+
+                  </div>
+
+                }
+
+              </div>
+
+            }
+
+          </div>
+
+
+          <!-- EMPTY -->
+
+          @if (
+            comments.length === 0
+          ) {
+
+            <div class="comments-empty">
+
+              Chưa có bình luận.
+              Hãy là người đầu tiên!
+
+            </div>
+
+          }
+
+        </section>
+
+      </article>
+
+
+      <!-- =====================================================
+           SIDEBAR
+      ====================================================== -->
+
+      <aside class="sidebar">
+
+        <div class="sidebar-sticky">
+
+          <!-- RELATED -->
+
+          <section class="sidebar-box">
+
+            <div class="sidebar-title">
+
+              <span></span>
+
+              Có Thể Bạn Quan Tâm
+
+            </div>
+
+
+            <div class="related-list">
+
+              @for (
+                item of getRelatedArticles();
+                track item.id
+              ) {
+
+                <a
+                  class="related-item"
+                  [routerLink]="[
+                    '/bai-viet',
+                    item.id
+                  ]">
+
+                  <div class="related-image">
+
+                    <img
+                      [src]="item.image"
+                      [alt]="item.title">
+
+                  </div>
+
+
+                  <div class="related-content">
+
+                    <p>
+                      {{ item.title }}
+                    </p>
+
+                    <div>
+
+                      <span class="mini-category">
+                        {{ item.category }}
+                      </span>
+
+                      <small>
+                        {{ item.date }}
+                      </small>
+
+                    </div>
+
+                  </div>
+
+                </a>
+
+              }
+
+            </div>
+
+          </section>
+
+
+          <!-- AUTHOR -->
+
+          <section class="sidebar-box author-sidebar">
+
+            <div class="sidebar-author">
+
+              <div class="avatar avatar-medium">
+
+                {{ getAvatarLetter(article.author) }}
+
+              </div>
+
+              <div>
+
+                <strong>
+                  {{ article.author }}
+                </strong>
+
+                <small>
+                  42 bài viết
+                </small>
+
+              </div>
+
+            </div>
+
+
+            @for (
+              item of getAuthorArticles();
+              track item.id
+            ) {
+
+              <a
+                class="author-article"
+                [routerLink]="[
+                  '/bai-viet',
+                  item.id
+                ]">
+
+                <span>›</span>
+
+                <p>
+                  {{ item.title }}
+                </p>
+
+              </a>
+
+            }
+
+          </section>
+
+        </div>
+
+      </aside>
+
+    </div>
+
+  </main>
+
+}
+
+
+
+@if (!article) {
+
+  <main class="not-found">
+
+    <span>
+      404
+    </span>
+
+    <p>
+      Bài viết không tồn tại hoặc đã bị xóa.
+    </p>
+
+    <a routerLink="/">
+      Về Trang Chủ
+    </a>
+
+  </main>
+
+}

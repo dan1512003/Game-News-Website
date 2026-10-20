@@ -1,0 +1,669 @@
+
+
+<section
+  class="category-hero"
+  [style.--accent]="meta.accent"
+  [class.review-hero]="isReviews"
+>
+  <div class="hero-background">
+    <img
+      [src]="meta.heroImage"
+      [alt]="meta.label"
+    />
+  </div>
+
+  <div class="hero-overlay"></div>
+
+  <div class="hero-accent"></div>
+
+  <div class="hero-container">
+    <div class="hero-content">
+
+      <div class="hero-label-row">
+
+        <span
+          class="hero-icon"
+          [class.review-icon]="isReviews"
+        >
+          {{ meta.icon }}
+        </span>
+
+        <span
+          class="hero-label"
+          [style.background-color]="meta.accent"
+          [class.review-label]="isReviews"
+        >
+          {{ meta.label }}
+        </span>
+
+      </div>
+
+      <h1>
+        @if (isReviews) {
+          ĐÁNH GIÁ GAME
+        } @else {
+          {{ meta.label }}
+        }
+      </h1>
+
+      <p>
+        {{ meta.description }}
+      </p>
+
+    </div>
+  </div>
+</section>
+
+
+
+
+<main class="listing-container">
+
+  <div class="listing-layout">
+
+
+
+    <section class="listing-content">
+
+
+
+
+      @if (isReviews) {
+
+        <div class="score-filter">
+
+          <span class="filter-label">
+            Lọc theo điểm:
+          </span>
+
+          <div class="filter-buttons">
+
+            @for (
+              filter of SCORE_FILTERS;
+              track filter
+            ) {
+
+              <button
+                type="button"
+                class="filter-button"
+                [class.active]="scoreFilter === filter"
+                [style.--accent]="meta.accent"
+                (click)="changeFilter(filter)"
+              >
+                {{ filter }}
+              </button>
+
+            }
+
+          </div>
+
+        </div>
+
+      }
+
+
+      <div class="section-heading">
+
+        <h2>
+
+          <span
+            class="section-heading-bar"
+            [style.background-color]="meta.accent"
+          ></span>
+
+          @if (isReviews) {
+            Tất Cả Đánh Giá
+          } @else {
+            Tin {{ meta.label }}
+          }
+
+        </h2>
+
+        <span class="section-heading-sub">
+
+          {{ filteredArticles.length }}
+
+          @if (isReviews) {
+            bài
+          } @else {
+            bài viết
+          }
+
+          @if (totalPages > 1) {
+            · Trang {{ page }}/{{ totalPages }}
+          }
+
+        </span>
+
+        <div class="section-heading-line"></div>
+
+      </div>
+
+
+
+      @if (filteredArticles.length > 0) {
+
+        <div class="news-grid">
+
+          @for (
+            article of paginatedArticles;
+            track trackByNews($index, article)
+          ) {
+
+            <a
+              class="news-card-link"
+              [routerLink]="['/bai-viet', article.id]"
+            >
+
+              <article class="news-card">
+
+
+                <div class="news-image">
+
+                  <img
+                    [src]="article.image"
+                    [alt]="article.title"
+                    loading="lazy"
+                  />
+
+                  <div class="news-image-gradient"></div>
+
+                  <div class="news-top">
+
+                    <span class="category-badge">
+                      {{ article.category }}
+                    </span>
+
+                    @if (article.hot) {
+
+                      <span class="hot-badge">
+
+                        <span class="hot-dot"></span>
+
+                        Hot
+
+                      </span>
+
+                    }
+
+                  </div>
+
+
+
+                  @if (article.score !== null && article.score !== undefined) {
+
+                    <div
+                      class="score-badge"
+                      [style.background-color]="scoreColor(article.score)"
+                    >
+
+                      <strong>
+                        {{ article.score }}
+                      </strong>
+
+                      <span>/10</span>
+
+                    </div>
+
+                  }
+
+                </div>
+
+
+        
+
+                <div class="news-card-content">
+
+                  <h3>
+                    {{ article.title }}
+                  </h3>
+
+
+                  @if (article.excerpt) {
+
+                    <p class="news-excerpt">
+                      {{ article.excerpt }}
+                    </p>
+
+                  }
+
+
+             
+
+                  <div class="news-meta">
+
+                    <div class="news-author">
+
+                      @if (article.author) {
+
+                        <span class="author">
+                          {{ article.author }}
+                        </span>
+
+                      }
+
+
+                      @if (
+                        article.author &&
+                        article.readTime
+                      ) {
+
+                        <span class="meta-dot">
+                          ·
+                        </span>
+
+                      }
+
+
+                      @if (article.readTime) {
+
+                        <span>
+                          {{ article.readTime }}
+                        </span>
+
+                      }
+
+
+                      @if (
+                        !article.author &&
+                        !article.readTime
+                      ) {
+
+                        <span>
+                          {{ article.date }}
+                        </span>
+
+                      }
+
+                    </div>
+
+
+                    @if (article.views) {
+
+                      <div class="views">
+
+                        <svg
+                          width="11"
+                          height="11"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          aria-hidden="true"
+                        >
+
+                          <path
+                            d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                          />
+
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="3"
+                          />
+
+                        </svg>
+
+                        <span>
+                          {{ article.views }}
+                        </span>
+
+                      </div>
+
+                    }
+
+                  </div>
+
+
+
+                  @if (
+                    isReviews &&
+                    article.score !== null &&
+                    article.score !== undefined
+                  ) {
+
+                    <div
+                      class="review-score-label"
+                      [style.color]="scoreColor(article.score)"
+                    >
+                      {{ scoreLabel(article.score) }}
+                    </div>
+
+                  }
+
+                </div>
+
+              </article>
+
+            </a>
+
+          }
+
+        </div>
+
+
+ 
+
+        @if (totalPages > 1) {
+
+          <nav
+            class="pagination"
+            aria-label="Phân trang"
+          >
+
+
+
+            <button
+              type="button"
+              class="pagination-arrow"
+              [disabled]="page === 1"
+              (click)="goTo(page - 1)"
+              aria-label="Trang trước"
+            >
+
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+
+                <path d="m15 18-6-6 6-6" />
+
+              </svg>
+
+              <span>
+                Trước
+              </span>
+
+            </button>
+
+
+      
+
+            <div class="pagination-numbers">
+
+              @for (
+                p of paginationPages;
+                track trackByPage($index, p)
+              ) {
+
+                @if (p === '...') {
+
+                  <span
+                    class="pagination-dots"
+                    aria-hidden="true"
+                  >
+                    …
+                  </span>
+
+                } @else {
+
+                  <button
+                    type="button"
+                    class="pagination-number"
+                    [class.active]="p === page"
+                    [style.--accent]="meta.accent"
+                    [attr.aria-current]="p === page ? 'page' : null"
+                    [attr.aria-label]="'Trang ' + p"
+                    (click)="goTo(+p)"
+                  >
+                    {{ p }}
+                  </button>
+
+                }
+
+              }
+
+            </div>
+
+
+       
+
+            <button
+              type="button"
+              class="pagination-arrow"
+              [disabled]="page === totalPages"
+              (click)="goTo(page + 1)"
+              aria-label="Trang sau"
+            >
+
+              <span>
+                Sau
+              </span>
+
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+
+                <path d="m9 18 6-6-6-6" />
+
+              </svg>
+
+            </button>
+
+          </nav>
+
+        }
+
+      } @else {
+
+
+      
+
+        <div class="empty-state">
+
+          <div class="empty-icon">
+            @if (isReviews) {
+              ★
+            } @else {
+              📰
+            }
+          </div>
+
+          <h3>
+            @if (isReviews) {
+              Không có đánh giá nào
+            } @else {
+              Chưa có bài viết
+            }
+          </h3>
+
+          <p>
+            @if (isReviews) {
+              Không có bài đánh giá nào phù hợp với bộ lọc hiện tại.
+            } @else {
+              Chưa có bài viết trong danh mục này.
+            }
+          </p>
+
+          @if (isReviews && scoreFilter !== 'Tất cả') {
+
+            <button
+              type="button"
+              class="reset-filter-button"
+              [style.--accent]="meta.accent"
+              (click)="changeFilter('Tất cả')"
+            >
+              Xem tất cả đánh giá
+            </button>
+
+          }
+
+        </div>
+
+      }
+
+
+
+
+      <section class="newsletter">
+
+        <div class="newsletter-content">
+
+          <div class="newsletter-title-row">
+
+            <span></span>
+
+            <span>
+              Newsletter
+            </span>
+
+          </div>
+
+          <h3>
+            Không bỏ lỡ bất kỳ tin tức game nào
+          </h3>
+
+          <p>
+            Nhận bản tóm tắt hàng ngày trực tiếp vào hộp thư của bạn.
+            Miễn phí, không spam.
+          </p>
+
+        </div>
+
+
+        <form
+          class="newsletter-form"
+          (submit)="$event.preventDefault()"
+        >
+
+          <input
+            type="email"
+            name="newsletterEmail"
+            placeholder="email@của.bạn"
+            autocomplete="email"
+            required
+          />
+
+          <button type="submit">
+            Đăng Ký
+          </button>
+
+        </form>
+
+      </section>
+
+    </section>
+
+
+
+    <aside class="trending-sidebar">
+
+      <div class="trending-box">
+
+        <div class="trending-header">
+
+          <h2>
+
+            <span
+              [style.background-color]="meta.accent"
+            ></span>
+
+            Trending
+
+          </h2>
+
+          <small>
+            Hôm nay
+          </small>
+
+        </div>
+
+
+        <div class="trending-list">
+
+          @if (trendingItems.length > 0) {
+
+            @for (
+              item of trendingItems;
+              track item.rank
+            ) {
+
+              <div class="trending-item">
+
+                <span
+                  class="trending-rank"
+                  [class.top]="item.rank <= 3"
+                  [style.--accent]="meta.accent"
+                >
+                  {{ item.rank }}
+                </span>
+
+
+                <div class="trending-content">
+
+                  <p>
+                    {{ item.title }}
+                  </p>
+
+
+                  <div class="trending-meta">
+
+                    <span class="category-badge">
+                      {{ item.category }}
+                    </span>
+
+
+                    <span class="views">
+
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        aria-hidden="true"
+                      >
+
+                        <path
+                          d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                        />
+
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="3"
+                        />
+
+                      </svg>
+
+                      {{ item.views }}
+
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            }
+
+          } @else {
+
+            <div class="trending-empty">
+              Chưa có dữ liệu trending.
+            </div>
+
+          }
+
+        </div>
+
+      </div>
+
+    </aside>
+
+  </div>
+
+</main>
