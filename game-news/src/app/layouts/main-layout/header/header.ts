@@ -1,3 +1,4 @@
+
 import {
   Component,
   OnInit,
@@ -13,6 +14,10 @@ import {
 import {
   CommonModule,
 } from '@angular/common';
+
+import {
+  FormsModule,
+} from '@angular/forms';
 
 import {
   filter,
@@ -33,6 +38,7 @@ interface NavItem {
   imports: [
     CommonModule,
     RouterLink,
+    FormsModule,
   ],
 
   templateUrl: './header.html',
@@ -44,9 +50,13 @@ export class Header implements OnInit {
   private readonly router = inject(Router);
 
 
+
   menuOpen = false;
 
   currentRoute = '';
+
+  searchQuery = '';
+
 
 
 
@@ -117,7 +127,37 @@ export class Header implements OnInit {
   }
 
 
+  search(): void {
 
+    const keyword =
+      this.searchQuery.trim();
+
+
+    if (!keyword) {
+
+      return;
+
+    }
+
+
+    this.closeMenu();
+
+    this.router.navigate(
+      ['/search'],
+      {
+        queryParams: {
+          q: keyword,
+        },
+      },
+    );
+
+  }
+
+
+
+  // ==========================================================
+  // MOBILE MENU
+  // ==========================================================
 
   toggleMenu(): void {
 
@@ -152,6 +192,8 @@ export class Header implements OnInit {
   }
 
 
+
+
   goToLogin(): void {
 
     this.closeMenu();
@@ -161,6 +203,7 @@ export class Header implements OnInit {
     ]);
 
   }
+
 
 
 
@@ -189,8 +232,8 @@ export class Header implements OnInit {
   }
 
 
-  logout(): void {
 
+  logout(): void {
 
     this.closeMenu();
 

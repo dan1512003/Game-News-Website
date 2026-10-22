@@ -1,6 +1,4 @@
-<!-- =====================================================
-     BREAKING NEWS
-===================================================== -->
+
 
 <div class="breaking-ticker">
 
@@ -43,23 +41,17 @@
 </div>
 
 
-<!-- =====================================================
-     HEADER
-===================================================== -->
+
 
 <header class="header">
 
   <div class="header-container">
 
 
-    <!-- =================================================
-         TOP HEADER
-    ================================================== -->
 
     <div class="header-top">
 
 
-      <!-- LOGO -->
 
       <a
         routerLink="/"
@@ -102,40 +94,43 @@
       <div class="header-actions">
 
 
-        <!-- SEARCH -->
 
-        <div class="search-box">
+<div class="search-box">
 
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+  >
 
-            <circle
-              cx="11"
-              cy="11"
-              r="8"
-            />
+    <circle
+      cx="11"
+      cy="11"
+      r="8"
+    />
 
-            <path
-              d="m21 21-4.35-4.35"
-            />
+    <path
+      d="m21 21-4.35-4.35"
+    />
 
-          </svg>
+  </svg>
 
-          <input
-            type="text"
-            placeholder="Tìm kiếm tin tức..."
-          />
+  <input
+    type="text"
+    [(ngModel)]="searchQuery"
+    (keyup.enter)="search()"
+    placeholder="Tìm kiếm tin tức..."
+    autocomplete="off"
+    aria-label="Tìm kiếm tin tức"
+  />
 
-        </div>
+</div>
 
 
-        <!-- LOGIN -->
+
 
         <a
           routerLink="/login"
@@ -170,8 +165,6 @@
         </a>
 
 
-        <!-- REGISTER -->
-
         <a
           routerLink="/register"
           class="register-button"
@@ -180,7 +173,6 @@
         </a>
 
 
-        <!-- ADMIN -->
 
         <a
           routerLink="/admin"
@@ -240,7 +232,6 @@
         </a>
 
 
-        <!-- MOBILE MENU -->
 
         <button
           type="button"
@@ -270,9 +261,6 @@
     </div>
 
 
-    <!-- =================================================
-         DESKTOP NAV
-    ================================================== -->
 
     <nav class="desktop-nav">
 
@@ -316,53 +304,99 @@
     </nav>
 
 
-    <!-- =================================================
-         MOBILE NAV
-    ================================================== -->
 
-    @if (menuOpen) {
+@if (menuOpen) {
 
-      <div class="mobile-nav">
-
-        @for (item of navItems; track item.path) {
-
-          <a
-            [routerLink]="item.path"
-            (click)="closeMenu()"
-            class="mobile-nav-item"
-            [class.active]="isActive(item.path)"
-          >
-
-            {{ item.label }}
-
-          </a>
-
-        }
+  <div class="mobile-nav">
 
 
-        <div class="mobile-auth">
 
-          <a
-            routerLink="/login"
-            (click)="closeMenu()"
-            class="mobile-login"
-          >
-            Đăng nhập
-          </a>
 
-          <a
-            routerLink="/register"
-            (click)="closeMenu()"
-            class="mobile-register"
-          >
-            Đăng ký
-          </a>
+      <div class="mobile-search-box">
 
-        </div>
+     
+
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+
+          <circle
+            cx="11"
+            cy="11"
+            r="8"
+          />
+
+          <path
+            d="m21 21-4.35-4.35"
+          />
+
+        </svg>
+
+
+        <!-- SEARCH INPUT -->
+
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="search()"
+          placeholder="Tìm kiếm tin tức..."
+          autocomplete="off"
+          aria-label="Tìm kiếm tin tức"
+        />
 
       </div>
 
+   
+
+
+
+
+    @for (item of navItems; track item.path) {
+
+      <a
+        [routerLink]="item.path"
+        (click)="closeMenu()"
+        class="mobile-nav-item"
+        [class.active]="isActive(item.path)"
+      >
+
+        {{ item.label }}
+
+      </a>
+
     }
+
+
+
+    <div class="mobile-auth">
+
+      <a
+        routerLink="/login"
+        (click)="closeMenu()"
+        class="mobile-login"
+      >
+        Đăng nhập
+      </a>
+
+
+      <a
+        routerLink="/register"
+        (click)="closeMenu()"
+        class="mobile-register"
+      >
+        Đăng ký
+      </a>
+
+    </div>
+
+  </div>
+
+}
 
   </div>
 

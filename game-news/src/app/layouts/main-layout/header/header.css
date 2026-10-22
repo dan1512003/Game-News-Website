@@ -199,7 +199,41 @@
   color: var(--muted);
 }
 
+.mobile-search-box{
+    width: 100%;
 
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 6px 12px;
+
+  border: 1px solid var(--border);
+
+  background: var(--bg-light);
+
+  color: var(--muted);
+}
+
+
+.mobile-search-box input {
+  width: 100%;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: var(--text);
+
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+.mobile-search-box input::placeholder {
+  color: var(--muted);
+}
 .login-button,
 .register-button,
 .admin-button {

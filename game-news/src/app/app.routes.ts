@@ -19,7 +19,7 @@ import { ProfileUser } from './features/profile/profile';
 import { guestGuard } from './core/guards/guest.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { ForbiddenPage } from './features/errors/forbidden-page/forbidden-page';
-
+import { Search } from './features/search-page/search-page';
 
 export const routes: Routes = [
 
@@ -204,6 +204,10 @@ export const routes: Routes = [
           pageType: 'Giftcode',
         },
       },
+      {
+  path: 'search',
+  component: Search,
+},
       {
   path: 'bai-viet/:id',
   component: NewsDetail,
