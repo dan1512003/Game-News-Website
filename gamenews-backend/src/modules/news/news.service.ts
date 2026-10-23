@@ -1,4 +1,4 @@
-
+import sanitizeHtml from 'sanitize-html';
 import {
   BadRequestException,
   ForbiddenException,
@@ -563,159 +563,257 @@ export class NewsService {
   // =====================================================
   // CREATE
   // =====================================================
+private sanitizeBlockContent(
+  type: string,
+  content: string,
+): string {
+  if (typeof content !== 'string') {
+    throw new BadRequestException(
+      'Nội dung block phải là chuỗi',
+    );
+  }
 
-  async create(dto: CreateNewsDto, user: UserEntity) {
-    return this.dataSource.transaction(async (manager) => {
-      const newsRepo = manager.getRepository(NewsEntity);
-      const tagRepo = manager.getRepository(NewsTagEntity);
-      const blockRepo = manager.getRepository(ContentBlockEntity);
+  // Image/video chỉ lưu URL hoặc đường dẫn.
+  if (type === 'image' || type === 'video') {
+    const value = content.trim();
 
-     const initialStatus = dto.status ?? 'draft';
-      const news = newsRepo.create({
-        title: dto.title,
-        slug: dto.slug,
-        summary: dto.summary ?? null,
-        categoryId: String(dto.categoryId),
-        authorId: user.userId,
-        reviewerId: dto.reviewerId ?? null,
-        thumbnail: dto.thumbnail ?? null,
-        status: initialStatus,
-        views: '0',
-        publishedAt:
-          initialStatus === 'published'
-            ? new Date()
-            : null,
-        scheduledAt: null,
-        editorNote: null,
-        requirementNote: null,
-        reviewScore: null,
-      });
+    if (!value) {
+      throw new BadRequestException(
+        'URL hình ảnh hoặc video không được để trống',
+      );
+    }
 
-      const saved = await newsRepo.save(news);
+    return value;
+  }
 
-      if (dto.tagIds?.length) {
-        const uniqueTagIds = [...new Set(dto.tagIds)];
+  const allowedTagsByType: Record<string, string[]> = {
+    paragraph: [
+      'strong', // In đậm
+      'em',     // In nghiêng
+      'u',      // Gạch chân
+      'a',      // Liên kết
+    ],
 
+    heading1: [
+      'em',     // Chỉ in nghiêng
+    ],
+
+    heading2: [
+      'em',     // Chỉ in nghiêng
+    ],
+  };
+
+  const allowedTags = allowedTagsByType[type];
+
+  if (!allowedTags) {
+    throw new BadRequestException(
+      `Loại content block không hợp lệ: ${type}`,
+    );
+  }
+
+  const cleanContent = sanitizeHtml(content, {
+    allowedTags,
+
+    allowedAttributes: {
+      a: ['href', 'target', 'rel'],
+    },
+
+    allowedSchemes: [
+      'http',
+      'https',
+      'mailto',
+    ],
+
+    // Không cho phép URL dạng //example.com.
+    allowProtocolRelative: false,
+  });
+
+  if (!cleanContent.trim()) {
+    throw new BadRequestException(
+      'Nội dung block không hợp lệ',
+    );
+  }
+
+  return cleanContent;
+}
+async create(dto: CreateNewsDto, user: UserEntity) {
+  return this.dataSource.transaction(async (manager) => {
+    const newsRepo = manager.getRepository(NewsEntity);
+    const tagRepo = manager.getRepository(NewsTagEntity);
+    const blockRepo = manager.getRepository(ContentBlockEntity);
+
+    const initialStatus = dto.status ?? 'draft';
+
+    const news = newsRepo.create({
+      title: dto.title,
+      slug: dto.slug,
+      summary: dto.summary ?? null,
+      categoryId: String(dto.categoryId),
+      authorId: user.userId,
+      reviewerId: dto.reviewerId ?? null,
+      thumbnail: dto.thumbnail ?? null,
+      status: initialStatus,
+      views: '0',
+
+      publishedAt:
+        initialStatus === 'published'
+          ? new Date()
+          : null,
+
+      scheduledAt: null,
+      editorNote: null,
+      requirementNote: null,
+      reviewScore: dto.reviewScore ?? null,
+    });
+
+    const saved = await newsRepo.save(news);
+
+    // Lưu tags
+    if (dto.tagIds?.length) {
+      const uniqueTagIds = [...new Set(dto.tagIds)];
+
+      await tagRepo.save(
+        uniqueTagIds.map((tagId) =>
+          tagRepo.create({
+            newsId: saved.newsId,
+            tagId: String(tagId),
+          }),
+        ),
+      );
+    }
+
+    // Lưu content blocks
+    if (dto.contentBlocks?.length) {
+      const blocks = dto.contentBlocks.map((block) =>
+        blockRepo.create({
+          newsId: saved.newsId,
+          type: block.type,
+
+          // Làm sạch HTML trước khi lưu.
+          content: this.sanitizeBlockContent(
+            block.type,
+            block.content,
+          ),
+
+          position: block.position,
+        }),
+      );
+
+      await blockRepo.save(blocks);
+    }
+
+    return saved;
+  });
+}
+  // =====================================================
+  // UPDATE
+  // =====================================================
+
+async update(
+  id: string,
+  dto: UpdateNewsDto,
+  user: UserEntity,
+) {
+  const news = await this.findOneOrFail(id);
+
+  // Kiểm tra quyền sửa theo trạng thái hiện tại.
+  this.assertCanEdit(news, user);
+
+  return this.dataSource.transaction(async (manager) => {
+    const repo = manager.getRepository(NewsEntity);
+    const tagRepo = manager.getRepository(NewsTagEntity);
+    const blockRepo = manager.getRepository(ContentBlockEntity);
+
+    // Cập nhật thông tin cơ bản
+    if (dto.title !== undefined) {
+      news.title = dto.title;
+    }
+
+    if (dto.slug !== undefined) {
+      news.slug = dto.slug;
+    }
+
+    if (dto.summary !== undefined) {
+      news.summary = dto.summary;
+    }
+
+    if (dto.categoryId !== undefined) {
+      news.categoryId = String(dto.categoryId);
+    }
+
+    if (dto.thumbnail !== undefined) {
+      news.thumbnail = dto.thumbnail;
+    }
+
+    // Cập nhật điểm đánh giá
+    if (dto.reviewScore !== undefined) {
+      news.reviewScore = dto.reviewScore;
+    }
+
+    // Chỉ staff mới được đổi status qua update.
+    if (dto.status !== undefined && this.isStaff(user)) {
+      const previousStatus = news.status;
+
+      this.changeStatus(news, dto.status);
+
+      if (
+        previousStatus !== dto.status &&
+        dto.status === 'published'
+      ) {
+        news.publishedAt = new Date();
+        news.scheduledAt = null;
+      }
+    }
+
+    // Lưu thông tin bài viết
+    await repo.save(news);
+
+    // Cập nhật tags
+    if (dto.tagIds !== undefined) {
+      await tagRepo.delete({ newsId: id });
+
+      const uniqueTagIds = [...new Set(dto.tagIds)];
+
+      if (uniqueTagIds.length > 0) {
         await tagRepo.save(
           uniqueTagIds.map((tagId) =>
             tagRepo.create({
-              newsId: saved.newsId,
+              newsId: id,
               tagId: String(tagId),
             }),
           ),
         );
       }
+    }
 
-      if (dto.contentBlocks?.length) {
+    // Cập nhật content blocks
+    if (dto.contentBlocks !== undefined) {
+      // Xóa block cũ trong transaction.
+      await blockRepo.delete({ newsId: id });
+
+      if (dto.contentBlocks.length > 0) {
         const blocks = dto.contentBlocks.map((block) =>
           blockRepo.create({
-            newsId: saved.newsId,
+            newsId: id,
             type: block.type,
-            content: block.content,
+
+            // Làm sạch HTML trước khi lưu.
+            content: this.sanitizeBlockContent(
+              block.type,
+              block.content,
+            ),
+
             position: block.position,
           }),
         );
 
         await blockRepo.save(blocks);
       }
+    }
 
-      return saved;
-    });
-  }
-
-  // =====================================================
-  // UPDATE
-  // =====================================================
-
-  async update(
-    id: string,
-    dto: UpdateNewsDto,
-    user: UserEntity,
-  ) {
-    const news = await this.findOneOrFail(id);
-
-    // Kiểm tra quyền sửa theo trạng thái hiện tại.
-    this.assertCanEdit(news, user);
-
-    return this.dataSource.transaction(async (manager) => {
-      const repo = manager.getRepository(NewsEntity);
-      const tagRepo = manager.getRepository(NewsTagEntity);
-      const blockRepo = manager.getRepository(ContentBlockEntity);
-
-      if (dto.title !== undefined) {
-        news.title = dto.title;
-      }
-
-      if (dto.slug !== undefined) {
-        news.slug = dto.slug;
-      }
-
-      if (dto.summary !== undefined) {
-        news.summary = dto.summary;
-      }
-
-      if (dto.categoryId !== undefined) {
-        news.categoryId = String(dto.categoryId);
-      }
-
-      if (dto.thumbnail !== undefined) {
-        news.thumbnail = dto.thumbnail;
-      }
-
-      // Chỉ staff mới được đổi status qua update.
-      if (dto.status !== undefined && this.isStaff(user)) {
-        const previousStatus = news.status;
-
-        this.changeStatus(news, dto.status);
-
-        if (
-          previousStatus !== dto.status &&
-          dto.status === 'published'
-        ) {
-          news.publishedAt = new Date();
-          news.scheduledAt = null;
-        }
-      }
-
-      await repo.save(news);
-
-      if (dto.tagIds !== undefined) {
-        await tagRepo.delete({ newsId: id });
-
-        const uniqueTagIds = [...new Set(dto.tagIds)];
-
-        if (uniqueTagIds.length > 0) {
-          await tagRepo.save(
-            uniqueTagIds.map((tagId) =>
-              tagRepo.create({
-                newsId: id,
-                tagId: String(tagId),
-              }),
-            ),
-          );
-        }
-      }
-
-      if (dto.contentBlocks !== undefined) {
-        await blockRepo.delete({ newsId: id });
-
-        if (dto.contentBlocks.length > 0) {
-          await blockRepo.save(
-            dto.contentBlocks.map((block) =>
-              blockRepo.create({
-                newsId: id,
-                type: block.type,
-                content: block.content,
-                position: block.position,
-              }),
-            ),
-          );
-        }
-      }
-
-      return this.findOneOrFail(id);
-    });
-  }
+    return this.findOneOrFail(id);
+  });
+}
 
   // =====================================================
   // REMOVE
