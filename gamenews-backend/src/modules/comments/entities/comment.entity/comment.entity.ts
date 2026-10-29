@@ -63,7 +63,25 @@ export class CommentEntity {
     type: 'timestamp',
   })
   createdAt: Date;
+@Column({
+  name: 'root_id',
+  type: 'bigint',
+  nullable: true,
+})
+rootId: string | null;
 
+// ROOT COMMENT RELATION
+
+@ManyToOne(() => CommentEntity, {
+  nullable: true,
+  onUpdate: 'CASCADE',
+  onDelete: 'CASCADE',
+})
+@JoinColumn({
+  name: 'root_id',
+  referencedColumnName: 'commentId',
+})
+root: Relation<CommentEntity> | null;
   // =========================
   // NEWS
   // =========================

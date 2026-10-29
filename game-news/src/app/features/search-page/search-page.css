@@ -342,6 +342,19 @@
   margin-top: 28px;
 }
 
+.pagination-dots {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #6b6560;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  user-select: none;
+}
+
 .pagination-button {
   display: flex;
   width: 36px;

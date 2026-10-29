@@ -33,6 +33,8 @@ import type { UserEntity } from '../users/entities/user.entity/user.entity.js';
 import { ParseFormDataInterceptor } from '../../common/interceptors/parse-form-data.interceptor.js';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { createImageUploadOptions } from '../../common/upload/image-upload.config.js';
+import { PublicNewsQueryDto } from './dto/public-news-query.dto/public-news-query.dto.js';
+import { Public } from '../../common/decorators/public.decorator.js';
 
 @Controller('news')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -71,14 +73,44 @@ private attachContentBlockImages(
     };
   });
 }
+  // GET /news/public
+  // Danh sách bài viết công khai, có phân trang và lọc
+  @Public()
+  @Get('public')
+  getPublicListing(
+    @Query() dto: PublicNewsQueryDto,
+  ) {
+    return this.newsService.getPublicListing(dto);
+  }
 
+  // GET /news/search?q=game&page=1&limit=6
+  // Tìm kiếm bài viết công khai
+  @Public()
+  @Get('search')
+  searchPublicNews(
+    @Query() dto: PublicNewsQueryDto,
+  ) {
+    return this.newsService.searchPublicNews(dto);
+  }
+
+  // GET /news/trending?limit=5
+  // Danh sách bài viết thịnh hành
+  @Public()
+  @Get('trending')
+  getTrending(
+    @Query('limit') limit?: string,
+  ) {
+    return this.newsService.getTrending(
+      limit === undefined ? 5 : Number(limit),
+    );
+  }
    // =====================================================
   // DASHBOARD STATS
   // GET /news/dashboard-stats
   // =====================================================
 
   @Get('dashboard-stats')
-  @Roles('admin', 'super_admin', 'editor')
+  @Roles('admin', 'super_admin','author','editor')
   getDashboardStats() {
     return this.newsService.getDashboardStats();
   }
@@ -337,6 +369,35 @@ update(
     @CurrentUser() user: UserEntity,
   ) {
     return this.newsService.unpublish(id, user);
+  }
+
+
+  
+
+  // GET /news/public/:id/related?page=1&limit=6
+  // Danh sách bài viết liên quan
+  @Public()
+  @Get('public/:id/related')
+  findRelated(
+    @Param('id') id: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.newsService.findRelated(
+      id,
+      page === undefined ? 1 : Number(page),
+      limit === undefined ? 6 : Number(limit),
+    );
+  }
+
+  // GET /news/public/:id
+  // Chi tiết bài viết công khai
+  @Public()
+  @Get('public/:id')
+  findDetail(
+    @Param('id') id: string,
+  ) {
+    return this.newsService.findDetail(id);
   }
 
 }

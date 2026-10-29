@@ -864,7 +864,12 @@ input[type="file"]:disabled::file-selector-button {
 
 /* BLOCKS */
 
-
+.toolbar {
+  position: sticky;
+  top: 0px;
+  z-index: 10;
+  background: var(--bg);
+}
 
 .toolbar,
 

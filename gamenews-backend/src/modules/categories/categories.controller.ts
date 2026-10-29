@@ -31,7 +31,7 @@ export class CategoriesController {
   // // GET /categories/dashboard-stats
   //  // ===================================================== 
   @Get('dashboard-stats') 
-  @Roles('admin', 'super_admin', 'editor')
+  @Roles('admin', 'super_admin','author','editor')
    getDashboardStats()
     { return this.categoriesService.getDashboardStats(); }
     

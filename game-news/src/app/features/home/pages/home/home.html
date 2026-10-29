@@ -1,459 +1,255 @@
 
-
 <section class="hero-section">
-
-  <div class="hero-grid">
-    <a
-      class="hero-main"
-      [routerLink]="[
-        '/bai-viet',
-        heroArticle.id
-      ]">
-
-      <div class="hero-image">
-
-        <img
-          [src]="heroArticle.image"
-          [alt]="heroArticle.title">
-
-      </div>
-
-
-      <div class="hero-overlay"></div>
-
-      <div class="hero-overlay-right"></div>
-
-
-
-
-      <div class="hero-badges">
-
-        @if (heroArticle.hot) {
-
-          <span class="hot-badge">
-
-            <span class="hot-dot"></span>
-
-            HOT
-
-          </span>
-
-        }
-
-        <span class="category-badge">
-          {{ heroArticle.category }}
-        </span>
-
-      </div>
-
-
-
-
-      <div class="hero-content">
-
-        <h1>
-          {{ heroArticle.title }}
-        </h1>
-
-        <p>
-          {{ heroArticle.excerpt }}
-        </p>
-
-
-        <div class="hero-meta">
-
-          <span class="hero-author">
-            {{ heroArticle.author }}
-          </span>
-
-          <span>
-            —
-          </span>
-
-          <span>
-            {{ heroArticle.date }}
-          </span>
-
-          <span>
-            ·
-          </span>
-
-          <span>
-            {{ heroArticle.readTime }}
-          </span>
-
+  @if (heroArticle(); as article) {
+    <div class="hero-grid">
+      <a
+        class="hero-main"
+        [routerLink]="['/bai-viet', article.newsId]"
+      >
+        <div class="hero-image">
+          <img
+            [src]="getThumbnailUrl(article.thumbnail)"
+            [alt]="article.title"
+         
+          >
         </div>
 
-      </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-overlay-right"></div>
 
-    </a>
+        <div class="hero-badges">
+          <span class="category-badge">
+            {{ getCategory(article) }}
+          </span>
+        </div>
 
+        <div class="hero-content">
+          <h1>{{ article.title }}</h1>
+          <p>{{ article.summary || '' }}</p>
 
-    <div class="secondary-featured">
-
-      @for (
-        article of secondaryFeatured;
-        track article.id
-      ) {
-
-        <a
-          class="secondary-card"
-          [routerLink]="[
-            '/bai-viet',
-            article.id
-          ]">
-
-          <div class="secondary-image">
-
-            <img
-              [src]="article.image"
-              [alt]="article.title">
-
-          </div>
-
-
-          <div class="secondary-overlay"></div>
-
-
-   
-
-          @if (article.hot) {
-
-            <span class="secondary-hot">
-              HOT
+          <div class="hero-meta">
+            <span class="hero-author">
+              {{ getAuthor(article) }}
             </span>
+            <span>—</span>
+            <span>{{ getDate(article.publishedAt) }}</span>
+          </div>
+        </div>
+      </a>
 
-          } @else {
+      <div class="secondary-featured">
+        @for (featured of secondaryFeatured(); track featured.newsId) {
+          <a
+            class="secondary-card"
+            [routerLink]="['/bai-viet', featured.newsId]"
+          >
+            <div class="secondary-image">
+              <img
+                [src]="getThumbnailUrl(featured.thumbnail)"
+                [alt]="featured.title"
+          
+              >
+            </div>
+
+            <div class="secondary-overlay"></div>
 
             <span class="category-badge secondary-category">
-              {{ article.category }}
+              {{ getCategory(featured) }}
             </span>
 
-          }
-
-
-          <div class="secondary-content">
-
-            <h3>
-              {{ article.title }}
-            </h3>
-
-            <span>
-              {{ article.date }}
-            </span>
-
-          </div>
-
-        </a>
-
-      }
-
+            <div class="secondary-content">
+              <h3>{{ featured.title }}</h3>
+              <span>{{ getDate(featured.publishedAt) }}</span>
+            </div>
+          </a>
+        }
+      </div>
     </div>
-
-  </div>
-
+  } @else if (listingLoading()) {
+    <p class="home-loading">Đang tải tin nổi bật...</p>
+  }
 </section>
 
-
 <section class="latest-header">
-
   <div class="latest-title">
-
     <span></span>
-
-    <h2>
-      Tin Mới Nhất
-    </h2>
-
+    <h2>Tin Mới Nhất</h2>
   </div>
-
 
   <div class="latest-line"></div>
 
-
-  <time>
-    {{ getToday() }}
-  </time>
-
+  <time>{{ getToday() }}</time>
 </section>
 
-
-
-
 <main class="home-main">
-
   <div class="home-grid">
-
-
-
     <section class="news-column">
+      @if (error()) {
+        <p class="home-error" role="alert">
+          {{ error() }}
+        </p>
+      }
 
-      <div class="news-grid">
-
-        @for (
-          article of news;
-          track article.id
-        ) {
-
-          <a
-            class="news-card"
-            [routerLink]="[
-              '/bai-viet',
-              article.id
-            ]">
-
-
-  
-
-            <div class="news-image">
-
-              <img
-                [src]="article.image"
-                [alt]="article.title">
-
-
-              @if (article.hot) {
-
-                <span class="news-hot">
-                  HOT
-                </span>
-
-              } @else {
+      @if (listingLoading() && news().length === 0) {
+        <p class="home-loading">Đang tải tin tức...</p>
+      } @else {
+        <div class="news-grid">
+          @for (article of news(); track article.newsId) {
+            <a
+              class="news-card"
+              [routerLink]="['/bai-viet', article.newsId]"
+            >
+              <div class="news-image">
+                <img
+                  [src]="getThumbnailUrl(article.thumbnail)"
+                  [alt]="article.title"
+             
+                >
 
                 <span class="news-category">
-                  {{ article.category }}
+                  {{ getCategory(article) }}
                 </span>
-
-              }
-
-            </div>
-
-
-
-
-            <div class="news-content">
-
-              <div class="news-meta">
-
-                <span>
-                  {{ article.category }}
-                </span>
-
-                <span>
-                  {{ article.date }}
-                </span>
-
               </div>
 
+              <div class="news-content">
+                <div class="news-meta">
+                  <span>{{ getCategory(article) }}</span>
+                  <span>{{ getDate(article.publishedAt) }}</span>
+                </div>
 
-              <h3>
-                {{ article.title }}
-              </h3>
+                <h3>{{ article.title }}</h3>
+                <p>{{ article.summary || '' }}</p>
 
-
-              <p>
-                {{ article.excerpt }}
-              </p>
-
-
-              <div class="news-footer">
-
-                <span>
-                  {{ article.author }}
-                </span>
-
-                <span>
-                  {{ article.readTime }}
-                </span>
-
+                <div class="news-footer">
+                  <span>{{ getAuthor(article) }}</span>
+                  <span>{{ getViews(article.views) }} lượt xem</span>
+                </div>
               </div>
-
-            </div>
-
-          </a>
-
-        }
-
-      </div>
-
-
+            </a>
+          } @empty {
+            @if (!listingLoading()) {
+              <p>Chưa có bài viết nào.</p>
+            }
+          }
+        </div>
+      }
 
       @if (totalPages > 1) {
-
-        <nav
-          class="pagination"
-          aria-label="Phân trang">
-
-
-  
-
+        <nav class="pagination" aria-label="Phân trang">
           <button
             type="button"
             class="pagination-arrow"
-            [disabled]="page === 1"
-            (click)="previousPage()">
-
+            [disabled]="currentPage === 1 || listingLoading()"
+            (click)="previousPage()"
+            aria-label="Trang trước"
+          >
             ‹
-
           </button>
 
-
-     
-
-          @for (
-            pageNumber of paginationPages;
-            track pageNumber
-          ) {
-
-            <button
-              type="button"
-              class="pagination-number"
-              [class.active]="
-                pageNumber === page
-              "
-              (click)="goTo(pageNumber)">
-
-              {{ pageNumber }}
-
-            </button>
-
+          @for (item of paginationItems; track $index) {
+            @if (item === 'dots') {
+              <span class="pagination-dots" aria-hidden="true">
+                ...
+              </span>
+            } @else {
+              <button
+                type="button"
+                class="pagination-number"
+                [class.active]="item === currentPage"
+                [attr.aria-current]="item === currentPage ? 'page' : null"
+                [disabled]="listingLoading()"
+                (click)="goTo(item)"
+              >
+                {{ item }}
+              </button>
+            }
           }
-
-
-
 
           <button
             type="button"
             class="pagination-arrow"
             [disabled]="
-              page === totalPages
+              currentPage === totalPages ||
+              totalPages === 0 ||
+              listingLoading()
             "
-            (click)="nextPage()">
-
+            (click)="nextPage()"
+            aria-label="Trang sau"
+          >
             ›
-
           </button>
-
         </nav>
-
       }
 
->
-
       <section class="newsletter">
-
         <div class="newsletter-content">
-
           <span class="newsletter-label">
             GAMEZONE NEWSLETTER
           </span>
 
-          <h2>
-            Nhận tin game mới nhất
-          </h2>
+          <h2>Nhận tin game mới nhất</h2>
 
           <p>
             Những tin tức gaming nổi bật sẽ được gửi
             trực tiếp đến email của bạn.
           </p>
-
         </div>
-
 
         <div class="newsletter-form">
-
           <input
             type="email"
-            placeholder="Email của bạn">
+            placeholder="Email của bạn"
+          >
 
-
-          <button
-            type="button">
-
-            Đăng ký
-
-          </button>
-
+          <button type="button">Đăng ký</button>
         </div>
-
       </section>
-
     </section>
 
-
-
-
     <aside class="trending-sidebar">
-
       <div class="trending-sticky">
-
         <div class="trending-title">
-
           <span></span>
-
-          <h2>
-            Đang Thịnh Hành
-          </h2>
-
+          <h2>Đang Thịnh Hành</h2>
         </div>
 
+        @if (trendingLoading()) {
+          <p class="home-loading">
+            Đang tải tin thịnh hành...
+          </p>
+        }
 
-        <div class="trending-list">
+        @if (trending().length > 0) {
+          <div class="trending-list">
+            @for (article of trending(); track article.newsId; let index = $index) {
+              <a
+                class="trending-item"
+                [routerLink]="['/bai-viet', article.newsId]"
+              >
+                <div class="trending-number">
+                  {{ index + 1 }}
+                </div>
 
-          @for (
-            article of trending;
-            track article.id;
-            let index = $index
-          ) {
+                <div class="trending-image">
+                  <img
+                    [src]="getThumbnailUrl(article.thumbnail)"
+                    [alt]="article.title"
+             
+                  >
+                </div>
 
-            <a
-              class="trending-item"
-              [routerLink]="[
-                '/bai-viet',
-                article.id
-              ]">
-
-
-              <div class="trending-number">
-                {{ index + 1 }}
-              </div>
-
-
-              <div class="trending-image">
-
-                <img
-                  [src]="article.image"
-                  [alt]="article.title">
-
-              </div>
-
-
-              <div class="trending-content">
-
-                <span>
-                  {{ article.category }}
-                </span>
-
-                <h3>
-                  {{ article.title }}
-                </h3>
-
-                <small>
-                  {{ article.views }} lượt xem
-                </small>
-
-              </div>
-
-            </a>
-
-          }
-
-        </div>
-
+                <div class="trending-content">
+                  <span>{{ getCategory(article) }}</span>
+                  <h3>{{ article.title }}</h3>
+                  <small>
+                    {{ getViews(article.views) }} lượt xem
+                  </small>
+                </div>
+              </a>
+            }
+          </div>
+        }
       </div>
-
     </aside>
-
   </div>
-
 </main>

@@ -1,9 +1,11 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   Param,
   Patch,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -14,6 +16,9 @@ import { QueryCommentsDto } from './dto/query-comments.dto/query-comments.dto.js
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
+import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
+import { UserEntity } from '../users/entities/user.entity/user.entity.js';
+import { CreateCommentDto } from './dto/create-comment.dto/create-comment.dto.js';
 
 @Controller('comments')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -27,7 +32,7 @@ export class CommentsController {
   // =====================================================
 
   @Get('dashboard-stats')
-  @Roles('admin', 'editor', 'super_admin')
+  @Roles('admin', 'super_admin','author','editor')
   getDashboardStats() {
     return this.commentsService.getDashboardStats();
   }
@@ -88,6 +93,64 @@ export class CommentsController {
     return this.commentsService.remove(id);
   }
 
+  // =====================================================
+  // FIND COMMENTS BY NEWS
+  // GET /comments/news/:newsId?sortBy=newest
+  // Không bắt buộc đăng nhập
+  // =====================================================
+
+  @Get('news/:newsId')
+  findByNews(
+    @Param('newsId') newsId: string,
+    @Query('sortBy') sortBy?: 'newest' | 'popular',
+  ) {
+    return this.commentsService.findByNews(
+      newsId,
+      sortBy ?? 'newest',
+    );
+  }
+
+  // =====================================================
+  // CREATE COMMENT
+  // POST /comments/news/:newsId
+  // Yêu cầu đăng nhập
+  // =====================================================
+
+  @Post('news/:newsId')
+  @UseGuards(JwtAuthGuard)
+  create(
+    @Param('newsId') newsId: string,
+    @Body() dto: CreateCommentDto,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return this.commentsService.create(
+      newsId,
+      dto,
+      user,
+    );
+  }
+
+  // =====================================================
+  // TOGGLE LIKE
+  // POST /comments/news/:newsId/:commentId/like
+  // Yêu cầu đăng nhập
+  // =====================================================
+
+  @Post('news/:newsId/:commentId/like')
+  @UseGuards(JwtAuthGuard)
+  toggleLike(
+    @Param('newsId') newsId: string,
+    @Param('commentId') commentId: string,
+    @CurrentUser() user: UserEntity,
+    @Query('sortBy') sortBy?: 'newest' | 'popular',
+  ) {
+    return this.commentsService.toggleLike(
+      newsId,
+      commentId,
+      user,
+      sortBy ?? 'newest',
+    );
+  }
  
 
 }

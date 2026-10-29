@@ -146,7 +146,7 @@ async login(
 
     sameSite: 'strict',
 
-    path: '/auth',
+    path: '/',
 
     maxAge: Math.max(
       result.refreshExpiresAt.getTime() - Date.now(),
@@ -289,7 +289,7 @@ async refresh(
           .execute();
 
         res.clearCookie('refresh_token', {
-          path: '/auth',
+          path: '/',
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
@@ -322,7 +322,7 @@ async refresh(
       );
 
       res.clearCookie('refresh_token', {
-        path: '/auth',
+        path: '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
@@ -446,7 +446,7 @@ const durationMs = storedToken.rememberMe
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        path: '/auth',
+        path: '/',
         maxAge: storedToken.rememberMe
         ? 30 * 24 * 60 * 60 * 1000
         : 24 * 60 * 60 * 1000
@@ -567,7 +567,7 @@ async logout(
   res.clearCookie(
     'refresh_token',
     {
-      path: '/auth',
+      path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -755,7 +755,7 @@ async resetEmail(
   res.clearCookie(
     'refresh_token',
     {
-      path: '/auth',
+      path: '/',
     },
   );
 
@@ -777,7 +777,7 @@ const result= await this.authService.issueTokens(
 
     sameSite: 'strict',
 
-    path: '/auth',
+    path: '/',
 
     maxAge: Math.max(
       result.refreshExpiresAt.getTime() - Date.now(),
@@ -1266,7 +1266,7 @@ async resetPassword(
 
         sameSite: 'strict',
 
-        path: '/auth',
+        path: '/',
       },
     );
 
@@ -1429,7 +1429,7 @@ async changePassword(
       {
 
         path:
-          '/auth/refresh',
+          '/',
 
       },
 
@@ -1454,7 +1454,7 @@ async changePassword(
 
     sameSite: 'strict',
 
-    path: '/auth',
+    path: '/',
 
     maxAge: Math.max(
       result.refreshExpiresAt.getTime() - Date.now(),
@@ -1470,5 +1470,88 @@ result.user,
     };
 }
 
+// =====================================================
+// SSR USER
+// GET /auth/ssr-user
+// Xác minh refresh token và lấy user trước khi render
+// =====================================================
 
+@Get('ssr-user')
+@UseGuards(AuthGuard('jwt-refresh'))
+@HttpCode(200)
+async getSsrUser(
+  @Req() req: Request,
+  @Res({ passthrough: true }) res: Response,
+) {
+ 
+  res.setHeader('Cache-Control', 'private, no-store');
+
+  const payload = req.user as {
+    id: string;
+    refreshToken: string;
+  };
+
+  const userId = payload?.id;
+  const refreshToken = payload?.refreshToken;
+
+  if (!userId || !refreshToken) {
+    throw new UnauthorizedException(
+      'Refresh token không hợp lệ',
+    );
+  }
+
+  // Hash refresh token để đối chiếu với database
+  const tokenHash = crypto
+    .createHash('sha256')
+    .update(refreshToken)
+    .digest('hex');
+
+  // Chỉ chấp nhận phiên chưa bị thu hồi
+  const storedToken = await this.refreshTokenRepo.findOne({
+    where: {
+      userId,
+      tokenHash,
+      revokedAt: IsNull(),
+    },
+  });
+
+  if (
+    !storedToken ||
+    storedToken.expiresAt.getTime() <= Date.now()
+  ) {
+    throw new UnauthorizedException(
+      'Phiên đăng nhập không hợp lệ hoặc đã hết hạn',
+    );
+  }
+
+  // Chỉ lấy các trường được phép trả về client
+  const user = await this.userRepo.findOne({
+    where: {
+      userId,
+    },
+    select: {
+      userId: true,
+      username: true,
+      email: true,
+      role: true,
+      status: true,
+    },
+  });
+
+  if (!user || user.status !== 'active') {
+    throw new UnauthorizedException(
+      'Tài khoản không tồn tại hoặc không hoạt động',
+    );
+  }
+
+  return {
+    user: {
+      userId: user.userId,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    },
+  };
+}
 }

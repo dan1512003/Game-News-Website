@@ -1848,6 +1848,13 @@ console.log('========================================');
     this.form.requirement_note.trim() || null;
 
 
+//chuân hóa điểm đánh giá
+const reviewScore =
+  this.form.review_score == null ||
+  String(this.form.review_score).trim() === ''
+    ? null
+    : Number(this.form.review_score);
+
 
   // 14. Xác định ID bài viết
 
@@ -1872,6 +1879,7 @@ console.log('========================================');
     tagIds,
 
     contentBlocks,
+      reviewScore,
 
   };
 

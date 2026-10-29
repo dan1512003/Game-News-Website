@@ -28,7 +28,7 @@ export class TagsController {
     private readonly tagsService: TagsService,
   ) {}
   @Get('dashboard-stats') 
-  @Roles('admin', 'super_admin', 'editor')
+  @Roles('admin', 'super_admin','author','editor')
    getDashboardStats() { 
     return this.tagsService.getDashboardStats(); 
   }

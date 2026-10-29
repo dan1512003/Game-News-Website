@@ -41,7 +41,10 @@ import {
   ResetPasswordResponse,
 } from '../../shared/models/auth/auth.model';
 
-
+export const restoreUser = createAction(
+  '[Auth] Restore User',
+  props<{ user: UserLogin | null }>(),
+);
 // =====================================================
 // REGISTER
 // =====================================================

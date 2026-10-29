@@ -1,15 +1,24 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Brackets,
+  DataSource,
+  EntityManager,
+  In,
   Repository,
 } from 'typeorm';
 
 import { CommentEntity } from './entities/comment.entity/comment.entity.js';
 import { QueryCommentsDto } from './dto/query-comments.dto/query-comments.dto.js';
+import { CreateCommentDto } from './dto/create-comment.dto/create-comment.dto.js';
+import { UserEntity } from '../users/entities/user.entity/user.entity.js';
+import { NewsEntity } from '../news/entities/news.entity/news.entity.js';
+import { CommentSort } from './pipes/comment-sort.pipe.js';
+import { CommentLikeEntity } from './entities/comment-like.entity/comment-like.entity.js';
 
 
 @Injectable()
@@ -17,8 +26,17 @@ export class CommentsService {
   constructor(
     @InjectRepository(CommentEntity)
     private readonly commentsRepository: Repository<CommentEntity>,
+       @InjectRepository(NewsEntity)
+    private readonly newsRepo: Repository<NewsEntity>,
+
+    @InjectRepository(UserEntity)
+    private readonly userRepo: Repository<UserEntity>,
+      private readonly dataSource: DataSource,
   ) {}
 
+
+
+  
   /**
    * Chuẩn hóa dữ liệu trả về cho Angular.
    * Không trả toàn bộ entity hoặc các quan hệ không cần thiết.
@@ -370,4 +388,408 @@ async getDashboardStats() {
     spam: byStatus['spam'],
   };
 }
+
+
+
+  // 1. CREATE COMMENT
+
+  async create(
+    newsId: string,
+    dto: CreateCommentDto,
+    currentUser: UserEntity,
+  ) {
+    const content = dto.content?.trim();
+
+    if (!content) {
+      throw new BadRequestException(
+        'Nội dung bình luận không được để trống',
+      );
+    }
+
+    const created = await this.dataSource.transaction(
+      async (manager) => {
+        const newsRepository =
+          manager.getRepository(NewsEntity);
+
+        const userRepository =
+          manager.getRepository(UserEntity);
+
+        const commentRepository =
+          manager.getRepository(CommentEntity);
+
+        // Kiểm tra bài viết đã xuất bản.
+        const news = await newsRepository.findOne({
+          where: {
+            newsId,
+            status: 'published',
+          },
+        });
+
+        if (!news) {
+          throw new NotFoundException(
+            'Không tìm thấy bài viết đã xuất bản',
+          );
+        }
+
+        // Kiểm tra tài khoản đang hoạt động.
+        const user = await userRepository.findOne({
+          where: {
+            userId: currentUser.userId,
+            status: 'active',
+          },
+        });
+
+        if (!user) {
+          throw new NotFoundException(
+            'Tài khoản không tồn tại hoặc không hoạt động',
+          );
+        }
+
+        // Kiểm tra bình luận cha nếu là trả lời.
+        const parentId = dto.parentId ?? null;
+        let parent: CommentEntity | null = null;
+
+        if (parentId !== null) {
+          parent = await commentRepository.findOne({
+            where: {
+              commentId: parentId,
+              newsId,
+            },
+          });
+
+          if (!parent || parent.status === 'spam') {
+            throw new NotFoundException(
+              'Không tìm thấy bình luận cha hợp lệ',
+            );
+          }
+        }
+
+        // Tạo bình luận mới.
+        // pending vẫn được hiển thị vì chỉ ẩn spam.
+        let comment = commentRepository.create({
+          newsId: news.newsId,
+          userId: user.userId,
+          parentId: parent?.commentId ?? null,
+          rootId: parent
+            ? parent.rootId ?? parent.commentId
+            : null,
+          content,
+          status: 'pending',
+          likes: 0,
+        });
+
+        comment = await commentRepository.save(comment);
+
+        // Bình luận gốc tự tham chiếu rootId.
+        if (!parent) {
+          comment.rootId = comment.commentId;
+          comment = await commentRepository.save(comment);
+        }
+
+        return {
+          id: String(comment.commentId),
+          newsId: String(comment.newsId),
+          userId: String(comment.userId),
+          parentId: comment.parentId
+            ? String(comment.parentId)
+            : null,
+          rootId: comment.rootId
+            ? String(comment.rootId)
+            : null,
+          content: comment.content,
+          status: comment.status,
+          likes: comment.likes,
+          liked: false,
+          createdAt: comment.createdAt,
+          user: {
+            id: String(user.userId),
+            username: user.username,
+          },
+        };
+      },
+    );
+
+    // Lấy danh sách sau khi transaction đã hoàn tất.
+    const comments = await this.findByNews(
+      newsId,
+      'newest',
+      String(currentUser.userId),
+    );
+
+    return {
+      message: 'Đã gửi bình luận',
+      created,
+      comments,
+    };
+  }
+
+
+  // 2. FIND COMMENTS BY NEWS
+ 
+  async findByNews(
+    newsId: string,
+    sortBy: CommentSort = 'newest',
+    currentUserId?: string,
+  ) {
+    const news = await this.dataSource
+      .getRepository(NewsEntity)
+      .findOne({
+        where: {
+          newsId,
+          status: 'published',
+        },
+      });
+
+    if (!news) {
+      throw new NotFoundException(
+        'Không tìm thấy bài viết đã xuất bản',
+      );
+    }
+
+    return this.getCommentsByNews(
+      newsId,
+      sortBy,
+      currentUserId,
+    );
+  }
+
+
+  // 3. TOGGLE LIKE
+
+  async toggleLike(
+    newsId: string,
+    commentId: string,
+    currentUser: UserEntity,
+    sortBy: CommentSort = 'newest',
+  ) {
+    const result = await this.dataSource.transaction(
+      async (manager) => {
+        const newsRepository =
+          manager.getRepository(NewsEntity);
+
+        const userRepository =
+          manager.getRepository(UserEntity);
+
+        const commentRepository =
+          manager.getRepository(CommentEntity);
+
+        const likeRepository =
+          manager.getRepository(CommentLikeEntity);
+
+        // Kiểm tra bài viết.
+        const news = await newsRepository.findOne({
+          where: {
+            newsId,
+            status: 'published',
+          },
+        });
+
+        if (!news) {
+          throw new NotFoundException(
+            'Không tìm thấy bài viết đã xuất bản',
+          );
+        }
+
+        // Kiểm tra người dùng.
+        const user = await userRepository.findOne({
+          where: {
+            userId: currentUser.userId,
+            status: 'active',
+          },
+        });
+
+        if (!user) {
+          throw new NotFoundException(
+            'Tài khoản không tồn tại hoặc không hoạt động',
+          );
+        }
+
+        // Khóa dòng bình luận trong transaction.
+        const comment = await commentRepository.findOne({
+          where: {
+            commentId,
+            newsId,
+          },
+          lock: {
+            mode: 'pessimistic_write',
+          },
+        });
+
+        if (!comment || comment.status === 'spam') {
+          throw new NotFoundException(
+            'Không tìm thấy bình luận',
+          );
+        }
+
+        // Kiểm tra lượt like hiện có.
+        const existingLike = await likeRepository.findOne({
+          where: {
+            commentId: comment.commentId,
+            userId: String(user.userId),
+          },
+        });
+
+        let liked: boolean;
+
+        if (existingLike) {
+          await likeRepository.delete({
+            id: existingLike.id,
+          });
+
+          liked = false;
+        } else {
+          await likeRepository.insert({
+            commentId: comment.commentId,
+            userId: String(user.userId),
+          });
+
+          liked = true;
+        }
+
+        // Tính lại số like từ bảng comment_likes.
+        const likes = await likeRepository.count({
+          where: {
+            commentId: comment.commentId,
+          },
+        });
+
+        await commentRepository.update(
+          {
+            commentId: comment.commentId,
+          },
+          {
+            likes,
+          },
+        );
+
+        return {
+          commentId: String(comment.commentId),
+          liked,
+          likes,
+        };
+      },
+    );
+
+    // Trả danh sách đã cập nhật sau khi transaction hoàn tất.
+    const comments = await this.findByNews(
+      newsId,
+      sortBy,
+      String(currentUser.userId),
+    );
+
+    return {
+      ...result,
+      comments,
+    };
+  }
+
+
+  // PRIVATE: DÙNG CHUNG CHO VIỆC LẤY DANH SÁCH
+
+  private async getCommentsByNews(
+    newsId: string,
+    sortBy: CommentSort = 'newest',
+    currentUserId?: string,
+    manager?: EntityManager,
+  ) {
+    const commentRepository = manager
+      ? manager.getRepository(CommentEntity)
+      : this.dataSource.getRepository(CommentEntity);
+
+    const likeRepository = manager
+      ? manager.getRepository(CommentLikeEntity)
+      : this.dataSource.getRepository(CommentLikeEntity);
+
+    const query = commentRepository
+      .createQueryBuilder('comment')
+      .leftJoin('comment.user', 'user')
+      .select([
+        'comment.commentId',
+        'comment.newsId',
+        'comment.userId',
+        'comment.parentId',
+        'comment.rootId',
+        'comment.content',
+        'comment.status',
+        'comment.likes',
+        'comment.createdAt',
+      ])
+      .addSelect([
+        'user.userId',
+        'user.username',
+      ])
+      .where('comment.newsId = :newsId', { newsId })
+      .andWhere('comment.status <> :spam', {
+        spam: 'spam',
+      });
+
+    if (sortBy === 'popular') {
+      query
+        .orderBy('comment.likes', 'DESC')
+        .addOrderBy('comment.createdAt', 'DESC')
+        .addOrderBy('comment.commentId', 'DESC');
+    } else {
+      query
+        .orderBy('comment.createdAt', 'DESC')
+        .addOrderBy('comment.commentId', 'DESC');
+    }
+
+    const comments = await query.getMany();
+
+    // Mặc định chưa like nếu người xem chưa đăng nhập.
+    const likedIds = new Set<string>();
+
+    const commentIds = comments.map(
+      (comment) => String(comment.commentId),
+    );
+
+    // Một truy vấn lấy tất cả lượt like của người hiện tại.
+    if (currentUserId && commentIds.length > 0) {
+      const likedRows = await likeRepository.find({
+        select: {
+          commentId: true,
+        },
+        where: {
+          userId: currentUserId,
+          commentId: In(commentIds),
+        },
+      });
+
+      for (const row of likedRows) {
+        likedIds.add(String(row.commentId));
+      }
+    }
+
+    return comments.map((comment) => ({
+      id: String(comment.commentId),
+      newsId: String(comment.newsId),
+      userId: String(comment.userId),
+
+      parentId: comment.parentId
+        ? String(comment.parentId)
+        : null,
+
+      rootId: comment.rootId
+        ? String(comment.rootId)
+        : null,
+
+      content: comment.content,
+      status: comment.status,
+      likes: comment.likes,
+
+      liked: currentUserId
+        ? likedIds.has(String(comment.commentId))
+        : false,
+
+      createdAt: comment.createdAt,
+
+      user: comment.user
+        ? {
+            id: String(comment.user.userId),
+            username: comment.user.username,
+             role: comment.user.role,
+          }
+        : null,
+    }));
+  }
 }

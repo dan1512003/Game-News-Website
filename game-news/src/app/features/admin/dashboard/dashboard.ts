@@ -9,6 +9,7 @@ import {
   afterNextRender,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   HostListener,
   inject,
@@ -50,6 +51,8 @@ import {
   selectTagDashboardStats,
   selectTagDashboardStatsLoading,
 } from '../../../store/tag/tag.selectors';
+import { Actions, ofType } from '@ngrx/effects';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-dashboard',
@@ -60,6 +63,8 @@ import {
 })
 export class Dashboard implements OnInit {
   private readonly store = inject(Store);
+  private readonly actions$ = inject(Actions);
+private readonly destroyRef = inject(DestroyRef);
   @ViewChild('chartContainer')
   chartContainer!: ElementRef<HTMLDivElement>;
 
@@ -140,17 +145,36 @@ export class Dashboard implements OnInit {
 
   areaD = '';
 
-  constructor(
-  
-    @Inject(PLATFORM_ID)
-    private readonly platformId: object,
-    private readonly cdr: ChangeDetectorRef,
-  ) {
-    afterNextRender(() => {
-      this.updateWidthAndChart();
-      this.cdr.detectChanges();
+
+constructor(
+  @Inject(PLATFORM_ID)
+  private readonly platformId: object,
+  private readonly cdr: ChangeDetectorRef,
+) {
+  afterNextRender(() => {
+    this.updateWidthAndChart();
+    this.cdr.detectChanges();
+  });
+
+  this.actions$
+    .pipe(
+      ofType(
+        NewsActions.loadNewsDashboardStatsSuccess,
+        CommentActions.loadCommentDashboardStatsSuccess,
+        UserActions.loadUserDashboardStatsSuccess,
+        CategoryActions.loadCategoryDashboardStatsSuccess,
+        TagActions.loadTagDashboardStatsSuccess,
+      ),
+      takeUntilDestroyed(this.destroyRef),
+    )
+    .subscribe((action) => {
+      console.log(
+        '✅ [DASHBOARD] Load stats thành công:',
+        action,
+      );
     });
-  }
+}
+
 
   ngOnInit(): void {
     // Tải thống kê từ NgRx Effects/API.

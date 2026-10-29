@@ -125,7 +125,9 @@ import {
 import { PasswordResetTokenEntity } from './modules/auth/entities/password-reset-token.entity/password-reset-token.entity.js';
 import { EmailResetTokenEntity } from './modules/auth/entities/email-reset-token.entity/email-reset-token.entity.js';
 import { AccessTokenBlacklistEntity } from './modules/auth/entities/access-token-blacklist.entity/access-token-blacklist.entity.js';
-
+import {
+  CommentLikeEntity,
+} from './modules/comments/entities/comment-like.entity/comment-like.entity.js';
 
 // =====================================================
 // OBSERVE
@@ -230,6 +232,7 @@ export const {
             EmailResetTokenEntity,
             PasswordResetTokenEntity,
           AccessTokenBlacklistEntity,
+          CommentLikeEntity
 
         ],
 
@@ -267,6 +270,7 @@ export const {
     AuthModule,
 
     MailModule,
+    CommentLikeEntity
 
   ],
 

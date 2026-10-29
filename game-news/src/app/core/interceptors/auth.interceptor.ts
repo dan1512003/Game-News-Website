@@ -10,6 +10,8 @@ import { Store } from '@ngrx/store';
 
 import {
   catchError,
+  finalize,
+  shareReplay,
   switchMap,
   throwError,
 } from 'rxjs';
@@ -33,96 +35,45 @@ export const authInterceptor: HttpInterceptorFn = (
   req,
   next,
 ) => {
-  console.log('[AuthInterceptor] ========== REQUEST START ==========');
-  console.log('[AuthInterceptor] URL:', req.url);
-  console.log('[AuthInterceptor] Method:', req.method);
-  console.log('[AuthInterceptor] Headers:', req.headers.keys());
-  console.log(
-    '[AuthInterceptor] Is auth endpoint:',
-    isAuthEndpoint(req.url),
-  );
-
   const store = inject(Store<AppState>);
   const authService = inject(AuthService);
 
+  console.log('[AuthInterceptor] Request:', req.method, req.url);
 
+  // Không gắn access token vào các endpoint xác thực
+  // và các endpoint tin tức công khai.
   if (isAuthEndpoint(req.url)) {
-    console.log(
-      '[AuthInterceptor] Bỏ qua endpoint xác thực:',
-      req.url,
-    );
-
     return next(req);
   }
 
- 
   const accessToken = store.selectSignal(
     AuthSelectors.selectAccessToken,
   )();
 
-  console.log(
-    '[AuthInterceptor] Có access token:',
-    !!accessToken,
-  );
+  // Gửi request với token nếu đang có token.
+  const authReq = accessToken
+    ? req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+    : req;
 
   if (!accessToken) {
-    console.log(
-      '[AuthInterceptor] Không có access token, gửi request không thêm Authorization',
+    console.warn(
+      '[AuthInterceptor] Chưa có access token:',
+      req.url,
     );
-
-    return next(req);
   }
-
-
-  const authReq = req.clone({
-    setHeaders: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  console.log(
-    '[AuthInterceptor] Đã thêm Authorization header',
-  );
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      console.error(
-        '[AuthInterceptor] ========== HTTP ERROR ==========',
-      );
-      console.error('[AuthInterceptor] URL:', req.url);
-      console.error('[AuthInterceptor] Method:', req.method);
-      console.error('[AuthInterceptor] Status:', error.status);
-      console.error(
-        '[AuthInterceptor] Response body:',
-        error.error,
-      );
-      console.error(
-        '[AuthInterceptor] Request có X-Retry:',
-        req.headers.has('X-Retry'),
-      );
-      console.error(
-        '[AuthInterceptor] =================================',
-      );
-
-   
       if (error.status !== 401) {
-        console.log(
-          '[AuthInterceptor] Không phải lỗi 401, trả lỗi về caller',
-        );
-
         return throwError(() => error);
       }
 
-      console.warn(
-        '[AuthInterceptor] Nhận 401, kiểm tra request retry',
-      );
-
-
+      // Request đã retry mà vẫn 401 thì không refresh lần nữa.
       if (req.headers.has('X-Retry')) {
-        console.error(
-          '[AuthInterceptor] Request retry vẫn nhận 401, không refresh lần nữa',
-        );
-
         store.dispatch(
           AuthActions.refreshFailure({
             error: error.error as ApiErrorResponse,
@@ -132,103 +83,66 @@ export const authInterceptor: HttpInterceptorFn = (
         return throwError(() => error);
       }
 
-   
+      // Các request cùng sử dụng một HTTP refresh request.
       if (!refreshRequest$) {
-        console.log(
-          '[AuthInterceptor] Chưa có refresh request, bắt đầu refresh',
-        );
+        console.log('[AuthInterceptor] Bắt đầu refresh');
 
-        refreshRequest$ = authService.refresh();
+        refreshRequest$ = authService.refresh().pipe(
+          finalize(() => {
+            refreshRequest$ = null;
+
+            console.log(
+              '[AuthInterceptor] Đã reset refreshRequest$',
+            );
+          }),
+          shareReplay({
+            bufferSize: 1,
+            refCount: false,
+          }),
+        );
       } else {
         console.log(
-          '[AuthInterceptor] Đang có refresh request, dùng chung request hiện tại',
+          '[AuthInterceptor] Dùng chung refresh request',
         );
       }
 
-      return refreshRequest$.pipe(
+      const sharedRefresh$ = refreshRequest$;
+
+      return sharedRefresh$.pipe(
         switchMap((response) => {
-          console.log(
-            '[AuthInterceptor] Refresh thành công',
-          );
-          console.log(
-            '[AuthInterceptor] Refresh response:',
-            {
-              message: response.message,
-              user: response.data.user,
-              hasAccessToken: !!response.data.accessToken,
-            },
-          );
+          const newAccessToken =
+            response.data.accessToken;
 
-      
-          refreshRequest$ = null;
+          if (!newAccessToken) {
+            return throwError(
+              () => new Error(
+                'Refresh thành công nhưng không có access token.',
+              ),
+            );
+          }
 
-          console.log(
-            '[AuthInterceptor] Đã reset refreshRequest$',
-          );
-
-       
           store.dispatch(
             AuthActions.refreshSuccess({
               response,
             }),
           );
 
-          console.log(
-            '[AuthInterceptor] Đã dispatch refreshSuccess',
-          );
-
-     
           const retryReq = req.clone({
             setHeaders: {
-              Authorization:
-                `Bearer ${response.data.accessToken}`,
+              Authorization: `Bearer ${newAccessToken}`,
               'X-Retry': 'true',
             },
           });
 
           console.log(
-            '[AuthInterceptor] Gửi lại request với access token mới',
-          );
-          console.log(
-            '[AuthInterceptor] Retry URL:',
+            '[AuthInterceptor] Retry request:',
             retryReq.url,
-          );
-          console.log(
-            '[AuthInterceptor] Retry method:',
-            retryReq.method,
-          );
-          console.log(
-            '[AuthInterceptor] Retry headers:',
-            retryReq.headers.keys(),
           );
 
           return next(retryReq);
         }),
 
         catchError((refreshError: HttpErrorResponse) => {
-          console.error(
-            '[AuthInterceptor] ========== REFRESH ERROR ==========',
-          );
-          console.error(
-            '[AuthInterceptor] Refresh status:',
-            refreshError.status,
-          );
-          console.error(
-            '[AuthInterceptor] Refresh message:',
-            refreshError.message,
-          );
-          console.error(
-            '[AuthInterceptor] Refresh response body:',
-            refreshError.error,
-          );
-
-      
-          refreshRequest$ = null;
-
-          console.log(
-            '[AuthInterceptor] Đã reset refreshRequest$ sau lỗi',
-          );
-
           const apiError =
             refreshError.error as ApiErrorResponse;
 
@@ -236,13 +150,6 @@ export const authInterceptor: HttpInterceptorFn = (
             AuthActions.refreshFailure({
               error: apiError,
             }),
-          );
-
-          console.error(
-            '[AuthInterceptor] Đã dispatch refreshFailure',
-          );
-          console.error(
-            '[AuthInterceptor] =================================',
           );
 
           return throwError(() => refreshError);
@@ -254,14 +161,16 @@ export const authInterceptor: HttpInterceptorFn = (
 
 function isAuthEndpoint(url: string): boolean {
   return (
-
-
-
     url.includes('/auth/login') ||
     url.includes('/auth/register') ||
-    url.includes('/auth/refresh')||
-     url.includes('auth/password-reset/request') ||
-    url.includes('auth/password-reset/verify') ||
-    url.includes('auth/password-reset/reset')
+    url.includes('/auth/refresh') ||
+    url.includes('/auth/password-reset/request') ||
+    url.includes('/auth/password-reset/verify') ||
+    url.includes('/auth/password-reset/reset') ||
+
+    // Tin tức công khai
+    url.includes('/news/public') ||
+    /\/news\/search(?:\?|$)/.test(url) ||
+    /\/news\/trending(?:\?|$)/.test(url)
   );
 }

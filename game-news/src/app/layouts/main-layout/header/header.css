@@ -19,6 +19,7 @@
 
 
 
+
 .breaking-ticker {
   height: 36px;
 
@@ -70,7 +71,20 @@
   font-size: 13px;
   font-weight: 500;
 
-  animation: ticker 28s linear infinite;
+  animation: ticker 35s linear infinite;
+}
+
+.breaking-track span {
+  display: inline-block;
+}
+
+.breaking-loading {
+  padding-left: 8px;
+
+  font-family: var(--font-body);
+  font-size: 13px;
+
+  opacity: 0.85;
 }
 
 @keyframes ticker {
@@ -121,6 +135,9 @@
   justify-content: space-between;
 }
 
+
+
+
 .logo {
   display: flex;
   align-items: center;
@@ -156,12 +173,15 @@
   color: var(--orange);
 }
 
+
+
 .header-actions {
   display: flex;
   align-items: center;
 
   gap: 12px;
 }
+
 
 
 .search-box {
@@ -199,8 +219,11 @@
   color: var(--muted);
 }
 
-.mobile-search-box{
-    width: 100%;
+
+
+
+.mobile-search-box {
+  width: 100%;
 
   display: flex;
   align-items: center;
@@ -214,8 +237,9 @@
   background: var(--bg-light);
 
   color: var(--muted);
-}
 
+  margin-bottom: 8px;
+}
 
 .mobile-search-box input {
   width: 100%;
@@ -234,9 +258,12 @@
 .mobile-search-box input::placeholder {
   color: var(--muted);
 }
+
+
+
+
 .login-button,
-.register-button,
-.admin-button {
+.register-button {
   text-decoration: none;
 
   transition: 0.2s;
@@ -295,15 +322,113 @@
 
 
 
+.user-profile-button {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding: 4px 8px 4px 5px;
+
+  border: 1px solid var(--border);
+
+  background: #101010;
+
+  color: var(--text);
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+
+.user-profile-button:hover {
+  border-color: rgba(255, 92, 0, 0.5);
+
+  background: #151515;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  color: white;
+
+  font-family: var(--font-display);
+
+  font-size: 14px;
+  font-weight: 900;
+
+  text-transform: uppercase;
+}
+
+.user-profile-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  gap: 2px;
+}
+
+.user-name {
+  max-width: 120px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+
+  color: var(--text);
+
+  font-family: var(--font-body);
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.user-role {
+  color: var(--muted);
+
+  font-family: var(--font-mono);
+
+  font-size: 8px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.08em;
+}
+
+
+
 .admin-button {
   display: flex;
   align-items: center;
+  justify-content: center;
 
   padding: 7px 10px;
 
   border: 1px solid #1a1a1a;
 
+  background: transparent;
+
   color: #3a3530;
+
+  cursor: pointer;
+
+  transition: 0.2s;
 }
 
 .admin-button:hover {
@@ -311,6 +436,8 @@
 
   border-color: rgba(255, 92, 0, 0.3);
 }
+
+
 
 
 .desktop-nav {
@@ -369,6 +496,9 @@
   background: var(--orange);
 }
 
+
+
+
 .social-links {
   margin-left: auto;
 
@@ -398,6 +528,7 @@
 
 
 
+
 .mobile-menu-button {
   display: none;
 
@@ -412,8 +543,106 @@
   cursor: pointer;
 }
 
+
+
 .mobile-nav {
   display: none;
+}
+
+
+
+.mobile-user-profile {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 12px 16px;
+
+  border: none;
+  border-bottom: 1px solid #161616;
+
+  background: transparent;
+
+  color: var(--text);
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.mobile-avatar {
+  width: 38px;
+  height: 38px;
+}
+
+.mobile-user-info {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.mobile-user-info strong {
+  color: var(--text);
+
+  font-family: var(--font-body);
+
+  font-size: 14px;
+}
+
+.mobile-user-info small {
+  color: var(--muted);
+
+  font-family: var(--font-mono);
+
+  font-size: 9px;
+
+  text-transform: uppercase;
+}
+
+.mobile-admin-button {
+  width: calc(100% - 32px);
+
+  margin: 10px 16px;
+
+  padding: 10px;
+
+  border: 1px solid var(--border);
+
+  background: transparent;
+
+  color: var(--muted);
+
+  cursor: pointer;
+
+  font-family: var(--font-body);
+
+  font-size: 13px;
+}
+
+.mobile-admin-button:hover {
+  color: var(--orange);
+
+  border-color: rgba(255, 92, 0, 0.4);
+}
+
+
+
+@media screen and (max-width: 1100px) {
+
+  .search-box {
+    width: 180px;
+  }
+
+  .nav-item {
+    padding: 0 11px;
+
+    font-size: 11px;
+  }
+
 }
 
 
@@ -426,12 +655,14 @@
   .login-button,
   .register-button,
   .admin-button,
+  .user-profile-button,
   .desktop-nav {
     display: none;
   }
 
   .mobile-menu-button {
     display: flex;
+
     align-items: center;
     justify-content: center;
   }
@@ -512,6 +743,28 @@
 
 }
 
+
+@media screen and (max-width: 600px) {
+
+  .breaking-label {
+    padding: 6px 10px;
+
+    margin-right: 8px;
+
+    font-size: 9px;
+  }
+
+  .breaking-track {
+    gap: 35px;
+
+    font-size: 11px;
+
+    animation-duration: 30s;
+  }
+
+}
+
+
 @media screen and (max-width: 500px) {
 
   .header-container {
@@ -520,6 +773,11 @@
 
   .logo-text {
     font-size: 22px;
+  }
+
+  .logo-icon {
+    width: 29px;
+    height: 29px;
   }
 
 }

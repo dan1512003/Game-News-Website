@@ -771,8 +771,7 @@
 
   gap: 6px;
 
-  margin:
-    32px 0;
+
 }
 
 
@@ -853,6 +852,8 @@
 
   border:
     1px solid var(--border);
+      margin:
+    32px 0;
 }
 
 
@@ -1272,4 +1273,17 @@
       24px 0;
   }
 
+}
+
+
+.pagination-dots {
+  min-width: 24px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #777;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  user-select: none;
 }

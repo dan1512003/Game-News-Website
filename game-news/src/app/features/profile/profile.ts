@@ -32,7 +32,7 @@ type PasswordField =
   | 'confirm';
 
 @Component({
-  selector: 'app-profile',
+  selector: 'app-profile-user',
   standalone: true,
   imports: [
     CommonModule,

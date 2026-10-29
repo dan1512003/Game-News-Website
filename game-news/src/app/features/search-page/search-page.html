@@ -1,58 +1,26 @@
 
 <main class="search-page">
 
-
-
   <div class="search-header">
-
     <div class="eyebrow">
-
       <span class="eyebrow-line"></span>
-
-      <span class="eyebrow-text">
-        Khám phá GameZone
-      </span>
-
+      <span class="eyebrow-text">Khám phá GameZone</span>
     </div>
 
-
-    <h1>
-      Kết quả tìm kiếm
-    </h1>
-
+    <h1>Kết quả tìm kiếm</h1>
 
     @if (query) {
-
       <p class="search-description">
-
         Tìm thấy
-
-        <span class="result-count">
-          {{ matchingArticles.length }}
-        </span>
-
+        <span class="result-count">{{ matchingArticles.length }}</span>
         bài viết cho
-
-        <span class="query-text">
-          “{{ query }}”
-        </span>
-
+        <span class="query-text">“{{ query }}”</span>
       </p>
-
     }
-
   </div>
 
-
-
-
-  <form
-    class="search-form"
-    (submit)="search()"
-  >
-
+  <form class="search-form" (ngSubmit)="search()">
     <div class="search-input-wrapper">
-
       <svg
         class="search-icon"
         width="19"
@@ -62,19 +30,9 @@
         stroke="currentColor"
         stroke-width="2"
       >
-
-        <circle
-          cx="11"
-          cy="11"
-          r="8"
-        />
-
-        <path
-          d="m21 21-4.35-4.35"
-        />
-
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.35-4.35" />
       </svg>
-
 
       <input
         type="text"
@@ -83,386 +41,257 @@
         aria-label="Nhập từ khóa tìm kiếm"
         placeholder="Tìm kiếm tin tức..."
       />
-
     </div>
 
-
-    <button
-      type="submit"
-      class="search-button"
-    >
+    <button type="submit" class="search-button">
       Tìm kiếm
     </button>
-
   </form>
 
-
-
-
-
   <div class="content-grid">
-
-
-
-
     <section class="results-section">
 
-
-
-      @if (matchingArticles.length > 0) {
-
-        <div class="category-wrapper">
-
-          @for (
-            item of categories;
-            track trackCategory($index, item)
-          ) {
-
-            <button
-              type="button"
-              class="category-button"
-              [class.active]="category === item"
-              (click)="selectCategory(item)"
-            >
-              {{ item }}
-            </button>
-
-          }
-
+      @if (loading()) {
+        <div class="empty-state">
+          <h2>Đang tải bài viết...</h2>
+          <p>Vui lòng chờ trong giây lát.</p>
         </div>
+      } @else if (error()) {
+        <div class="empty-state">
+          <h2>Không thể tải bài viết</h2>
+          <p>Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại sau.</p>
+        </div>
+      } @else {
 
-      }
+        @if (matchingArticles.length > 0) {
+          <div class="category-wrapper">
+            @for (
+              item of categories;
+              track trackCategory($index, item)
+            ) {
+              <button
+                type="button"
+                class="category-button"
+                [class.active]="category === item"
+                (click)="selectCategory(item)"
+              >
+                {{ item }}
+              </button>
+            }
+          </div>
+        }
 
+        @if (paginatedArticles.length > 0) {
+          <div class="article-list">
+            @for (
+              article of paginatedArticles;
+              track trackArticle($index, article)
+            ) {
+              <a
+                class="article-item"
+                [routerLink]="articleUrl(article)"
+              >
+                <div class="article-image">
+                  <img
+                    [src]="article.image"
+                    [alt]="article.title"
+                    loading="lazy"
+                  />
+                </div>
 
-
-
-      @if (paginatedArticles.length > 0) {
-
-        <div class="article-list">
-
-          @for (
-            article of paginatedArticles;
-            track trackArticle($index, article)
-          ) {
-
-            <a
-              class="article-item"
-              [routerLink]="articleUrl(article)"
-            >
-
-
-
-              <div class="article-image">
-
-                <img
-                  [src]="article.image"
-                  [alt]="article.title"
-                />
-
-              </div>
-
-
-
-              <div class="article-info">
-
-
-
-                <div class="article-meta-top">
-
-                  <span class="category-badge">
-                    {{ article.category }}
-                  </span>
-
-
-                  @if (article.hot) {
-
-                    <span class="hot-badge">
-                      Hot
+                <div class="article-info">
+                  <div class="article-meta-top">
+                    <span class="category-badge">
+                      {{ article.category }}
                     </span>
 
-                  }
+                    @if (article.hot) {
+                      <span class="hot-badge">Hot</span>
+                    }
+                  </div>
 
+                  <h2>{{ article.title }}</h2>
+
+                  <p class="article-excerpt">
+                    {{ article.excerpt }}
+                  </p>
+
+                  <div class="article-meta">
+                    <span class="author">
+                      {{ article.author }}
+                    </span>
+
+                    <span class="separator">·</span>
+
+                    <span>{{ article.date }}</span>
+
+                    <span class="separator desktop-only">·</span>
+
+                    <span class="desktop-only">
+                      {{ article.readTime }}
+                    </span>
+                  </div>
                 </div>
+              </a>
+            }
+          </div>
 
-
-
-  
-
-                <h2>
-                  {{ article.title }}
-                </h2>
-
-
-
-
-                <p class="article-excerpt">
-                  {{ article.excerpt }}
-                </p>
-
-
-
-
-                <div class="article-meta">
-
-                  <span class="author">
-                    {{ article.author }}
-                  </span>
-
-                  <span class="separator">
-                    ·
-                  </span>
-
-                  <span>
-                    {{ article.date }}
-                  </span>
-
-                  <span class="separator desktop-only">
-                    ·
-                  </span>
-
-                  <span class="desktop-only">
-                    {{ article.readTime }}
-                  </span>
-
-                </div>
-
-              </div>
-
-            </a>
-
-          }
-
-        </div>
-
-
-
-        <!-- PAGINATION -->
-
-        @if (totalPages > 1) {
-
-          <div class="pagination">
-
-
-         
-
-            <button
-              type="button"
-              class="pagination-button"
-              [disabled]="isFirstPage()"
-              (click)="goTo(page - 1)"
-            >
-
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-
-                <path
-                  d="m15 18-6-6 6-6"
-                />
-
-              </svg>
-
-            </button>
-
-
-
-         
-
-            @for (
-              pageNumber of paginationPages;
-              track pageNumber
-            ) {
+          @if (totalPages > 1) {
+            <nav class="pagination" aria-label="Phân trang">
 
               <button
                 type="button"
                 class="pagination-button"
-                [class.active]="page === pageNumber"
-                (click)="goTo(pageNumber)"
+                aria-label="Trang trước"
+                [disabled]="isFirstPage()"
+                (click)="goTo(page - 1)"
               >
-                {{ pageNumber }}
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
               </button>
 
-            }
+              @for (
+                pageNumber of paginationPages;
+                track $index
+              ) {
+                @if (pageNumber === '...') {
+                  <span
+                    class="pagination-dots"
+                    aria-hidden="true"
+                  >
+                    ...
+                  </span>
+                } @else {
+                  <button
+                    type="button"
+                    class="pagination-button"
+                    [class.active]="page === pageNumber"
+                    [attr.aria-current]="
+                      page === pageNumber ? 'page' : null
+                    "
+                    [attr.aria-label]="'Trang ' + pageNumber"
+                    (click)="goTo(+pageNumber)"
+                  >
+                    {{ pageNumber }}
+                  </button>
+                }
+              }
 
+              <button
+                type="button"
+                class="pagination-button"
+                aria-label="Trang tiếp theo"
+                [disabled]="isLastPage()"
+                (click)="goTo(page + 1)"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
 
+            </nav>
+          }
 
-          
-
-            <button
-              type="button"
-              class="pagination-button"
-              [disabled]="isLastPage()"
-              (click)="goTo(page + 1)"
-            >
-
+        } @else {
+          <div class="empty-state">
+            <div class="empty-icon">
               <svg
-                width="16"
-                height="16"
+                width="25"
+                height="25"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
+                stroke-width="1.5"
               >
-
-                <path
-                  d="m9 18 6-6-6-6"
-                />
-
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
               </svg>
+            </div>
 
-            </button>
+            <h2>
+              @if (query) {
+                Không tìm thấy bài viết
+              } @else {
+                Bắt đầu tìm kiếm
+              }
+            </h2>
 
+            <p>
+              @if (query) {
+                Hãy thử từ khóa ngắn hơn, tên game khác hoặc chọn một chủ đề phổ biến.
+              } @else {
+                Nhập từ khóa để tìm bài viết theo tên game, tác giả, danh mục hoặc nội dung.
+              }
+            </p>
           </div>
-
         }
-
-      }
-
-
-
-      @else {
-
-        <div class="empty-state">
-
-
-          <div class="empty-icon">
-
-            <svg
-              width="25"
-              height="25"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-            >
-
-              <circle
-                cx="11"
-                cy="11"
-                r="8"
-              />
-
-              <path
-                d="m21 21-4.35-4.35"
-              />
-
-            </svg>
-
-          </div>
-
-
-
-          <h2>
-
-            @if (query) {
-
-              Không tìm thấy bài viết
-
-            } @else {
-
-              Bắt đầu tìm kiếm
-
-            }
-
-          </h2>
-
-
-
-          <p>
-
-            @if (query) {
-
-              Hãy thử từ khóa ngắn hơn,
-              tên game khác hoặc chọn một
-              chủ đề phổ biến.
-
-            } @else {
-
-              Nhập từ khóa để tìm bài viết
-              theo tên game, tác giả,
-              danh mục hoặc nội dung.
-
-            }
-
-          </p>
-
-        </div>
-
       }
 
     </section>
 
-
-
-
     <aside class="trending-sidebar">
-
-
       <div class="sidebar-title">
-
         <span class="sidebar-line"></span>
-
-        <span>
-          Đang thịnh hành
-        </span>
-
+        <span>Đang thịnh hành</span>
       </div>
 
+      @if (trendingLoading()) {
+        <p class="sidebar-message">
+          Đang tải tin thịnh hành...
+        </p>
+      } @else if (trending.length === 0) {
+        <p class="sidebar-message">
+          Chưa có tin thịnh hành.
+        </p>
+      } @else {
+        <div class="trending-list">
+          @for (
+            article of trending;
+            track trackArticle($index, article)
+          ) {
+            <a
+              class="trending-item"
+              [routerLink]="articleUrl(article)"
+            >
+              <div class="trending-image">
+                <img
+                  [src]="article.image"
+                  [alt]="article.title"
+                  loading="lazy"
+                />
+              </div>
 
+              <div class="trending-info">
+                <span class="trending-category">
+                  {{ article.category }}
+                </span>
 
-      <div class="trending-list">
+                <h3>{{ article.title }}</h3>
 
-        @for (
-          article of trending;
-          track trackArticle($index, article)
-        ) {
-
-          <a
-            class="trending-item"
-            [routerLink]="articleUrl(article)"
-          >
-
-
-            <div class="trending-image">
-
-              <img
-                [src]="article.image"
-                [alt]="article.title"
-              />
-
-            </div>
-
-
-
-            <div class="trending-info">
-
-              <span class="trending-category">
-                {{ article.category }}
-              </span>
-
-              <h3>
-                {{ article.title }}
-              </h3>
-
-              <span class="trending-date">
-                {{ article.date }}
-              </span>
-
-            </div>
-
-          </a>
-
-        }
-
-      </div>
+                <span class="trending-date">
+                  {{ article.date }}
+                </span>
+              </div>
+            </a>
+          }
+        </div>
+      }
 
     </aside>
-
   </div>
-
 </main>

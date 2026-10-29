@@ -26,7 +26,9 @@ import {
   exhaustMap,
   map,
   of,
+  switchMap,
   tap,
+  timer,
   withLatestFrom,
 } from 'rxjs';
 
@@ -301,43 +303,133 @@ export class AuthEffects {
   // REFRESH
   // =====================================================
 
-  refresh$ = createEffect(() =>
+refresh$ = createEffect(() =>
+  this.actions$.pipe(
+    ofType(AuthActions.refresh),
+
+    exhaustMap(() => {
+      console.log('[EFFECT] Bắt đầu refresh');
+
+      return this.authService.refresh().pipe(
+        map((response) => {
+          console.log('[EFFECT] Dispatch refreshSuccess');
+
+          return AuthActions.refreshSuccess({ response });
+        }),
+
+        catchError((error: HttpErrorResponse) => {
+          console.log(
+            '[EFFECT] Dispatch refreshFailure:',
+            error.status,
+          );
+
+          return of(
+            AuthActions.refreshFailure({
+              error: toApiError(error),
+            }),
+          );
+        }),
+      );
+    }),
+  ),
+);
+  // =====================================================
+// SAVE USER TO SESSION STORAGE
+// =====================================================
+
+persistUser$ = createEffect(
+  () =>
     this.actions$.pipe(
-
       ofType(
-        AuthActions.refresh,
+        AuthActions.loginSuccess,
+        AuthActions.refreshSuccess,
+        AuthActions.getMeSuccess,
+        AuthActions.updateUsernameSuccess,
       ),
 
-      exhaustMap(() =>
+      tap((action) => {
+        switch (action.type) {
+          case AuthActions.loginSuccess.type:
+          case AuthActions.refreshSuccess.type: {
+            const user = action.response.data.user;
 
-        this.authService
-          .refresh()
-          .pipe(
+            if (user) {
+              sessionStorage.setItem(
+                'auth_user',
+                JSON.stringify(user),
+              );
+            }
 
-            map((response) =>
-              AuthActions.refreshSuccess({
-                response,
+            break;
+          }
+
+          case AuthActions.getMeSuccess.type: {
+            const user = action.user;
+
+            if (user) {
+              sessionStorage.setItem(
+                'auth_user',
+                JSON.stringify(user),
+              );
+            }
+
+            break;
+          }
+
+          case AuthActions.updateUsernameSuccess.type: {
+            const updatedUser = action.response.data.user;
+
+            if (!updatedUser) {
+              return;
+            }
+
+            const savedUser =
+              sessionStorage.getItem('auth_user');
+
+            const previousUser = savedUser
+              ? JSON.parse(savedUser)
+              : {};
+
+            sessionStorage.setItem(
+              'auth_user',
+              JSON.stringify({
+                ...previousUser,
+                ...updatedUser,
               }),
-            ),
+            );
 
-            catchError(
-              (
-                error: HttpErrorResponse,
-              ) =>
-                of(
-                  AuthActions.refreshFailure({
-                    error:
-                      toApiError(error),
-                  }),
-                ),
-            ),
-
-          ),
-      ),
+            break;
+          }
+        }
+      }),
     ),
-  );
+  {
+    dispatch: false,
+  },
+);
+// =====================================================
+// CLEAR SAVED USER
+// =====================================================
 
+clearSavedUser$ = createEffect(
+  () =>
+    this.actions$.pipe(
+      ofType(
+        AuthActions.refreshFailure,
+        AuthActions.loginFailure,
+        AuthActions.logoutSuccess,
+        AuthActions.logoutFailure,
+        AuthActions.resetAuth,
+      ),
 
+      tap(() => {
+        sessionStorage.removeItem('auth_user');
+      }),
+    ),
+  {
+    dispatch: false,
+  },
+);
   // =====================================================
   // LOGOUT
   // =====================================================

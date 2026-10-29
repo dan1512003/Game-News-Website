@@ -41,6 +41,10 @@ import { CommentEffects } from './store/comment/comment.effects';
 // Interceptors and initializers
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { authInitializer } from './core/initializers/auth.initializer';
+import { NewsPublicEffects } from './store/news-public/store/news-public.effects';
+import { CommentsPublicEffects } from './store/comments-public/store/comments-public.effects';
+import { newsPublicReducer } from './store/news-public/store/news-public.reducer';
+import { commentsPublicReducer } from './store/comments-public/store/comments-public.reducer';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -69,6 +73,8 @@ export const appConfig: ApplicationConfig = {
       category: categoryReducer,
       tag: tagReducer,
       comment: commentReducer,
+        newsPublic: newsPublicReducer,
+  commentsPublic: commentsPublicReducer,
     }),
 
     // NgRx Effects
@@ -79,6 +85,8 @@ export const appConfig: ApplicationConfig = {
       CategoryEffects,
       TagEffects,
       CommentEffects,
+        NewsPublicEffects,
+  CommentsPublicEffects,
     ]),
 
     // Auth initializer

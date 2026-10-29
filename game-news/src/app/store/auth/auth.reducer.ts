@@ -16,7 +16,10 @@ export const authReducer =
 
     initialAuthState,
 
-
+on(AuthActions.restoreUser, (state, { user }) => ({
+  ...state,
+  user,
+})),
     // =====================================================
     // REGISTER
     // =====================================================
@@ -197,58 +200,58 @@ export const authReducer =
     // REFRESH
     // =====================================================
 
-    on(
-      AuthActions.refresh,
-      (state) => ({
-        ...state,
+on(AuthActions.refresh, (state) => {
+  console.log('[REFRESH BEFORE]', {
+    user: state.user,
+    loading: state.loading,
+    initialized: state.initialized,
+  });
 
-        loading: true,
+  const nextState = {
+    ...state,
+    loading: true,
+    error: null,
+  };
 
-        error: null,
-      }),
-    ),
+  console.log('[REFRESH AFTER]', {
+    user: nextState.user,
+    loading: nextState.loading,
+  });
 
+  return nextState;
+}),
+on(AuthActions.refreshSuccess, (state, { response }) => ({
+  ...state,
+  loading: false,
+  initialized: true,
+  user: response.data.user ?? state.user,
+  accessToken: response.data.accessToken,
+  isAuthenticated: true,
+  error: null,
+})),
 
-    on(
-      AuthActions.refreshSuccess,
-      (state, { response }) => ({
-        ...state,
+on(AuthActions.refreshFailure, (state, { error }) => {
+  const nextState = {
+    ...state,
+    loading: false,
+    initialized: true,
 
-        loading: false,
+    // Giữ user đã lưu nếu refresh thất bại.
+    user: state.user,
 
-        initialized: true,
+    accessToken: null,
+    isAuthenticated: false,
+    error,
+  };
 
-        user:
-          response.data.user,
+  console.log('[REDUCER] refreshFailure:', {
+    loading: nextState.loading,
+    initialized: nextState.initialized,
+    user: nextState.user,
+  });
 
-        accessToken:
-          response.data.accessToken,
-
-        isAuthenticated: true,
-
-        error: null,
-      }),
-    ),
-
-
-    on(
-      AuthActions.refreshFailure,
-      (state, { error }) => ({
-        ...state,
-
-        loading: false,
-
-        initialized: true,
-
-        user: null,
-
-        accessToken: null,
-
-        isAuthenticated: false,
-
-        error,
-      }),
-    ),
+  return nextState;
+}),
 
 
     // =====================================================

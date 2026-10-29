@@ -24,6 +24,7 @@ import type { QueryNewsDto } from './dto/query-news.dto/query-news.dto.js';
 import { CommentEntity } from '../comments/entities/comment.entity/comment.entity.js';
 import { unlink } from 'fs/promises';
 import { basename, join } from 'path';
+import { PublicNewsQueryDto } from './dto/public-news-query.dto/public-news-query.dto.js';
 
 @Injectable()
 export class NewsService {
@@ -601,6 +602,7 @@ private sanitizeBlockContent(
     heading2: [
       'em',     // Chỉ in nghiêng
     ],
+     quote: [],
   };
 
   const allowedTags = allowedTagsByType[type];
@@ -1354,4 +1356,483 @@ private async deleteUploadFiles(
       topViewed,
     };
   }
+
+
+  /*
+    Danh sách bài viết công khai.
+   */
+  async getPublicListing(dto: PublicNewsQueryDto) {
+    const page = this.normalizePage(dto.page);
+    const limit = this.normalizeLimit(dto.limit);
+    const minScore = this.normalizeScore(dto.minScore);
+
+    const query = this.createPublicQuery();
+
+    this.applyPageTypeFilter(query, dto.pageType);
+
+    if (dto.category?.trim()) {
+      query.andWhere(
+        'category.name = :categoryName',
+        { categoryName: dto.category.trim() },
+      );
+    }
+
+    if (minScore !== undefined) {
+      query.andWhere(
+        'news.reviewScore > = :minScore',
+        { minScore },
+      );
+    }
+
+    const [items, total] = await query
+      .orderBy('news.publishedAt', 'DESC')
+      .addOrderBy('news.newsId', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      items: items.map((item) => this.toPublicItem(item)),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /*
+    Tìm kiếm bài viết.
+   */
+  async searchPublicNews(dto: PublicNewsQueryDto) {
+    const keyword = dto.q?.trim();
+
+    if (!keyword) {
+      return {
+        items: [],
+        total: 0,
+        page: this.normalizePage(dto.page),
+        limit: this.normalizeLimit(dto.limit),
+        totalPages: 0,
+        categories: [],
+      };
+    }
+
+    const page = this.normalizePage(dto.page);
+    const limit = this.normalizeLimit(dto.limit);
+
+    const baseQuery = this.createPublicQuery();
+
+    this.applyKeywordFilter(baseQuery, keyword);
+
+    // Danh mục được lọc ở DB trước khi phân trang.
+    if (dto.category?.trim()) {
+      baseQuery.andWhere(
+        'category.name = :categoryName',
+        { categoryName: dto.category.trim() },
+      );
+    }
+
+    const [items, total] = await baseQuery
+      .orderBy('news.publishedAt', 'DESC')
+      .addOrderBy('news.newsId', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    // Lấy các danh mục của toàn bộ kết quả tìm kiếm,
+    // không chỉ danh mục xuất hiện trong trang hiện tại.
+    const categoryQuery = this.newsRepo
+      .createQueryBuilder('news')
+      .innerJoin('news.category', 'category')
+      .leftJoin('news.author', 'author')
+      .select('category.name', 'name')
+      .where('news.status = :status', {
+        status: 'published',
+      });
+
+    this.applyKeywordFilter(categoryQuery, keyword);
+
+    const categoryRows = await categoryQuery
+      .distinct(true)
+      .orderBy('category.name', 'ASC')
+      .getRawMany<{ name: string }>();
+
+    return {
+      items: items.map((item) => this.toPublicItem(item)),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      categories: categoryRows.map((row) => row.name),
+    };
+  }
+
+  /*
+    Danh sách bài thịnh hành theo lượt xem.
+   */
+  async getTrending(limit = 5) {
+    const safeLimit = Math.min(
+      10,
+      Math.max(1, Math.trunc(Number(limit) || 5)),
+    );
+
+    const items = await this.createPublicQuery()
+      .orderBy('news.views', 'DESC')
+      .addOrderBy('news.publishedAt', 'DESC')
+      .addOrderBy('news.newsId', 'DESC')
+      .take(safeLimit)
+      .getMany();
+
+    return items.map((item) => this.toPublicItem(item));
+  }
+
+  /*
+    Query dùng chung cho các trang công khai.
+   */
+  private createPublicQuery(): SelectQueryBuilder<NewsEntity> {
+    return this.newsRepo
+      .createQueryBuilder('news')
+      .leftJoin('news.category', 'category')
+      .leftJoin('news.author', 'author')
+      .select([
+        'news.newsId',
+        'news.title',
+        'news.slug',
+        'news.summary',
+        'news.thumbnail',
+        'news.views',
+        'news.publishedAt',
+        'news.reviewScore',
+        'category.categoryId',
+        'category.name',
+        'author.userId',
+        'author.username',
+      ])
+      .where('news.status = :status', {
+        status: 'published',
+      });
+  }
+
+  private applyKeywordFilter(
+    query: SelectQueryBuilder<NewsEntity>,
+    keyword: string,
+  ): void {
+    // Escape ký tự LIKE để % và _ trong từ khóa
+    // được xem là ký tự thông thường.
+    const escaped = keyword.replace(/[\\%_]/g, '\\$&');
+    const pattern = `%${escaped}%`;
+
+    query.andWhere(
+      `(
+        news.title ILIKE :keyword ESCAPE '\\'
+        OR news.summary ILIKE :keyword ESCAPE '\\'
+        OR category.name ILIKE :keyword ESCAPE '\\'
+        OR author.username ILIKE :keyword ESCAPE '\\'
+      )`,
+      { keyword: pattern },
+    );
+  }
+
+  private applyPageTypeFilter(
+    query: SelectQueryBuilder<NewsEntity>,
+    pageType?: string,
+  ): void {
+    const type = pageType?.trim();
+
+    if (!type || type === 'Tất cả') {
+      return;
+    }
+
+    // Dùng đúng tên category.name lưu trong database.
+    query.andWhere(
+      'category.name = :pageType',
+      { pageType: type },
+    );
+  }
+
+  private toPublicItem(news: NewsEntity) {
+    return {
+      newsId: String(news.newsId),
+      title: news.title,
+      slug: news.slug,
+      summary: news.summary ?? '',
+      category: news.category
+        ? {
+            name: news.category.name,
+          }
+        : null,
+      author: news.author
+        ? {
+            username: news.author.username,
+          }
+        : null,
+      publishedAt: news.publishedAt,
+      thumbnail: news.thumbnail ?? '',
+      views: String(news.views ?? 0),
+      reviewScore:
+        news.reviewScore == null
+          ? null
+          : Number(news.reviewScore),
+    };
+  }
+
+  private normalizePage(value?: number): number {
+    const page = Number(value ?? 1);
+
+    if (!Number.isInteger(page) || page < 1) {
+      throw new BadRequestException('page phải lớn hơn hoặc bằng 1');
+    }
+
+    return page;
+  }
+
+  private normalizeLimit(value?: number): number {
+    const limit = Number(value ?? 6);
+
+    if (!Number.isInteger(limit) || limit < 1) {
+      throw new BadRequestException('limit phải lớn hơn hoặc bằng 1');
+    }
+
+    return Math.min(limit, 20);
+  }
+
+  private normalizeScore(value?: number): number | undefined {
+    if (value === undefined) {
+      return undefined;
+    }
+
+    const score = Number(value);
+
+    if (!Number.isFinite(score) || score < 0 || score > 10) {
+      throw new BadRequestException(
+        'minScore phải nằm trong khoảng từ 0 đến 10',
+      );
+    }
+
+    return score;
+  }
+
+
+async findDetail(id: string) {
+  if (!/^[1-9]\d*$/.test(id)) {
+    throw new NotFoundException('ID bài viết không hợp lệ');
+  }
+
+  const news = await this.newsRepo.findOne({
+    where: {
+      newsId: id,
+      status: 'published',
+    },
+    relations: {
+      author: true,
+      category: true,
+      newsTags: {
+        tag: true,
+      },
+    },
+  });
+
+  if (!news) {
+    throw new NotFoundException('Không tìm thấy bài viết');
+  }
+
+  const blocks = await this.blockRepo.find({
+    where: {
+      newsId: id,
+    },
+    order: {
+      position: 'ASC',
+      blockId: 'ASC',
+    },
+  });
+
+  return {
+    id: String(news.newsId),
+    title: news.title,
+    slug: news.slug,
+    summary: news.summary,
+    thumbnail: news.thumbnail,
+    status: news.status,
+    views: Number(news.views),
+    reviewScore: news.reviewScore,
+    publishedAt: news.publishedAt,
+
+    author: news.author
+      ? {
+          id: String(news.author.userId),
+          username: news.author.username,
+        }
+      : null,
+
+    category: news.category
+      ? {
+          id: String(news.category.categoryId),
+          name: news.category.name,
+        }
+      : null,
+
+    tags: (news.newsTags ?? [])
+      .filter((newsTag) => newsTag.tag)
+      .map((newsTag) => ({
+        id: String(newsTag.tag.tagId),
+        name: newsTag.tag.name,
+      })),
+
+    contentBlocks: blocks.map((block) => ({
+      id: String(block.blockId),
+      type: block.type,
+      content: block.content,
+      position: block.position,
+    })),
+  };
+}
+
+async findRelated(
+  id: string,
+  page = 1,
+  limit = 6,
+) {
+  if (!/^[1-9]\d*$/.test(id)) {
+    throw new NotFoundException('ID bài viết không hợp lệ');
+  }
+
+  page = Math.max(1, Math.floor(Number(page) || 1));
+  limit = Math.min(
+    50,
+    Math.max(1, Math.floor(Number(limit) || 6)),
+  );
+
+  const currentNews = await this.newsRepo.findOne({
+    where: {
+      newsId: id,
+      status: 'published',
+    },
+    relations: {
+      newsTags: {
+        tag: true,
+      },
+    },
+  });
+
+  if (!currentNews) {
+    throw new NotFoundException('No find News');
+  }
+
+  const tagIds = (currentNews.newsTags ?? [])
+    .filter((newsTag) => newsTag.tag)
+    .map((newsTag) => newsTag.tag.tagId);
+
+  const baseQuery = () =>
+    this.newsRepo
+      .createQueryBuilder('news')
+      .where('news.status = :status', {
+        status: 'published',
+      })
+      .andWhere('news.categoryId = :categoryId', {
+        categoryId: currentNews.categoryId,
+      })
+      .andWhere('news.newsId != :currentId', {
+        currentId: id,
+      });
+
+  const total = await baseQuery().getCount();
+
+  const query = baseQuery()
+    .leftJoin('news.newsTags', 'relatedNewsTag');
+
+  if (tagIds.length > 0) {
+    query
+      .addSelect(
+        `COUNT(
+          DISTINCT CASE
+            WHEN "relatedNewsTag"."tag_id" IN (:...tagIds)
+            THEN "relatedNewsTag"."tag_id"
+          END
+        )`,
+        'matchedTagCount',
+      )
+      .setParameter('tagIds', tagIds)
+      .groupBy('news.newsId')
+      .orderBy('"matchedTagCount"', 'DESC');
+  } else {
+    query
+      .addSelect('0', 'matchedTagCount')
+      .groupBy('news.newsId');
+  }
+
+  query
+    .addOrderBy('news.publishedAt', 'DESC', 'NULLS LAST')
+    .addOrderBy('news.newsId', 'DESC')
+    .offset((page - 1) * limit)
+    .limit(limit);
+
+  const { entities } = await query.getRawAndEntities();
+
+  const itemIds = entities.map((item) => item.newsId);
+
+  const detailedItems = itemIds.length
+    ? await this.newsRepo.find({
+        where: itemIds.map((newsId) => ({
+          newsId,
+          status: 'published',
+        })),
+        relations: {
+          author: true,
+          category: true,
+          newsTags: {
+            tag: true,
+          },
+        },
+      })
+    : [];
+
+
+  const itemMap = new Map(
+    detailedItems.map((item) => [
+      String(item.newsId),
+      item,
+    ]),
+  );
+
+  const orderedItems = entities
+    .map((item) => itemMap.get(String(item.newsId)))
+    .filter((item) => item !== undefined);
+
+  return {
+    items: orderedItems.map((news) => ({
+      id: String(news.newsId),
+      title: news.title,
+      slug: news.slug,
+      summary: news.summary,
+      thumbnail: news.thumbnail,
+      publishedAt: news.publishedAt,
+
+      author: news.author
+        ? {
+            id: String(news.author.userId),
+            username: news.author.username,
+          }
+        : null,
+
+      category: news.category
+        ? {
+            id: String(news.category.categoryId),
+            name: news.category.name,
+          }
+        : null,
+
+      tags: (news.newsTags ?? [])
+        .filter((newsTag) => newsTag.tag)
+        .map((newsTag) => ({
+          id: String(newsTag.tag.tagId),
+          name: newsTag.tag.name,
+        })),
+    })),
+
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+  };
+}
 }

@@ -1,14 +1,14 @@
 
 :host {
   display: block;
-  min-height: 100vh;
+
   --orange: #ff5c00;
   --orange-hover: #e05200;
   --text: #f0ede8;
   --muted: #6b6560;
   --border: #1e1e1e;
   --bg: #080808;
-   height: 100vh;
+
   color: var(--text);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -27,13 +27,13 @@ button {
 }
 
 .profile-page {
-  width: 100%;
-  height: calc(100vh - 56px);
+
+  height: calc(100vh - 70px);
     overflow-y: auto;
     overflow-x: hidden;
+
     padding: 24px;
-  width: 100%;
-  max-width: 1100px;
+
   margin: 0 auto;
 
 }
