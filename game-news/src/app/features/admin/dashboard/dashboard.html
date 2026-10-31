@@ -7,7 +7,7 @@
       <h1 class="dashboard-title">Tổng quan</h1>
 
       <p class="dashboard-subtitle">
-   {{ currentDate | date:'dd/MM/yyyy' }}
+        {{ currentDate | date:'dd/MM/yyyy' }}
         · Xin chào, Admin!
       </p>
     </div>
@@ -48,8 +48,9 @@
       <div class="stat-card">
         <span class="stat-icon">👁</span>
         <div class="stat-content">
-          <!-- Giữ nguyên số lượt xem hiện tại -->
-          <p class="stat-value">2.4M</p>
+          <p class="stat-value">
+            {{ totalDailyViews() | number }}
+          </p>
           <p class="stat-label">LƯỢT XEM</p>
         </div>
       </div>
@@ -349,7 +350,7 @@
 
     </div>
 
-    <!-- ANALYTICS: GIỮ NGUYÊN SỐ LIỆU VÀ BIỂU ĐỒ -->
+    <!-- ANALYTICS: LƯỢT XEM 30 NGÀY -->
     <div class="analytics-section">
 
       <div class="analytics-header">
@@ -361,11 +362,9 @@
         <div class="analytics-summary">
           <span>
             Tổng:
-            <span class="analytics-total">1.8M</span>
-          </span>
-
-          <span class="analytics-growth">
-            +457%
+            <span class="analytics-total">
+              {{ totalDailyViews() | number }}
+            </span>
           </span>
         </div>
       </div>
@@ -422,16 +421,17 @@
       </div>
 
       <div class="analytics-footer">
-        @for (date of days; track date) {
+        @for (date of days(); track date.getTime()) {
           <span>{{ date | date:'d/M' }}</span>
         }
       </div>
 
     </div>
 
-    <!-- TRENDING: LẤY BÀI VIẾT TỪ NEWS DASHBOARD STATS -->
+    <!-- TRENDING & HOẠT ĐỘNG GẦN ĐÂY -->
     <div class="dashboard-content-grid">
 
+      <!-- TRENDING -->
       <div class="dashboard-panel">
 
         <div class="dashboard-panel-header">
@@ -444,6 +444,7 @@
         <div class="dashboard-trending-list">
 
           @for (news of trendingNews(); track news.news_id; let i = $index) {
+
             <div class="dashboard-trending-item">
 
               <span
@@ -473,6 +474,7 @@
                 <p class="dashboard-news-meta">
                   {{ news.author?.username ?? 'Không rõ tác giả' }}
                   ·
+
                   @if (news.published_at) {
                     {{ news.published_at | date:'dd/MM/yyyy' }}
                   } @else {
@@ -500,6 +502,7 @@
               </div>
 
             </div>
+
           } @empty {
             <p>Chưa có dữ liệu bài viết xem nhiều.</p>
           }
@@ -508,7 +511,7 @@
 
       </div>
 
-      <!-- HOẠT ĐỘNG GẦN ĐÂY: GIỮ NGUYÊN -->
+      <!-- HOẠT ĐỘNG GẦN ĐÂY -->
       <div class="dashboard-panel">
 
         <div class="dashboard-panel-header">
@@ -520,61 +523,54 @@
 
         <div class="dashboard-activity-list">
 
-          <div class="dashboard-activity-item">
-            <span class="dashboard-activity-icon">📰</span>
+          @if (activitiesLoading()) {
 
-            <div class="dashboard-activity-content">
-              <p class="dashboard-activity-text">
-                Đã đăng một bài viết mới
-              </p>
-
-              <span class="dashboard-activity-time">
-                5 phút trước
-              </span>
+            <div class="dashboard-activity-empty">
+              Đang tải hoạt động...
             </div>
-          </div>
 
-          <div class="dashboard-activity-item">
-            <span class="dashboard-activity-icon">✏️</span>
+          } @else if (activitiesError()) {
 
-            <div class="dashboard-activity-content">
-              <p class="dashboard-activity-text">
-                Đã cập nhật bài viết
-              </p>
-
-              <span class="dashboard-activity-time">
-                20 phút trước
-              </span>
+            <div class="dashboard-activity-empty">
+              {{ activitiesError() }}
             </div>
-          </div>
 
-          <div class="dashboard-activity-item">
-            <span class="dashboard-activity-icon">👁️</span>
+          } @else {
 
-            <div class="dashboard-activity-content">
-              <p class="dashboard-activity-text">
-                Bài viết đạt 10.000 lượt xem
-              </p>
+            @for (
+              activity of activities();
+              track activity.id
+            ) {
 
-              <span class="dashboard-activity-time">
-                1 giờ trước
-              </span>
-            </div>
-          </div>
+              <div class="dashboard-activity-item">
 
-          <div class="dashboard-activity-item">
-            <span class="dashboard-activity-icon">👤</span>
+                <span class="dashboard-activity-icon">
+                  {{ getActivityIcon(activity.type) }}
+                </span>
 
-            <div class="dashboard-activity-content">
-              <p class="dashboard-activity-text">
-                Người dùng mới đăng ký :
-              </p>
+                <div class="dashboard-activity-content">
 
-              <span class="dashboard-activity-time">
-                1 giờ trước
-              </span>
-            </div>
-          </div>
+                  <p class="dashboard-activity-text">
+                    {{ activity.message }}
+                  </p>
+
+                  <span class="dashboard-activity-time">
+                    {{ activity.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                  </span>
+
+                </div>
+
+              </div>
+
+            } @empty {
+
+              <div class="dashboard-activity-empty">
+                Chưa có hoạt động nào.
+              </div>
+
+            }
+
+          }
 
         </div>
 

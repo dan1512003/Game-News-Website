@@ -15,12 +15,14 @@ import { QueryUsersDto } from './dto/query-users.dto/query-users.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto/update-user.dto.js';
 import { NewsEntity } from '../news/entities/news.entity/news.entity.js';
 import { CommentEntity } from '../comments/entities/comment.entity/comment.entity.js';
+import { NotificationService } from '../notification/notification.service.js';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly usersRepository: Repository<UserEntity>,
+      private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -339,6 +341,10 @@ async update(
     );
   }
 
+  // Lưu lại dữ liệu cũ để so sánh
+  const oldRole = user.role;
+  const oldStatus = user.status;
+
   // Chỉ cập nhật trường được gửi lên
   if (dto.role !== undefined) {
     user.role = dto.role;
@@ -348,7 +354,45 @@ async update(
     user.status = dto.status;
   }
 
+  // Lưu thay đổi người dùng
   const updated = await this.usersRepository.save(user);
+
+  // Tìm người thực hiện thao tác
+  const actor = await this.usersRepository.findOne({
+    where: {
+      userId: currentUser.userId,
+    },
+    select: {
+      userId: true,
+      username: true,
+      role: true,
+    },
+  });
+
+  const actorName = actor?.username ?? `User #${currentUser.userId}`;
+
+  // ============================================
+  // 1. THÔNG BÁO KHI THAY ĐỔI ROLE
+  // ============================================
+  if (oldRole !== updated.role) {
+    await this.notificationService.createActivity(
+      'USER',
+      `${actorName} đã thay đổi quyền của ${updated.username} từ ${oldRole} thành ${updated.role}.`,
+    );
+  }
+
+  // ============================================
+  // 2. THÔNG BÁO KHI KHÓA TÀI KHOẢN
+  // ============================================
+  if (
+    oldStatus !== 'banned' &&
+    updated.status === 'banned'
+  ) {
+    await this.notificationService.createActivity(
+      'USER',
+      `${actorName} đã khóa tài khoản của ${updated.username}.`,
+    );
+  }
 
   return this.toResponse(updated);
 }

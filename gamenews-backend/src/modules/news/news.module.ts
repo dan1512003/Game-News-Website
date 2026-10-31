@@ -5,6 +5,7 @@ import { NewsEntity } from './entities/news.entity/news.entity.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NewsTagEntity } from '../news-tags/entities/news-tag.entity/news-tag.entity.js';
 import { ContentBlockEntity } from '../content-blocks/entities/content-block.entity/content-block.entity.js';
+import { NotificationModule } from '../notification/notification.module.js';
 
 @Module({
     imports: [
@@ -14,6 +15,7 @@ import { ContentBlockEntity } from '../content-blocks/entities/content-block.ent
       NewsTagEntity,
       ContentBlockEntity,
     ]),
+       NotificationModule,
   ],
   controllers: [NewsController],
   providers: [NewsService],

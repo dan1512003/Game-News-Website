@@ -19,6 +19,7 @@ import { UserEntity } from '../users/entities/user.entity/user.entity.js';
 import { NewsEntity } from '../news/entities/news.entity/news.entity.js';
 import { CommentSort } from './pipes/comment-sort.pipe.js';
 import { CommentLikeEntity } from './entities/comment-like.entity/comment-like.entity.js';
+import { NotificationService } from '../notification/notification.service.js';
 
 
 @Injectable()
@@ -32,6 +33,7 @@ export class CommentsService {
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
       private readonly dataSource: DataSource,
+       private readonly notificationService: NotificationService,
   ) {}
 
 
@@ -286,6 +288,10 @@ async findAll(query: QueryCommentsDto) {
   async approve(id: string) {
     const comment = await this.commentsRepository.findOne({
       where: { commentId: id },
+        relations: {
+    user: true,
+    news: true,
+  },
     });
 
     if (!comment) {
@@ -299,7 +305,11 @@ async findAll(query: QueryCommentsDto) {
     const updated = await this.commentsRepository.save(
       comment,
     );
-
+  // Thông báo bình luận được kiểm duyệt
+  await this.notificationService.createActivity(
+    'COMMENT',
+    `Bình luận của ${comment.user?.username ?? 'Người dùng'} trong bài viết "${comment.news?.title ?? 'Không rõ bài viết'}" đã được duyệt.`,
+  );
     return {
       comment_id: updated.commentId,
       status: updated.status,
@@ -314,6 +324,10 @@ async findAll(query: QueryCommentsDto) {
   async reject(id: string) {
     const comment = await this.commentsRepository.findOne({
       where: { commentId: id },
+        relations: {
+    user: true,
+    news: true,
+  },
     });
 
     if (!comment) {
@@ -327,7 +341,11 @@ async findAll(query: QueryCommentsDto) {
     const updated = await this.commentsRepository.save(
       comment,
     );
-
+  // Tạo notification khi bình luận bị từ chối.
+  await this.notificationService.createActivity(
+    'COMMENT',
+    `Bình luận của ${comment.user?.username ?? 'Người dùng'} trong bài viết "${comment.news?.title ?? 'Không rõ bài viết'}" đã bị từ chối.`,
+  );
     return {
       comment_id: updated.commentId,
       status: updated.status,
@@ -500,6 +518,7 @@ async getDashboardStats() {
           status: comment.status,
           likes: comment.likes,
           liked: false,
+          newsTitle: news.title,
           createdAt: comment.createdAt,
           user: {
             id: String(user.userId),
@@ -515,7 +534,11 @@ async getDashboardStats() {
       'newest',
       String(currentUser.userId),
     );
-
+// Thông báo có bình luận mới
+await this.notificationService.createActivity(
+  'COMMENT',
+  `${created.user.username} đã bình luận trong bài viết "${created.newsTitle}".`,
+);
     return {
       message: 'Đã gửi bình luận',
       created,

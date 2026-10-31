@@ -45,6 +45,8 @@ import { NewsPublicEffects } from './store/news-public/store/news-public.effects
 import { CommentsPublicEffects } from './store/comments-public/store/comments-public.effects';
 import { newsPublicReducer } from './store/news-public/store/news-public.reducer';
 import { commentsPublicReducer } from './store/comments-public/store/comments-public.reducer';
+import { notificationReducer } from './store/notifications/store/notification.reducer';
+import { NotificationEffects } from './store/notifications/store/notification.effects';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -75,6 +77,7 @@ export const appConfig: ApplicationConfig = {
       comment: commentReducer,
         newsPublic: newsPublicReducer,
   commentsPublic: commentsPublicReducer,
+   notifications: notificationReducer,
     }),
 
     // NgRx Effects
@@ -87,6 +90,7 @@ export const appConfig: ApplicationConfig = {
       CommentEffects,
         NewsPublicEffects,
   CommentsPublicEffects,
+    NotificationEffects,
     ]),
 
     // Auth initializer

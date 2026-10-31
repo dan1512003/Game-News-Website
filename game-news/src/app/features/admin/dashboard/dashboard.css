@@ -318,11 +318,14 @@ flex: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
   gap: 24px;
+   align-items: start;
 }
 .dashboard-panel {
   border: 1px solid #1e1e1e;
   background: #0d0d0d;
   min-width: 0;
+  height: auto;
+  align-self: start;
 }
 .dashboard-panel-header {
   display: flex;
@@ -530,6 +533,12 @@ flex: 1;
   font-family: var(--font-mono, monospace);
   font-size: 10px;
   line-height: 1.4;
+}
+.dashboard-activity-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
 }
 @media (max-width: 700px) {
   .dashboard-content-grid {

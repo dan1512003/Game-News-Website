@@ -128,6 +128,9 @@ import { AccessTokenBlacklistEntity } from './modules/auth/entities/access-token
 import {
   CommentLikeEntity,
 } from './modules/comments/entities/comment-like.entity/comment-like.entity.js';
+import { NotificationModule } from './modules/notification/notification.module.js';
+import { Notification } from './modules/notification/entities/notification.entity.js';
+import { NewsView } from './modules/notification/entities/news-view.entity.js';
 
 // =====================================================
 // OBSERVE
@@ -232,7 +235,9 @@ export const {
             EmailResetTokenEntity,
             PasswordResetTokenEntity,
           AccessTokenBlacklistEntity,
-          CommentLikeEntity
+          CommentLikeEntity,
+          Notification,
+          NewsView
 
         ],
 
@@ -270,8 +275,9 @@ export const {
     AuthModule,
 
     MailModule,
-    CommentLikeEntity
-
+    CommentLikeEntity,
+    
+  NotificationModule
   ],
 
 

@@ -11,6 +11,7 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  effect,
   HostListener,
   inject,
   Inject,
@@ -20,39 +21,53 @@ import {
 } from '@angular/core';
 
 import { Store } from '@ngrx/store';
+import { Actions, ofType } from '@ngrx/effects';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-// Điều chỉnh các đường dẫn import theo cấu trúc thư mục thực tế.
+// NEWS
 import * as NewsActions from '../../../store/news/news.actions';
 import {
   selectNewsDashboardStats,
   selectNewsDashboardStatsLoading,
 } from '../../../store/news/news.selectors';
 
+// COMMENT
 import * as CommentActions from '../../../store/comment/comment.actions';
 import {
   selectCommentDashboardStats,
   selectCommentDashboardStatsLoading,
 } from '../../../store/comment/comment.selectors';
 
+// USER
 import * as UserActions from '../../../store/users/users.actions';
 import {
   selectUserDashboardStats,
   selectUserDashboardStatsLoading,
-} from '../../../store/users/users.selectors'
+} from '../../../store/users/users.selectors';
 
+// CATEGORY
 import * as CategoryActions from '../../../store/category/category.actions';
 import {
   selectCategoryDashboardStats,
   selectCategoryDashboardStatsLoading,
 } from '../../../store/category/category.selectors';
 
+// TAG
 import * as TagActions from '../../../store/tag/tag.actions';
 import {
   selectTagDashboardStats,
   selectTagDashboardStatsLoading,
 } from '../../../store/tag/tag.selectors';
-import { Actions, ofType } from '@ngrx/effects';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+// NOTIFICATION
+import * as NotificationActions from '../../../store/notifications/store/notification.actions';
+import {
+  selectActivities,
+  selectNotificationLoading,
+  selectNotificationError,
+  selectDailyViews,
+  selectTotalDailyViews,
+} from '../../../store/notifications/store/notification.selectors';
 
 @Component({
   selector: 'app-dashboard',
@@ -64,14 +79,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class Dashboard implements OnInit {
   private readonly store = inject(Store);
   private readonly actions$ = inject(Actions);
-private readonly destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
+
   @ViewChild('chartContainer')
   chartContainer!: ElementRef<HTMLDivElement>;
 
   readonly currentDate = new Date();
 
   // ============================================================
-  // NG-RX DASHBOARD SELECTORS
+  // NEWS DASHBOARD SELECTORS
   // ============================================================
 
   readonly newsStats = this.store.selectSignal(
@@ -82,6 +98,10 @@ private readonly destroyRef = inject(DestroyRef);
     selectNewsDashboardStatsLoading,
   );
 
+  // ============================================================
+  // COMMENT DASHBOARD SELECTORS
+  // ============================================================
+
   readonly commentStats = this.store.selectSignal(
     selectCommentDashboardStats,
   );
@@ -89,6 +109,10 @@ private readonly destroyRef = inject(DestroyRef);
   readonly commentStatsLoading = this.store.selectSignal(
     selectCommentDashboardStatsLoading,
   );
+
+  // ============================================================
+  // USER DASHBOARD SELECTORS
+  // ============================================================
 
   readonly userStats = this.store.selectSignal(
     selectUserDashboardStats,
@@ -98,6 +122,10 @@ private readonly destroyRef = inject(DestroyRef);
     selectUserDashboardStatsLoading,
   );
 
+  // ============================================================
+  // CATEGORY DASHBOARD SELECTORS
+  // ============================================================
+
   readonly categoryStats = this.store.selectSignal(
     selectCategoryDashboardStats,
   );
@@ -105,6 +133,10 @@ private readonly destroyRef = inject(DestroyRef);
   readonly categoryStatsLoading = this.store.selectSignal(
     selectCategoryDashboardStatsLoading,
   );
+
+  // ============================================================
+  // TAG DASHBOARD SELECTORS
+  // ============================================================
 
   readonly tagStats = this.store.selectSignal(
     selectTagDashboardStats,
@@ -114,24 +146,74 @@ private readonly destroyRef = inject(DestroyRef);
     selectTagDashboardStatsLoading,
   );
 
-  // Dữ liệu bài viết xem nhiều từ API.
+  // ============================================================
+  // NOTIFICATION SELECTORS
+  // ============================================================
+
+  readonly activities = this.store.selectSignal(
+    selectActivities,
+  );
+
+  readonly activitiesLoading = this.store.selectSignal(
+    selectNotificationLoading,
+  );
+
+  readonly activitiesError = this.store.selectSignal(
+    selectNotificationError,
+  );
+
+  // ============================================================
+  // DAILY VIEWS - NGRX STORE
+  // ============================================================
+
+  readonly dailyViews = this.store.selectSignal(
+    selectDailyViews,
+  );
+
+  readonly totalDailyViews = this.store.selectSignal(
+    selectTotalDailyViews,
+  );
+
+  // ============================================================
+  // TRENDING NEWS
+  // ============================================================
+
   readonly trendingNews = () =>
     this.newsStats()?.topViewed ?? [];
 
   // ============================================================
-  // BIỂU ĐỒ LƯỢT XEM
-  // Giữ nguyên dữ liệu và thuật toán hiện tại.
+  // ACTIVITY ICON
   // ============================================================
 
-  viewData: number[] = [
-    18200, 22400, 19800, 31200, 28700, 24500, 35600,
-    41200, 38900, 29300, 45100, 52800, 48300, 61700,
-    55200, 49800, 67400, 72100, 68500, 59200, 81300,
-    76800, 84200, 78600, 91400, 88700, 95300, 89100,
-    102400, 97800,
-  ];
+  getActivityIcon(type: string): string {
+    switch (type) {
+      case 'NEWS':
+        return '📰';
 
-  days: Date[] = [];
+      case 'USER':
+        return '👤';
+
+      case 'COMMENT':
+        return '💬';
+
+      default:
+        return '🔔';
+    }
+  }
+
+  // ============================================================
+  // CHART DATA - NGRX STORE
+  // ============================================================
+
+  readonly viewData = () =>
+    this.dailyViews().map(
+      item => Number(item.totalViews) || 0,
+    );
+
+  readonly days = () =>
+    this.dailyViews().map(
+      item => new Date(`${item.date}T00:00:00`),
+    );
 
   W = 0;
 
@@ -145,39 +227,89 @@ private readonly destroyRef = inject(DestroyRef);
 
   areaD = '';
 
+  private readonly API_URL = 'http://localhost:3001';
 
-constructor(
-  @Inject(PLATFORM_ID)
-  private readonly platformId: object,
-  private readonly cdr: ChangeDetectorRef,
-) {
-  afterNextRender(() => {
-    this.updateWidthAndChart();
-    this.cdr.detectChanges();
-  });
+  constructor(
+    @Inject(PLATFORM_ID)
+    private readonly platformId: object,
+    private readonly cdr: ChangeDetectorRef,
+  ) {
+    // ========================================================
+    // KHỞI TẠO CHART
+    // ========================================================
 
-  this.actions$
-    .pipe(
-      ofType(
-        NewsActions.loadNewsDashboardStatsSuccess,
-        CommentActions.loadCommentDashboardStatsSuccess,
-        UserActions.loadUserDashboardStatsSuccess,
-        CategoryActions.loadCategoryDashboardStatsSuccess,
-        TagActions.loadTagDashboardStatsSuccess,
-      ),
-      takeUntilDestroyed(this.destroyRef),
-    )
-    .subscribe((action) => {
+    afterNextRender(() => {
+      this.updateWidthAndChart();
+      this.cdr.detectChanges();
+    });
+
+
+    effect(() => {
+      const views = this.dailyViews();
+
       console.log(
-        '✅ [DASHBOARD] Load stats thành công:',
-        action,
+        '[DASHBOARD] Daily views thay đổi:',
+        views,
+      );
+
+      if (!isPlatformBrowser(this.platformId)) {
+        return;
+      }
+
+      this.updateWidthAndChart();
+    });
+
+
+    this.actions$
+      .pipe(
+        ofType(
+          NewsActions.loadNewsDashboardStatsSuccess,
+          CommentActions.loadCommentDashboardStatsSuccess,
+          UserActions.loadUserDashboardStatsSuccess,
+          CategoryActions.loadCategoryDashboardStatsSuccess,
+          TagActions.loadTagDashboardStatsSuccess,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(action => {
+        console.log(
+          '✅ [DASHBOARD] Load stats thành công:',
+          action,
+        );
+      });
+
+  
+
+    this.actions$
+      .pipe(
+        ofType(
+          NotificationActions.loadDailyViewsSuccess,
+          NotificationActions.updateDailyViews,
+          NotificationActions.loadDailyViewsFailure,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(action => {
+        console.log(
+          '[DASHBOARD] Notification action:',
+          action,
+        );
+      });
+
+  
+    this.destroyRef.onDestroy(() => {
+      console.log('[DASHBOARD] Component destroyed');
+
+      this.store.dispatch(
+        NotificationActions.disconnectNotifications(),
       );
     });
-}
+  }
 
 
   ngOnInit(): void {
-    // Tải thống kê từ NgRx Effects/API.
+    console.log('[DASHBOARD] Bắt đầu khởi tạo Dashboard');
+
     this.store.dispatch(
       NewsActions.loadNewsDashboardStats(),
     );
@@ -198,16 +330,28 @@ constructor(
       TagActions.loadTagDashboardStats(),
     );
 
-    // Giữ nguyên logic tạo ngày của biểu đồ.
-    const today = new Date();
+    // ========================================================
+    // NOTIFICATION
+    // ========================================================
 
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i * 5);
-      this.days.push(date);
-    }
+    this.store.dispatch(
+      NotificationActions.loadActivities(),
+    );
+
+    
+    this.store.dispatch(
+      NotificationActions.loadDailyViews(),
+    );
+
+   
+    this.store.dispatch(
+      NotificationActions.connectNotifications(),
+    );
   }
- private readonly API_URL = 'http://localhost:3001';
+
+  // ============================================================
+  // THUMBNAIL URL
+  // ============================================================
 
   getThumbnailUrl(
     thumbnail: string | null | undefined,
@@ -218,17 +362,15 @@ constructor(
 
     const path = thumbnail.trim();
 
-    // URL đầy đủ thì giữ nguyên.
+    // URL đầy đủ thì giữ nguyên
     if (/^https?:\/\//i.test(path)) {
       return path;
     }
 
-    // Ghép URL backend với đường dẫn ảnh.
+    // Ghép URL backend với đường dẫn ảnh
     return `${this.API_URL}/${path.replace(/^\/+/, '')}`;
   }
-  // ============================================================
-  // BIỂU ĐỒ - GIỮ NGUYÊN LOGIC
-  // ============================================================
+
 
   @HostListener('window:resize')
   onResize(): void {
@@ -238,6 +380,8 @@ constructor(
 
     this.updateWidthAndChart();
   }
+
+
 
   private updateWidthAndChart(): void {
     if (!isPlatformBrowser(this.platformId)) {
@@ -263,17 +407,26 @@ constructor(
 
     if (newWidth !== this.W) {
       this.W = newWidth;
-      this.calculateChart();
     }
+
+    this.calculateChart();
   }
 
+  // ============================================================
+  // CALCULATE CHART
+  // ============================================================
+
   private calculateChart(): void {
-    if (this.viewData.length < 2 || this.W <= 0) {
+    const data = this.viewData();
+
+    if (data.length < 2 || this.W <= 0) {
+      this.lineD = '';
+      this.areaD = '';
       return;
     }
 
-    const min = Math.min(...this.viewData);
-    const max = Math.max(...this.viewData);
+    const min = Math.min(...data);
+    const max = Math.max(...data);
     const range = max - min || 1;
 
     const drawWidth = Math.max(
@@ -281,10 +434,10 @@ constructor(
       this.W - this.padLeft - this.padRight,
     );
 
-    const points = this.viewData.map((value, index) => {
+    const points = data.map((value, index) => {
       const x =
         this.padLeft +
-        (index / (this.viewData.length - 1)) * drawWidth;
+        (index / (data.length - 1)) * drawWidth;
 
       const y =
         this.H -

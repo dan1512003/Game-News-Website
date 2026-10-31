@@ -166,11 +166,6 @@ function isAuthEndpoint(url: string): boolean {
     url.includes('/auth/refresh') ||
     url.includes('/auth/password-reset/request') ||
     url.includes('/auth/password-reset/verify') ||
-    url.includes('/auth/password-reset/reset') ||
-
-    // Tin tức công khai
-    url.includes('/news/public') ||
-    /\/news\/search(?:\?|$)/.test(url) ||
-    /\/news\/trending(?:\?|$)/.test(url)
+    url.includes('/auth/password-reset/reset')
   );
 }

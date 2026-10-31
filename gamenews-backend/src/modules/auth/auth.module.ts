@@ -16,6 +16,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy.js';
 import { EmailResetTokenEntity } from './entities/email-reset-token.entity/email-reset-token.entity.js';
 import { PasswordResetTokenEntity } from './entities/password-reset-token.entity/password-reset-token.entity.js';
 import { AccessTokenBlacklistEntity } from './entities/access-token-blacklist.entity/access-token-blacklist.entity.js';
+import { NotificationModule } from '../notification/notification.module.js';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { AccessTokenBlacklistEntity } from './entities/access-token-blacklist.en
       PasswordResetTokenEntity,
       AccessTokenBlacklistEntity
     ]),
-
+   NotificationModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

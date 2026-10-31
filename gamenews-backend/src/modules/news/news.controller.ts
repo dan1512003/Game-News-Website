@@ -390,14 +390,17 @@ update(
     );
   }
 
-  // GET /news/public/:id
-  // Chi tiết bài viết công khai
-  @Public()
-  @Get('public/:id')
-  findDetail(
-    @Param('id') id: string,
-  ) {
-    return this.newsService.findDetail(id);
-  }
-
+// GET /news/public/:id
+// Chi tiết bài viết công khai
+@Public()
+@Get('public/:id')
+findDetail(
+  @Param('id') id: string,
+  @CurrentUser() user: UserEntity | null,
+) {
+  return this.newsService.findDetail(
+    id,
+    user?.userId ? String(user.userId) : null,
+  );
+}
 }

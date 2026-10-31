@@ -54,6 +54,7 @@ import { SendEmailResetOtpDto } from '../../dto/email-reset.dto/send-email-reset
 import { ResetEmailDto } from '../../dto/email-reset.dto/reset-email.dto.js';
 import { UpdateUsernameDto } from '../../../users/dto/update-username.dto/update-username.dto.js';
 import { ChangePasswordDto } from '../../../users/dto/change-password.dto/change-password.dto.js';
+import { NotificationService } from '../../../notification/notification.service.js';
 
 
 @Injectable()
@@ -89,7 +90,7 @@ private readonly passwordResetTokenRepository:
 
     private readonly jwtService:
       JwtService,
-
+ private readonly notificationService: NotificationService,
  
   ) {}
 
@@ -251,7 +252,10 @@ private readonly passwordResetTokenRepository:
       await this.userRepository.save(
         user,
       );
-
+await this.notificationService.createActivity(
+  'USER',
+  `Người dùng ${savedUser.username} vừa đăng ký tài khoản mới.`,
+);
 
     await this.mailService
       .sendVerificationEmail({

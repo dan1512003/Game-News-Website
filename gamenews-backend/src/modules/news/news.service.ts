@@ -25,6 +25,8 @@ import { CommentEntity } from '../comments/entities/comment.entity/comment.entit
 import { unlink } from 'fs/promises';
 import { basename, join } from 'path';
 import { PublicNewsQueryDto } from './dto/public-news-query.dto/public-news-query.dto.js';
+import { NotificationService } from '../notification/notification.service.js';
+import { NewsView } from '../notification/entities/news-view.entity.js';
 
 @Injectable()
 export class NewsService {
@@ -39,6 +41,7 @@ export class NewsService {
     private readonly blockRepo: Repository<ContentBlockEntity>,
 
     private readonly dataSource: DataSource,
+     private readonly notificationService: NotificationService,
   ) {}
 
   // =====================================================
@@ -639,7 +642,7 @@ private sanitizeBlockContent(
   return cleanContent;
 }
 async create(dto: CreateNewsDto, user: UserEntity) {
-  return this.dataSource.transaction(async (manager) => {
+  const savedNews = await this.dataSource.transaction(async (manager) => {
     const newsRepo = manager.getRepository(NewsEntity);
     const tagRepo = manager.getRepository(NewsTagEntity);
     const blockRepo = manager.getRepository(ContentBlockEntity);
@@ -656,13 +659,8 @@ async create(dto: CreateNewsDto, user: UserEntity) {
       thumbnail: dto.thumbnail ?? null,
       status: initialStatus,
       views: '0',
-
-      publishedAt:
-        initialStatus === 'published'
-          ? new Date()
-          : null,
-
-      scheduledAt: null,
+      publishedAt: initialStatus === 'published' ? new Date() : null,
+      scheduledAt: initialStatus === 'scheduled' ? dto.scheduledAt : null,
       editorNote: null,
       requirementNote: null,
       reviewScore: dto.reviewScore ?? null,
@@ -670,12 +668,11 @@ async create(dto: CreateNewsDto, user: UserEntity) {
 
     const saved = await newsRepo.save(news);
 
-    // Lưu tags
     if (dto.tagIds?.length) {
       const uniqueTagIds = [...new Set(dto.tagIds)];
 
       await tagRepo.save(
-        uniqueTagIds.map((tagId) =>
+        uniqueTagIds.map(tagId =>
           tagRepo.create({
             newsId: saved.newsId,
             tagId: String(tagId),
@@ -684,19 +681,12 @@ async create(dto: CreateNewsDto, user: UserEntity) {
       );
     }
 
-    // Lưu content blocks
     if (dto.contentBlocks?.length) {
-      const blocks = dto.contentBlocks.map((block) =>
+      const blocks = dto.contentBlocks.map(block =>
         blockRepo.create({
           newsId: saved.newsId,
           type: block.type,
-
-          // Làm sạch HTML trước khi lưu.
-          content: this.sanitizeBlockContent(
-            block.type,
-            block.content,
-          ),
-
+          content: this.sanitizeBlockContent(block.type, block.content),
           position: block.position,
         }),
       );
@@ -706,6 +696,18 @@ async create(dto: CreateNewsDto, user: UserEntity) {
 
     return saved;
   });
+
+  // Chỉ thông báo khi bài viết được xuất bản hoặc lên lịch
+  if (savedNews.status === 'published' || savedNews.status === 'scheduled') {
+    await this.notificationService.createActivity(
+      'NEWS',
+      `${user.username} đã ${
+        savedNews.status === 'published' ? 'xuất bản' : 'lên lịch'
+      } bài viết "${savedNews.title}".`,
+    );
+  }
+
+  return savedNews;
 }
   // =====================================================
   // UPDATE
@@ -720,101 +722,112 @@ async update(
 
   // Kiểm tra quyền sửa theo trạng thái hiện tại.
   this.assertCanEdit(news, user);
+const previousStatus = news.status;
+const updatedNews = await this.dataSource.transaction(async (manager) => {
+  const repo = manager.getRepository(NewsEntity);
+  const tagRepo = manager.getRepository(NewsTagEntity);
+  const blockRepo = manager.getRepository(ContentBlockEntity);
 
-  return this.dataSource.transaction(async (manager) => {
-    const repo = manager.getRepository(NewsEntity);
-    const tagRepo = manager.getRepository(NewsTagEntity);
-    const blockRepo = manager.getRepository(ContentBlockEntity);
+  // Cập nhật thông tin cơ bản
+  if (dto.title !== undefined) {
+    news.title = dto.title;
+  }
 
-    // Cập nhật thông tin cơ bản
-    if (dto.title !== undefined) {
-      news.title = dto.title;
+  if (dto.slug !== undefined) {
+    news.slug = dto.slug;
+  }
+
+  if (dto.summary !== undefined) {
+    news.summary = dto.summary;
+  }
+
+  if (dto.categoryId !== undefined) {
+    news.categoryId = String(dto.categoryId);
+  }
+
+  if (dto.thumbnail !== undefined) {
+    news.thumbnail = dto.thumbnail;
+  }
+
+  // Cập nhật điểm đánh giá
+  if (dto.reviewScore !== undefined) {
+    news.reviewScore = dto.reviewScore;
+  }
+
+  // Chỉ staff mới được đổi status qua update.
+  if (dto.status !== undefined && this.isStaff(user)) {
+    this.changeStatus(news, dto.status);
+
+    if (
+      previousStatus !== dto.status &&
+      dto.status === 'published'
+    ) {
+      news.publishedAt = new Date();
+      news.scheduledAt = null;
     }
+  }
 
-    if (dto.slug !== undefined) {
-      news.slug = dto.slug;
-    }
+  // Lưu thông tin bài viết
+  await repo.save(news);
 
-    if (dto.summary !== undefined) {
-      news.summary = dto.summary;
-    }
+  // Cập nhật tags
+  if (dto.tagIds !== undefined) {
+    await tagRepo.delete({ newsId: id });
 
-    if (dto.categoryId !== undefined) {
-      news.categoryId = String(dto.categoryId);
-    }
+    const uniqueTagIds = [...new Set(dto.tagIds)];
 
-    if (dto.thumbnail !== undefined) {
-      news.thumbnail = dto.thumbnail;
-    }
-
-    // Cập nhật điểm đánh giá
-    if (dto.reviewScore !== undefined) {
-      news.reviewScore = dto.reviewScore;
-    }
-
-    // Chỉ staff mới được đổi status qua update.
-    if (dto.status !== undefined && this.isStaff(user)) {
-      const previousStatus = news.status;
-
-      this.changeStatus(news, dto.status);
-
-      if (
-        previousStatus !== dto.status &&
-        dto.status === 'published'
-      ) {
-        news.publishedAt = new Date();
-        news.scheduledAt = null;
-      }
-    }
-
-    // Lưu thông tin bài viết
-    await repo.save(news);
-
-    // Cập nhật tags
-    if (dto.tagIds !== undefined) {
-      await tagRepo.delete({ newsId: id });
-
-      const uniqueTagIds = [...new Set(dto.tagIds)];
-
-      if (uniqueTagIds.length > 0) {
-        await tagRepo.save(
-          uniqueTagIds.map((tagId) =>
-            tagRepo.create({
-              newsId: id,
-              tagId: String(tagId),
-            }),
-          ),
-        );
-      }
-    }
-
-    // Cập nhật content blocks
-    if (dto.contentBlocks !== undefined) {
-      // Xóa block cũ trong transaction.
-      await blockRepo.delete({ newsId: id });
-
-      if (dto.contentBlocks.length > 0) {
-        const blocks = dto.contentBlocks.map((block) =>
-          blockRepo.create({
+    if (uniqueTagIds.length > 0) {
+      await tagRepo.save(
+        uniqueTagIds.map((tagId) =>
+          tagRepo.create({
             newsId: id,
-            type: block.type,
-
-            // Làm sạch HTML trước khi lưu.
-            content: this.sanitizeBlockContent(
-              block.type,
-              block.content,
-            ),
-
-            position: block.position,
+            tagId: String(tagId),
           }),
-        );
-
-        await blockRepo.save(blocks);
-      }
+        ),
+      );
     }
+  }
 
-    return this.findOneOrFail(id);
-  });
+  // Cập nhật content blocks
+  if (dto.contentBlocks !== undefined) {
+    await blockRepo.delete({ newsId: id });
+
+    if (dto.contentBlocks.length > 0) {
+      const blocks = dto.contentBlocks.map((block) =>
+        blockRepo.create({
+          newsId: id,
+          type: block.type,
+          content: this.sanitizeBlockContent(
+            block.type,
+            block.content,
+          ),
+          position: block.position,
+        }),
+      );
+
+      await blockRepo.save(blocks);
+    }
+  }
+
+  return this.findOneOrFail(id);
+});
+
+// Chỉ gửi thông báo khi trạng thái thay đổi sang published hoặc scheduled.
+if (
+  previousStatus !== updatedNews.status &&
+  ['published', 'scheduled'].includes(updatedNews.status)
+) {
+  await this.notificationService.createActivity(
+    'NEWS',
+    `${user.username} đã ${
+      updatedNews.status === 'published'
+        ? 'xuất bản'
+        : 'lên lịch'
+    } bài viết "${updatedNews.title}".`,
+  );
+}
+
+return updatedNews;
 }
 
   // =====================================================
@@ -955,7 +968,14 @@ private async deleteUploadFiles(
     news.scheduledAt = null;
     news.reviewerId = user.userId;
 
-    return this.newsRepo.save(news);
+const savedNews = await this.newsRepo.save(news);
+
+  await this.notificationService.createActivity(
+    'NEWS',
+    `${user.username} đã xuất bản bài viết "${savedNews.title}".`,
+  );
+
+  return savedNews;
   }
 
   // =====================================================
@@ -1172,7 +1192,14 @@ private async deleteUploadFiles(
     news.scheduledAt = date;
     news.reviewerId = user.userId;
 
-    return this.newsRepo.save(news);
+     const savedNews = await this.newsRepo.save(news);
+
+  await this.notificationService.createActivity(
+    'NEWS',
+    `${user.username} đã lên lịch bài viết "${savedNews.title}".`,
+  );
+
+  return savedNews;
   }
 
   // =====================================================
@@ -1611,13 +1638,132 @@ private async deleteUploadFiles(
 
     return score;
   }
+/**
+ * Ghi nhận lượt xem bài viết.
+ *
+ * Mỗi userId hoặc visitorId chỉ được tính
+ * một lượt xem duy nhất cho cùng một bài viết.
+ */
+private async recordNewsView(
+  newsId: string,
+  userId: string | null = null,
+): Promise<boolean> {
+  console.log('\n========== RECORD NEWS VIEW ==========');
+  console.log('[recordNewsView] newsId:', newsId);
+  console.log('[recordNewsView] userId:', userId);
+  console.log('[recordNewsView] userId type:', typeof userId);
 
+  // 1. Kiểm tra đăng nhập.
+  if (!userId) {
+    console.warn(
+      '[recordNewsView] Không ghi nhận lượt xem vì userId = null hoặc undefined',
+    );
 
-async findDetail(id: string) {
+    return false;
+  }
+
+  try {
+    // 2. Ghi nhận lượt xem trong transaction.
+    const isNewView = await this.dataSource.transaction(
+      async (manager) => {
+        console.log('[recordNewsView] Bắt đầu transaction');
+
+        const result = await manager.query(
+          `
+            INSERT INTO news_views (news_id, user_id)
+            VALUES ($1, $2)
+            ON CONFLICT (news_id, user_id)
+            WHERE user_id IS NOT NULL
+            DO NOTHING
+            RETURNING id
+          `,
+          [newsId, userId],
+        );
+
+        console.log(
+          '[recordNewsView] Kết quả INSERT news_views:',
+          result,
+        );
+
+        // 3. Nếu không có bản ghi mới thì tài khoản đã xem bài viết này.
+        if (result.length === 0) {
+          console.warn(
+            '[recordNewsView] Tài khoản đã xem bài viết này trước đó. Không tăng views.',
+          );
+
+          return false;
+        }
+
+        console.log(
+          '[recordNewsView] Đã tạo lượt xem mới, bắt đầu tăng views',
+        );
+
+        // 4. Tăng tổng lượt xem của bài viết.
+        const updateResult = await manager
+          .getRepository(NewsEntity)
+          .increment(
+            { newsId },
+            'views',
+            1,
+          );
+
+        console.log(
+          '[recordNewsView] Kết quả tăng views:',
+          updateResult,
+        );
+
+        console.log(
+          '[recordNewsView] Transaction hoàn tất thành công',
+        );
+
+        return true;
+      },
+    );
+
+    console.log('[recordNewsView] isNewView:', isNewView);
+
+    // 5. Chỉ cập nhật thống kê khi có lượt xem mới.
+    if (isNewView) {
+      console.log(
+        '[recordNewsView] Gửi cập nhật daily views',
+      );
+
+      await this.notificationService.updateDailyViews();
+
+      console.log(
+        '[recordNewsView] Đã gọi updateDailyViews thành công',
+      );
+    }
+
+    console.log('========== END RECORD NEWS VIEW ==========\n');
+
+    return isNewView;
+  } catch (error) {
+    console.error(
+      '[recordNewsView] LỖI KHI GHI NHẬN LƯỢT XEM:',
+      error,
+    );
+
+    throw error;
+  }
+}
+async findDetail(
+  id: string,
+  userId: string | null = null,
+) {
+  console.log('\n========== FIND NEWS DETAIL ==========');
+  console.log('[findDetail] id:', id);
+  console.log('[findDetail] userId nhận được:', userId);
+  console.log('[findDetail] userId type:', typeof userId);
+
+  // 1. Kiểm tra ID.
   if (!/^[1-9]\d*$/.test(id)) {
+    console.warn('[findDetail] ID bài viết không hợp lệ:', id);
+
     throw new NotFoundException('ID bài viết không hợp lệ');
   }
 
+  // 2. Tìm bài viết.
   const news = await this.newsRepo.findOne({
     where: {
       newsId: id,
@@ -1633,9 +1779,39 @@ async findDetail(id: string) {
   });
 
   if (!news) {
+    console.warn('[findDetail] Không tìm thấy bài viết:', id);
+
     throw new NotFoundException('Không tìm thấy bài viết');
   }
 
+  console.log('[findDetail] Tìm thấy bài viết:', news.newsId);
+  console.log('[findDetail] Trước khi ghi lượt xem:', news.views);
+
+  // 3. Ghi nhận lượt xem theo tài khoản.
+  const isNewView = await this.recordNewsView(
+    news.newsId,
+    userId,
+  );
+
+  console.log('[findDetail] Kết quả ghi nhận lượt xem:', isNewView);
+
+  // 4. Lấy tổng lượt xem mới nhất.
+  const updatedNews = await this.newsRepo.findOne({
+    where: {
+      newsId: id,
+    },
+    select: {
+      newsId: true,
+      views: true,
+    },
+  });
+
+  console.log(
+    '[findDetail] Views sau khi ghi nhận:',
+    updatedNews?.views,
+  );
+
+  // 5. Lấy nội dung bài viết.
   const blocks = await this.blockRepo.find({
     where: {
       newsId: id,
@@ -1646,6 +1822,10 @@ async findDetail(id: string) {
     },
   });
 
+  console.log('[findDetail] Số lượng content blocks:', blocks.length);
+  console.log('========== END FIND NEWS DETAIL ==========\n');
+
+  // 6. Trả về dữ liệu.
   return {
     id: String(news.newsId),
     title: news.title,
@@ -1653,7 +1833,9 @@ async findDetail(id: string) {
     summary: news.summary,
     thumbnail: news.thumbnail,
     status: news.status,
-    views: Number(news.views),
+
+    views: Number(updatedNews?.views ?? news.views ?? 0),
+
     reviewScore: news.reviewScore,
     publishedAt: news.publishedAt,
 
@@ -1686,7 +1868,6 @@ async findDetail(id: string) {
     })),
   };
 }
-
 async findRelated(
   id: string,
   page = 1,
