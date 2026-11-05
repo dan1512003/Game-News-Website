@@ -1,4 +1,5 @@
 
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
 import {
   NewsCounts,
   NewsDashboardStats,
@@ -17,12 +18,12 @@ export interface NewsState {
   detailLoading: boolean;
   saving: boolean;
   deleting: boolean;
-  error: string | null;
+ error: ApiErrorResponse | null;
   successMessage: string | null;
    // Dashboard
   dashboardStats: NewsDashboardStats | null;
   dashboardStatsLoading: boolean;
-  dashboardStatsError: string | null;
+  dashboardStatsError:ApiErrorResponse | null;
 }
 
 export const initialNewsState: NewsState = {

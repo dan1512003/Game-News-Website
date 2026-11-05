@@ -15,6 +15,10 @@ import {
   exhaustMap,
 } from 'rxjs';
 
+import { HttpErrorResponse } from '@angular/common/http';
+
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
+
 import { CategoryService } from './services/category.service';
 
 import {
@@ -38,6 +42,71 @@ import {
   loadCategoryDashboardStatsFailure,
 } from './category.actions';
 
+// Chuyển lỗi HTTP thành ApiErrorResponse
+function toApiError(error: unknown): ApiErrorResponse {
+  if (error instanceof HttpErrorResponse) {
+    // Backend không kết nối được
+    if (error.status === 0) {
+      return {
+        statusCode: 0,
+        message: 'Không thể kết nối đến máy chủ.',
+        timestamp: new Date().toISOString(),
+        path: '',
+      };
+    }
+
+    const body = error.error;
+    const message = body?.message;
+
+    let fallbackMessage = 'Đã xảy ra lỗi khi gọi API.';
+
+    if (error.status === 401) {
+      fallbackMessage =
+        'Phiên đăng nhập đã hết hạn hoặc chưa đăng nhập';
+    } else if (error.status === 403) {
+      fallbackMessage =
+        'Bạn không có quyền thực hiện thao tác này';
+    }
+
+    return {
+      statusCode:
+        typeof body?.statusCode === 'number'
+          ? body.statusCode
+          : error.status,
+
+      message: Array.isArray(message)
+        ? message.join(', ')
+        : typeof message === 'string'
+          ? message
+          : fallbackMessage,
+
+      errors: Array.isArray(body?.errors)
+        ? body.errors
+        : undefined,
+
+      timestamp:
+        typeof body?.timestamp === 'string'
+          ? body.timestamp
+          : new Date().toISOString(),
+
+      path:
+        typeof body?.path === 'string'
+          ? body.path
+          : '',
+    };
+  }
+
+  return {
+    statusCode: 500,
+    message:
+      error instanceof Error
+        ? error.message
+        : 'Đã xảy ra lỗi không xác định.',
+    timestamp: new Date().toISOString(),
+    path: '',
+  };
+}
+
 @Injectable()
 export class CategoryEffects {
   private readonly actions$ = inject(Actions);
@@ -49,11 +118,13 @@ export class CategoryEffects {
       ofType(loadCategories),
       switchMap(({ query }) =>
         this.service.getAll(query).pipe(
-          map((result) => loadCategoriesSuccess({ result })),
-          catchError((error) =>
+          map((result) =>
+            loadCategoriesSuccess({ result }),
+          ),
+          catchError((error: unknown) =>
             of(
               loadCategoriesFailure({
-                error: this.getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -71,10 +142,10 @@ export class CategoryEffects {
           map((options) =>
             loadCategoryOptionsSuccess({ options }),
           ),
-          catchError((error) =>
+          catchError((error: unknown) =>
             of(
               loadCategoryOptionsFailure({
-                error: this.getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -89,11 +160,13 @@ export class CategoryEffects {
       ofType(loadCategory),
       switchMap(({ id }) =>
         this.service.getById(id).pipe(
-          map((category) => loadCategorySuccess({ category })),
-          catchError((error) =>
+          map((category) =>
+            loadCategorySuccess({ category }),
+          ),
+          catchError((error: unknown) =>
             of(
               categoryOperationFailure({
-                error: this.getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -113,10 +186,10 @@ export class CategoryEffects {
               message: 'Thêm danh mục thành công',
             }),
           ),
-          catchError((error) =>
+          catchError((error: unknown) =>
             of(
               categoryOperationFailure({
-                error: this.getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -136,10 +209,10 @@ export class CategoryEffects {
               message: 'Cập nhật danh mục thành công',
             }),
           ),
-          catchError((error) =>
+          catchError((error: unknown) =>
             of(
               categoryOperationFailure({
-                error: this.getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -148,25 +221,27 @@ export class CategoryEffects {
     ),
   );
 
-loadCategoryDashboardStats$ = createEffect(() =>
-  this.actions$.pipe(
-    ofType(loadCategoryDashboardStats),
-    switchMap(() =>
-      this.service.getDashboardStats().pipe(
-        map((stats) =>
-          loadCategoryDashboardStatsSuccess({ stats }),
-        ),
-        catchError((error: unknown) =>
-          of(
-            loadCategoryDashboardStatsFailure({
-              error: this.getErrorMessage(error),
-            }),
+  // ===== Dashboard stats =====
+  loadCategoryDashboardStats$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(loadCategoryDashboardStats),
+      switchMap(() =>
+        this.service.getDashboardStats().pipe(
+          map((stats) =>
+            loadCategoryDashboardStatsSuccess({ stats }),
+          ),
+          catchError((error: unknown) =>
+            of(
+              loadCategoryDashboardStatsFailure({
+                error: toApiError(error),
+              }),
+            ),
           ),
         ),
       ),
     ),
-  ),
-);
+  );
+
   // ===== Delete =====
   deleteCategory$ = createEffect(() =>
     this.actions$.pipe(
@@ -180,10 +255,10 @@ loadCategoryDashboardStats$ = createEffect(() =>
                 result.message ?? 'Xóa danh mục thành công',
             }),
           ),
-          catchError((error) =>
+          catchError((error: unknown) =>
             of(
               categoryOperationFailure({
-                error: this.getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -191,27 +266,4 @@ loadCategoryDashboardStats$ = createEffect(() =>
       ),
     ),
   );
-
-  private getErrorMessage(error: any): string {
-    const body = error?.error;
-
-    if (Array.isArray(body?.message)) {
-      return body.message.join(', ');
-    }
-
-    if (typeof body?.message === 'string') {
-      return body.message;
-    }
-
-    if (error?.status === 401) {
-      return 'Phiên đăng nhập đã hết hạn hoặc chưa đăng nhập';
-    }
-
-    if (error?.status === 403) {
-      return 'Bạn không có quyền thực hiện thao tác này';
-    }
-
-    return 'Đã xảy ra lỗi. Vui lòng thử lại';
-  }
-  
 }

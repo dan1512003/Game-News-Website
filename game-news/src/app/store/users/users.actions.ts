@@ -1,3 +1,4 @@
+
 import { createAction, props } from '@ngrx/store';
 
 import {
@@ -9,6 +10,8 @@ import {
   UserListResponse,
   UserQuery,
 } from './models/users.model';
+
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
 
 // Dashboard stats
 export const loadUserDashboardStats = createAction(
@@ -22,7 +25,7 @@ export const loadUserDashboardStatsSuccess = createAction(
 
 export const loadUserDashboardStatsFailure = createAction(
   '[Users] Load Dashboard Stats Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Danh sách
@@ -38,7 +41,7 @@ export const loadUsersSuccess = createAction(
 
 export const loadUsersFailure = createAction(
   '[Users] Load Users Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Chi tiết
@@ -54,7 +57,7 @@ export const loadUserByIdSuccess = createAction(
 
 export const loadUserByIdFailure = createAction(
   '[Users] Load User By Id Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Cập nhật role/status
@@ -73,7 +76,7 @@ export const updateUserSuccess = createAction(
 
 export const updateUserFailure = createAction(
   '[Users] Update User Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Xóa
@@ -89,7 +92,7 @@ export const deleteUserSuccess = createAction(
 
 export const deleteUserFailure = createAction(
   '[Users] Delete User Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Xóa thông báo

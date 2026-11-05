@@ -62,10 +62,16 @@ private toFormData(
       continue;
     }
 
-    if (value === null) {
-      formData.append(key, '');
-      continue;
-    }
+  // Chỉ bỏ qua reviewScore khi có giá trị null
+if (key === 'reviewScore' && value === null) {
+  continue;
+}
+
+// Các field null khác vẫn gửi chuỗi rỗng như cũ
+if (value === null) {
+  formData.append(key, '');
+  continue;
+}
 
     // Chuyển contentBlocks, tags... thành JSON.
     if (Array.isArray(value) || typeof value === 'object') {

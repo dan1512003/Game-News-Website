@@ -1,5 +1,8 @@
+
 import { createAction, props } from '@ngrx/store';
+
 import type { NewsBlockImageUpload } from './services/news.service';
+
 import {
   CreateNewsDto,
   NewsData,
@@ -10,7 +13,9 @@ import {
   ScheduleNewsDto,
   UpdateNewsDto,
   NewsDashboardStats,
-} from './models/news.model'
+} from './models/news.model';
+
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
 
 // =========================
 // LOAD LIST
@@ -28,7 +33,7 @@ export const loadNewsSuccess = createAction(
 
 export const loadNewsFailure = createAction(
   '[News] Load News Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // =========================
@@ -47,7 +52,7 @@ export const loadNewsByIdSuccess = createAction(
 
 export const loadNewsByIdFailure = createAction(
   '[News] Load News By Id Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // =========================
@@ -56,7 +61,11 @@ export const loadNewsByIdFailure = createAction(
 
 export const createNews = createAction(
   '[News] Create News',
-  props<{ dto: CreateNewsDto; file?: File | null , blockImages?: NewsBlockImageUpload[];}>(),
+  props<{
+    dto: CreateNewsDto;
+    file?: File | null;
+    blockImages?: NewsBlockImageUpload[];
+  }>(),
 );
 
 export const createNewsSuccess = createAction(
@@ -66,8 +75,12 @@ export const createNewsSuccess = createAction(
 
 export const createNewsFailure = createAction(
   '[News] Create News Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
+
+// =========================
+// UPDATE
+// =========================
 
 export const updateNews = createAction(
   '[News] Update News',
@@ -75,7 +88,7 @@ export const updateNews = createAction(
     id: string;
     dto: UpdateNewsDto;
     file?: File | null;
-     blockImages?: NewsBlockImageUpload[];
+    blockImages?: NewsBlockImageUpload[];
   }>(),
 );
 
@@ -86,7 +99,7 @@ export const updateNewsSuccess = createAction(
 
 export const updateNewsFailure = createAction(
   '[News] Update News Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // =========================
@@ -108,7 +121,7 @@ export const deleteNewsSuccess = createAction(
 
 export const deleteNewsFailure = createAction(
   '[News] Delete News Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // =========================
@@ -165,8 +178,7 @@ export const unpublishNews = createAction(
   props<{ id: string }>(),
 );
 
-// Dùng chung cho kết quả các workflow action.
-// Các action này trả về News từ backend.
+// Dùng chung cho kết quả các workflow action
 export const newsWorkflowSuccess = createAction(
   '[News] Workflow Success',
   props<{ news: NewsData; message: string }>(),
@@ -174,7 +186,7 @@ export const newsWorkflowSuccess = createAction(
 
 export const newsWorkflowFailure = createAction(
   '[News] Workflow Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // =========================
@@ -188,9 +200,10 @@ export const clearSelectedNews = createAction(
 export const clearNewsError = createAction(
   '[News] Clear Error',
 );
-// =====================================================
+
+// =========================
 // DASHBOARD STATS
-// =====================================================
+// =========================
 
 export const loadNewsDashboardStats = createAction(
   '[News] Load Dashboard Stats',
@@ -203,5 +216,5 @@ export const loadNewsDashboardStatsSuccess = createAction(
 
 export const loadNewsDashboardStatsFailure = createAction(
   '[News] Load Dashboard Stats Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );

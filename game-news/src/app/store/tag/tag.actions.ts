@@ -12,6 +12,8 @@ import {
   UpdateTagDto,
 } from './models/tag.model';
 
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
+
 // Dashboard stats
 export const loadTagDashboardStats = createAction(
   '[Tags] Load Dashboard Stats',
@@ -24,7 +26,7 @@ export const loadTagDashboardStatsSuccess = createAction(
 
 export const loadTagDashboardStatsFailure = createAction(
   '[Tags] Load Dashboard Stats Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Danh sách phân trang
@@ -40,7 +42,7 @@ export const loadTagsSuccess = createAction(
 
 export const loadTagsFailure = createAction(
   '[Tags] Load Tags Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Toàn bộ tag options
@@ -55,7 +57,7 @@ export const loadTagOptionsSuccess = createAction(
 
 export const loadTagOptionsFailure = createAction(
   '[Tags] Load Tag Options Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Chi tiết
@@ -71,7 +73,7 @@ export const loadTagByIdSuccess = createAction(
 
 export const loadTagByIdFailure = createAction(
   '[Tags] Load Tag By Id Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Tạo mới
@@ -87,7 +89,7 @@ export const createTagSuccess = createAction(
 
 export const createTagFailure = createAction(
   '[Tags] Create Tag Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Cập nhật
@@ -103,7 +105,7 @@ export const updateTagSuccess = createAction(
 
 export const updateTagFailure = createAction(
   '[Tags] Update Tag Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Xóa
@@ -119,7 +121,7 @@ export const deleteTagSuccess = createAction(
 
 export const deleteTagFailure = createAction(
   '[Tags] Delete Tag Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Xóa thông báo

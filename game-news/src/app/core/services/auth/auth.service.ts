@@ -1,3 +1,4 @@
+
 import {
   Injectable,
 } from '@angular/core';
@@ -8,6 +9,8 @@ import {
 
 import {
   Observable,
+  shareReplay,
+  finalize,
 } from 'rxjs';
 
 import {
@@ -49,6 +52,12 @@ export class AuthService {
 
   private readonly API_URL =
     'http://localhost:3001/auth';
+
+  // ========================================
+  // SHARED REFRESH REQUEST
+  // ========================================
+
+  private refreshRequest$: Observable<RefreshResponse> | null = null;
 
 
   constructor(
@@ -102,6 +111,39 @@ export class AuthService {
         withCredentials: true,
       },
     );
+  }
+
+
+  // ========================================
+  // REFRESH ONCE
+  // SHARE ONE HTTP REQUEST
+  // ========================================
+
+  refreshOnce(): Observable<RefreshResponse> {
+
+    if (!this.refreshRequest$) {
+
+      const shared$ = this.refresh().pipe(
+
+        finalize(() => {
+
+          if (this.refreshRequest$ === shared$) {
+            this.refreshRequest$ = null;
+          }
+
+        }),
+
+        shareReplay({
+          bufferSize: 1,
+          refCount: false,
+        }),
+
+      );
+
+      this.refreshRequest$ = shared$;
+    }
+
+    return this.refreshRequest$;
   }
 
 
@@ -238,10 +280,9 @@ export class AuthService {
     return this.http.post<VerifyPasswordResetOtpResponse>(
       `${this.API_URL}/password-reset/verify`,
       data,
-          {
-      withCredentials: true,
-    },
-
+      {
+        withCredentials: true,
+      },
     );
   }
 
@@ -258,10 +299,9 @@ export class AuthService {
     return this.http.post<ResetPasswordResponse>(
       `${this.API_URL}/password-reset/reset`,
       data,
-          {
-      withCredentials: true,
-    },
-
+      {
+        withCredentials: true,
+      },
     );
   }
 

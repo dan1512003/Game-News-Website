@@ -1,4 +1,3 @@
-
 import {
   Tag,
   TagMeta,
@@ -6,25 +5,28 @@ import {
   TagDashboardStats,
 } from './models/tag.model';
 
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
+
 export interface TagState {
   tags: Tag[];
   selectedTag: Tag | null;
   meta: TagMeta;
 
-  // Options cho select
+  // Options
   options: TagOption[];
   optionsLoading: boolean;
-  optionsError: string | null;
+  optionsError: ApiErrorResponse | null;
 
   // Dashboard
   dashboardStats: TagDashboardStats | null;
   dashboardStatsLoading: boolean;
-  dashboardStatsError: string | null;
+  dashboardStatsError: ApiErrorResponse | null;
 
   loading: boolean;
   submitting: boolean;
   deleting: boolean;
-  error: string | null;
+
+  error: ApiErrorResponse | null;
   successMessage: string | null;
 }
 
@@ -50,6 +52,7 @@ export const initialTagState: TagState = {
   loading: false,
   submitting: false,
   deleting: false,
+
   error: null,
   successMessage: null,
 };

@@ -1,7 +1,10 @@
+import { ApiErrorResponse } from '../../../shared/models/auth/auth.model';
 import {
   DashboardActivity,
   DailyViews,
 } from '../models/notification.model';
+
+
 
 export interface NotificationState {
   activities: DashboardActivity[];
@@ -12,9 +15,9 @@ export interface NotificationState {
 
   dailyViewsLoading: boolean;
 
-  error: string | null;
+  error: ApiErrorResponse | null;
 
-  dailyViewsError: string | null;
+  dailyViewsError: ApiErrorResponse | null;
 }
 
 export const initialNotificationState: NotificationState = {

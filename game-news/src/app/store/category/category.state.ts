@@ -1,4 +1,6 @@
 
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
+
 import {
   Category,
   CategoryMeta,
@@ -15,14 +17,21 @@ export interface CategoryState {
   // Dashboard
   dashboardStats: CategoryDashboardStats | null;
   dashboardStatsLoading: boolean;
-  dashboardStatsError: string | null;
+  dashboardStatsError: ApiErrorResponse | null;
 
+  // Loading
   loading: boolean;
   optionsLoading: boolean;
-  optionsError: string | null;
+
+  // Errors
+  optionsError: ApiErrorResponse | null;
+  error: ApiErrorResponse | null;
+
+  // Operations
   submitting: boolean;
   deleting: boolean;
-  error: string | null;
+
+  // Messages
   successMessage: string | null;
 }
 
@@ -38,15 +47,23 @@ export const initialCategoryState: CategoryState = {
     totalPages: 0,
   },
 
+  // Dashboard
   dashboardStats: null,
   dashboardStatsLoading: false,
   dashboardStatsError: null,
 
+  // Loading
   loading: false,
   optionsLoading: false,
+
+  // Errors
   optionsError: null,
+  error: null,
+
+  // Operations
   submitting: false,
   deleting: false,
-  error: null,
+
+  // Messages
   successMessage: null,
 };

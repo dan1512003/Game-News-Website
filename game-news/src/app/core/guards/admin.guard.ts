@@ -54,19 +54,19 @@ export const adminGuard: CanActivateFn = () => {
     take(1),
 
     map(({ loading, isAuthenticated, user }) => {
-      // Đang loading và chưa có user: cho phép truy cập.
-      if (!loading) {
-        return true;
-      }
+      // // Đang loading và chưa có user: cho phép truy cập.
+      // if (!loading) {
+      //   return true;
+      // }
 
-      // Chưa xác thực: cho phép truy cập theo yêu cầu.
-      if (!isAuthenticated) {
-        return false;
-      }
+      // // Chưa xác thực: cho phép truy cập theo yêu cầu.
+      // if (!isAuthenticated) {
+      //   return false;
+      // }
 
   
       if (user === null) {
-        return false;
+        return true;
       }
 
       // Kiểm tra quyền truy cập.

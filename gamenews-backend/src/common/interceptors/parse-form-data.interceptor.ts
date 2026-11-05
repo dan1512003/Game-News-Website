@@ -36,7 +36,10 @@ export class ParseFormDataInterceptor implements NestInterceptor {
         }
       }
     }
-
+console.log('[INTERCEPTOR BEFORE]', {
+  reviewScore: body.reviewScore,
+  type: typeof body.reviewScore,
+});
     // Chuyển các trường số.
     for (const field of ['categoryId', 'views', 'reviewScore']) {
       const current = body[field];

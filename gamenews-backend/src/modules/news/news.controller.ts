@@ -157,6 +157,8 @@ create(
   @Body() dto: CreateNewsDto,
   @CurrentUser() user: UserEntity,
 ) {
+
+
   const uploadedFiles = files ?? [];
 
   const thumbnailFile = uploadedFiles.find(

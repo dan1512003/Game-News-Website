@@ -32,30 +32,11 @@ export interface AuthState {
   error: ApiErrorResponse | null;
 }
 
-export function getSavedUser(): UserLogin | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  try {
-    const savedUser = sessionStorage.getItem('auth_user');
-
-    if (!savedUser) {
-      return null;
-    }
-
-    return JSON.parse(savedUser) as UserLogin;
-  } catch (error) {
-    console.error('[getSavedUser] Lỗi đọc user:', error);
-    return null;
-  }
-}
 export const initialAuthState: AuthState = {
   loading: false,
   initialized: false,
 
-  // Khôi phục user tạm thời để hiển thị username sau F5
-  user: getSavedUser(),
+  user: null,
   accessToken: null,
   isAuthenticated: false,
 

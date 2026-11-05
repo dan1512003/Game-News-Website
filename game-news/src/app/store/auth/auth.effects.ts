@@ -1,6 +1,8 @@
+
 import {
   Injectable,
   inject,
+  PLATFORM_ID,
 } from '@angular/core';
 
 import {
@@ -26,9 +28,7 @@ import {
   exhaustMap,
   map,
   of,
-  switchMap,
   tap,
-  timer,
   withLatestFrom,
 } from 'rxjs';
 
@@ -46,7 +46,6 @@ import {
   selectAccessToken,
 } from './auth.selectors';
 
-
 // =====================================================
 // CONVERT API ERROR
 // =====================================================
@@ -56,32 +55,49 @@ function toApiError(
 ): ApiErrorResponse {
   const body = error.error;
 
+  // Backend không kết nối được
+  if (error.status === 0) {
+    return {
+      statusCode: 0,
+      message: 'Không thể kết nối đến máy chủ.',
+      timestamp: new Date().toISOString(),
+      path: '',
+    };
+  }
+
+  // Backend trả về ApiErrorResponse
   if (
     body &&
     typeof body === 'object' &&
-    typeof body.statusCode === 'number' &&
-    typeof body.message === 'string'
+    typeof body.statusCode === 'number'
   ) {
-    return body as ApiErrorResponse;
+    return {
+      statusCode: body.statusCode,
+      message:
+        Array.isArray(body.message)
+          ? body.message.join(', ')
+          : body.message ??
+            error.message ??
+            'Đã xảy ra lỗi.',
+      errors: body.errors,
+      timestamp:
+        body.timestamp ?? new Date().toISOString(),
+      path: body.path ?? '',
+    };
   }
 
+  // Các lỗi HTTP khác
   return {
-    statusCode: error.status || 500,
-
-    message:
-      typeof body?.message === 'string'
+    statusCode: error.status,
+    message: Array.isArray(body?.message)
+      ? body.message.join(', ')
+      : typeof body?.message === 'string'
         ? body.message
-        : error.message ||
-          'Đã xảy ra lỗi. Vui lòng thử lại.',
-
-    timestamp:
-      new Date().toISOString(),
-
+        : error.message || 'Đã xảy ra lỗi.',
+    timestamp: new Date().toISOString(),
     path: '',
   };
 }
-
-
 // =====================================================
 // AUTH EFFECTS
 // =====================================================
@@ -101,7 +117,6 @@ export class AuthEffects {
   private readonly store =
     inject(Store);
 
-
   // =====================================================
   // MISSING ACCESS TOKEN
   // =====================================================
@@ -115,13 +130,11 @@ export class AuthEffects {
       message:
         'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.',
 
-      timestamp:
-        new Date().toISOString(),
+      timestamp: new Date().toISOString(),
 
       path: '',
     };
   }
-
 
   // =====================================================
   // REGISTER
@@ -129,66 +142,50 @@ export class AuthEffects {
 
   register$ = createEffect(() =>
     this.actions$.pipe(
-
-      ofType(
-        AuthActions.register,
-      ),
+      ofType(AuthActions.register),
 
       exhaustMap(({ data }) =>
+        this.authService.register(data).pipe(
 
-        this.authService
-          .register(data)
-          .pipe(
-
-            map((response) =>
-              AuthActions.registerSuccess({
-                response,
-              }),
-            ),
-
-            catchError(
-              (
-                error: HttpErrorResponse,
-              ) =>
-                of(
-                  AuthActions.registerFailure({
-                    error:
-                      toApiError(error),
-                  }),
-                ),
-            ),
-
+          map((response) =>
+            AuthActions.registerSuccess({
+              response,
+            }),
           ),
+
+          catchError(
+            (error: HttpErrorResponse) =>
+              of(
+                AuthActions.registerFailure({
+                  error: toApiError(error),
+                }),
+              ),
+          ),
+
+        ),
       ),
     ),
   );
-
 
   // =====================================================
   // REGISTER SUCCESS
   // =====================================================
 
-  registerSuccess$ =
-    createEffect(
-      () =>
-        this.actions$.pipe(
+  registerSuccess$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.registerSuccess),
 
-          ofType(
-            AuthActions.registerSuccess,
-          ),
-
-          tap(() => {
-            void this.router.navigate([
-              '/verify-email',
-            ]);
-          }),
-
-        ),
-      {
-        dispatch: false,
-      },
-    );
-
+        tap(() => {
+          void this.router.navigate([
+            '/verify-email',
+          ]);
+        }),
+      ),
+    {
+      dispatch: false,
+    },
+  );
 
   // =====================================================
   // LOGIN
@@ -196,66 +193,48 @@ export class AuthEffects {
 
   login$ = createEffect(() =>
     this.actions$.pipe(
-
-      ofType(
-        AuthActions.login,
-      ),
+      ofType(AuthActions.login),
 
       exhaustMap(({ data }) =>
+        this.authService.login(data).pipe(
 
-        this.authService
-          .login(data)
-          .pipe(
-
-            map((response) =>
-              AuthActions.loginSuccess({
-                response,
-              }),
-            ),
-
-            catchError(
-              (
-                error: HttpErrorResponse,
-              ) =>
-                of(
-                  AuthActions.loginFailure({
-                    error:
-                      toApiError(error),
-                  }),
-                ),
-            ),
-
+          map((response) =>
+            AuthActions.loginSuccess({
+              response,
+            }),
           ),
+
+          catchError(
+            (error: HttpErrorResponse) =>
+              of(
+                AuthActions.loginFailure({
+                  error: toApiError(error),
+                }),
+              ),
+          ),
+
+        ),
       ),
     ),
   );
-
 
   // =====================================================
   // LOGIN SUCCESS
   // =====================================================
 
-  loginSuccess$ =
-    createEffect(
-      () =>
-        this.actions$.pipe(
+  loginSuccess$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.loginSuccess),
 
-          ofType(
-            AuthActions.loginSuccess,
-          ),
-
-          tap(() => {
-            void this.router.navigate([
-              '/',
-            ]);
-          }),
-
-        ),
-      {
-        dispatch: false,
-      },
-    );
-
+        tap(() => {
+          void this.router.navigate(['/']);
+        }),
+      ),
+    {
+      dispatch: false,
+    },
+  );
 
   // =====================================================
   // GET CURRENT USER
@@ -263,204 +242,333 @@ export class AuthEffects {
 
   getMe$ = createEffect(() =>
     this.actions$.pipe(
-
-      ofType(
-        AuthActions.getMe,
-      ),
+      ofType(AuthActions.getMe),
 
       exhaustMap(() =>
+        this.authService.getMe().pipe(
 
-        this.authService
-          .getMe()
-          .pipe(
-
-            map((response) =>
-              AuthActions.getMeSuccess({
-                user:
-                  response.data.user,
-              }),
-            ),
-
-            catchError(
-              (
-                error: HttpErrorResponse,
-              ) =>
-                of(
-                  AuthActions.getMeFailure({
-                    error:
-                      toApiError(error),
-                  }),
-                ),
-            ),
-
+          map((response) =>
+            AuthActions.getMeSuccess({
+              user: response.data.user,
+            }),
           ),
+
+          catchError(
+            (error: HttpErrorResponse) =>
+              of(
+                AuthActions.getMeFailure({
+                  error: toApiError(error),
+                }),
+              ),
+          ),
+
+        ),
       ),
     ),
   );
-
 
   // =====================================================
   // REFRESH
   // =====================================================
 
-refresh$ = createEffect(() =>
-  this.actions$.pipe(
-    ofType(AuthActions.refresh),
-
-    exhaustMap(() => {
-      console.log('[EFFECT] Bắt đầu refresh');
-
-      return this.authService.refresh().pipe(
-        map((response) => {
-          console.log('[EFFECT] Dispatch refreshSuccess');
-
-          return AuthActions.refreshSuccess({ response });
-        }),
-
-        catchError((error: HttpErrorResponse) => {
-          console.log(
-            '[EFFECT] Dispatch refreshFailure:',
-            error.status,
-          );
-
-          return of(
-            AuthActions.refreshFailure({
-              error: toApiError(error),
-            }),
-          );
-        }),
-      );
-    }),
-  ),
-);
-  // =====================================================
-// SAVE USER TO SESSION STORAGE
-// =====================================================
-
-persistUser$ = createEffect(
-  () =>
+  refresh$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(
-        AuthActions.loginSuccess,
-        AuthActions.refreshSuccess,
-        AuthActions.getMeSuccess,
-        AuthActions.updateUsernameSuccess,
-      ),
+      ofType(AuthActions.refresh),
 
-      tap((action) => {
-        switch (action.type) {
-          case AuthActions.loginSuccess.type:
-          case AuthActions.refreshSuccess.type: {
-            const user = action.response.data.user;
+      exhaustMap(() => {
+        console.log(
+          '[AuthEffects] Bắt đầu refresh',
+        );
 
-            if (user) {
-              sessionStorage.setItem(
-                'auth_user',
-                JSON.stringify(user),
-              );
-            }
+        return this.authService.refreshOnce().pipe(
 
-            break;
-          }
-
-          case AuthActions.getMeSuccess.type: {
-            const user = action.user;
-
-            if (user) {
-              sessionStorage.setItem(
-                'auth_user',
-                JSON.stringify(user),
-              );
-            }
-
-            break;
-          }
-
-          case AuthActions.updateUsernameSuccess.type: {
-            const updatedUser = action.response.data.user;
-
-            if (!updatedUser) {
-              return;
-            }
-
-            const savedUser =
-              sessionStorage.getItem('auth_user');
-
-            const previousUser = savedUser
-              ? JSON.parse(savedUser)
-              : {};
-
-            sessionStorage.setItem(
-              'auth_user',
-              JSON.stringify({
-                ...previousUser,
-                ...updatedUser,
-              }),
+          map((response) => {
+            console.log(
+              '[AuthEffects] Refresh thành công',
             );
 
-            break;
-          }
-        }
+            return AuthActions.refreshSuccess({
+              response,
+            });
+          }),
+
+          catchError(
+            (error: HttpErrorResponse) => {
+              console.log(
+                '[AuthEffects] Refresh thất bại:',
+                error.status,
+              );
+
+              return of(
+                AuthActions.refreshFailure({
+                  error: toApiError(error),
+                }),
+              );
+            },
+          ),
+
+        );
       }),
     ),
-  {
-    dispatch: false,
-  },
-);
-// =====================================================
-// CLEAR SAVED USER
-// =====================================================
+  );
 
-clearSavedUser$ = createEffect(
-  () =>
-    this.actions$.pipe(
-      ofType(
-        AuthActions.refreshFailure,
-        AuthActions.loginFailure,
-        AuthActions.logoutSuccess,
-        AuthActions.logoutFailure,
-        AuthActions.resetAuth,
-      ),
-
-      tap(() => {
-        sessionStorage.removeItem('auth_user');
-      }),
-    ),
-  {
-    dispatch: false,
-  },
-);
   // =====================================================
   // LOGOUT
   // =====================================================
 
   logout$ = createEffect(() =>
     this.actions$.pipe(
-
-      ofType(
-        AuthActions.logout,
-      ),
+      ofType(AuthActions.logout),
 
       exhaustMap(() =>
+        this.authService.logout().pipe(
 
-        this.authService
-          .logout()
+          map((response) =>
+            AuthActions.logoutSuccess({
+              response,
+            }),
+          ),
+
+          catchError(
+            (error: HttpErrorResponse) =>
+              of(
+                AuthActions.logoutFailure({
+                  error: toApiError(error),
+                }),
+              ),
+          ),
+
+        ),
+      ),
+    ),
+  );
+
+  // =====================================================
+  // LOGOUT SUCCESS
+  // =====================================================
+
+  logoutSuccess$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.logoutSuccess),
+
+        tap(() => {
+          void this.router.navigate(['/login']);
+        }),
+      ),
+    {
+      dispatch: false,
+    },
+  );
+
+  // =====================================================
+  // UPDATE USERNAME
+  // =====================================================
+
+  updateUsername$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.updateUsername),
+
+      withLatestFrom(
+        this.store.select(selectAccessToken),
+      ),
+
+      exhaustMap(([{ data }, accessToken]) => {
+
+        if (!accessToken) {
+          return of(
+            AuthActions.updateUsernameFailure({
+              error: this.missingTokenError(),
+            }),
+          );
+        }
+
+        return this.authService
+          .updateUsername(data)
           .pipe(
 
             map((response) =>
-              AuthActions.logoutSuccess({
+              AuthActions.updateUsernameSuccess({
                 response,
               }),
             ),
 
             catchError(
-              (
-                error: HttpErrorResponse,
-              ) =>
+              (error: HttpErrorResponse) =>
                 of(
-                  AuthActions.logoutFailure({
-                    error:
-                      toApiError(error),
+                  AuthActions.updateUsernameFailure({
+                    error: toApiError(error),
+                  }),
+                ),
+            ),
+
+          );
+      }),
+    ),
+  );
+
+  // =====================================================
+  // CHANGE PASSWORD
+  // =====================================================
+
+  changePassword$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.changePassword),
+
+      withLatestFrom(
+        this.store.select(selectAccessToken),
+      ),
+
+      exhaustMap(([{ data }, accessToken]) => {
+
+        if (!accessToken) {
+          return of(
+            AuthActions.changePasswordFailure({
+              error: this.missingTokenError(),
+            }),
+          );
+        }
+
+        return this.authService
+          .changePassword(data)
+          .pipe(
+
+            map((response) =>
+              AuthActions.changePasswordSuccess({
+                response,
+              }),
+            ),
+
+            catchError(
+              (error: HttpErrorResponse) =>
+                of(
+                  AuthActions.changePasswordFailure({
+                    error: toApiError(error),
+                  }),
+                ),
+            ),
+
+          );
+      }),
+    ),
+  );
+
+  // =====================================================
+  // SEND EMAIL RESET OTP
+  // =====================================================
+
+  sendEmailResetOtp$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.sendEmailResetOtp),
+
+      withLatestFrom(
+        this.store.select(selectAccessToken),
+      ),
+
+      exhaustMap(([{ data }, accessToken]) => {
+
+        if (!accessToken) {
+          return of(
+            AuthActions.sendEmailResetOtpFailure({
+              error: this.missingTokenError(),
+            }),
+          );
+        }
+
+        return this.authService
+          .sendEmailResetOtp(data)
+          .pipe(
+
+            map((response) =>
+              AuthActions.sendEmailResetOtpSuccess({
+                response,
+              }),
+            ),
+
+            catchError(
+              (error: HttpErrorResponse) =>
+                of(
+                  AuthActions.sendEmailResetOtpFailure({
+                    error: toApiError(error),
+                  }),
+                ),
+            ),
+
+          );
+      }),
+    ),
+  );
+
+  // =====================================================
+  // VERIFY OTP AND CHANGE EMAIL
+  // =====================================================
+
+  resetEmail$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.resetEmail),
+
+      withLatestFrom(
+        this.store.select(selectAccessToken),
+      ),
+
+      exhaustMap(([{ data }, accessToken]) => {
+
+        if (!accessToken) {
+          return of(
+            AuthActions.resetEmailFailure({
+              error: this.missingTokenError(),
+            }),
+          );
+        }
+
+        return this.authService
+          .resetEmail(data)
+          .pipe(
+
+            map((response) =>
+              AuthActions.resetEmailSuccess({
+                response,
+              }),
+            ),
+
+            catchError(
+              (error: HttpErrorResponse) =>
+                of(
+                  AuthActions.resetEmailFailure({
+                    error: toApiError(error),
+                  }),
+                ),
+            ),
+
+          );
+      }),
+    ),
+  );
+
+  // =====================================================
+  // REQUEST PASSWORD RESET
+  // =====================================================
+
+  requestPasswordReset$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.requestPasswordReset),
+
+      exhaustMap(({ data }) =>
+        this.authService
+          .requestPasswordReset(data)
+          .pipe(
+
+            map((response) =>
+              AuthActions.requestPasswordResetSuccess({
+                response,
+              }),
+            ),
+
+            catchError(
+              (error: HttpErrorResponse) =>
+                of(
+                  AuthActions.requestPasswordResetFailure({
+                    error: toApiError(error),
                   }),
                 ),
             ),
@@ -470,485 +578,88 @@ clearSavedUser$ = createEffect(
     ),
   );
 
-
-  // =====================================================
-  // LOGOUT SUCCESS
-  // =====================================================
-
-  logoutSuccess$ =
-    createEffect(
-      () =>
-        this.actions$.pipe(
-
-          ofType(
-            AuthActions.logoutSuccess,
-          ),
-
-          tap(() => {
-            void this.router.navigate([
-              '/login',
-            ]);
-          }),
-
-        ),
-      {
-        dispatch: false,
-      },
-    );
-
-
-  // =====================================================
-  // UPDATE USERNAME
-  // =====================================================
-
-  updateUsername$ =
-    createEffect(() =>
-      this.actions$.pipe(
-
-        ofType(
-          AuthActions.updateUsername,
-        ),
-
-        withLatestFrom(
-          this.store.select(
-            selectAccessToken,
-          ),
-        ),
-
-        exhaustMap(
-          ([
-            { data },
-            accessToken,
-          ]) => {
-
-            if (!accessToken) {
-
-              return of(
-                AuthActions.updateUsernameFailure({
-                  error:
-                    this.missingTokenError(),
-                }),
-              );
-            }
-
-            return this.authService
-              .updateUsername(
-                data
-              )
-              .pipe(
-
-                map((response) =>
-                  AuthActions.updateUsernameSuccess({
-                    response,
-                  }),
-                ),
-
-                catchError(
-                  (
-                    error: HttpErrorResponse,
-                  ) =>
-                    of(
-                      AuthActions.updateUsernameFailure({
-                        error:
-                          toApiError(error),
-                      }),
-                    ),
-                ),
-
-              );
-          },
-        ),
-      ),
-    );
-
-
-  // =====================================================
-  // CHANGE PASSWORD
-  // =====================================================
-
-  changePassword$ =
-    createEffect(() =>
-      this.actions$.pipe(
-
-        ofType(
-          AuthActions.changePassword,
-        ),
-
-        withLatestFrom(
-          this.store.select(
-            selectAccessToken,
-          ),
-        ),
-
-        exhaustMap(
-          ([
-            { data },
-            accessToken,
-          ]) => {
-
-            if (!accessToken) {
-
-              return of(
-                AuthActions.changePasswordFailure({
-                  error:
-                    this.missingTokenError(),
-                }),
-              );
-            }
-
-            return this.authService
-              .changePassword(
-                data
-              )
-              .pipe(
-
-                map((response) =>
-                  AuthActions.changePasswordSuccess({
-                    response,
-                  }),
-                ),
-
-                catchError(
-                  (
-                    error: HttpErrorResponse,
-                  ) =>
-                    of(
-                      AuthActions.changePasswordFailure({
-                        error:
-                          toApiError(error),
-                      }),
-                    ),
-                ),
-
-              );
-          },
-        ),
-      ),
-    );
-
-
-  // =====================================================
-  // SEND EMAIL RESET OTP
-  // =====================================================
-
-  sendEmailResetOtp$ =
-    createEffect(() =>
-      this.actions$.pipe(
-
-        ofType(
-          AuthActions.sendEmailResetOtp,
-        ),
-
-        withLatestFrom(
-          this.store.select(
-            selectAccessToken,
-          ),
-        ),
-
-        exhaustMap(
-          ([
-            { data },
-            accessToken,
-          ]) => {
-
-            if (!accessToken) {
-
-              return of(
-                AuthActions.sendEmailResetOtpFailure({
-                  error:
-                    this.missingTokenError(),
-                }),
-              );
-            }
-
-            return this.authService
-              .sendEmailResetOtp(
-                data
-              )
-              .pipe(
-
-                map((response) =>
-                  AuthActions.sendEmailResetOtpSuccess({
-                    response,
-                  }),
-                ),
-
-                catchError(
-                  (
-                    error: HttpErrorResponse,
-                  ) =>
-                    of(
-                      AuthActions.sendEmailResetOtpFailure({
-                        error:
-                          toApiError(error),
-                      }),
-                    ),
-                ),
-
-              );
-          },
-        ),
-      ),
-    );
-
-
-  // =====================================================
-  // VERIFY OTP AND CHANGE EMAIL
-  // =====================================================
-
-  resetEmail$ =
-    createEffect(() =>
-      this.actions$.pipe(
-
-        ofType(
-          AuthActions.resetEmail,
-        ),
-
-        withLatestFrom(
-          this.store.select(
-            selectAccessToken,
-          ),
-        ),
-
-        exhaustMap(
-          ([
-            { data },
-            accessToken,
-          ]) => {
-
-            if (!accessToken) {
-
-              return of(
-                AuthActions.resetEmailFailure({
-                  error:
-                    this.missingTokenError(),
-                }),
-              );
-            }
-
-            /*
-             * data:
-             *
-             * {
-             *   email,
-             *   newEmail,
-             *   otp,
-             *   sessionId
-             * }
-             */
-
-            return this.authService
-              .resetEmail(
-                data
-              )
-              .pipe(
-
-                map((response) =>
-                  AuthActions.resetEmailSuccess({
-                    response,
-                  }),
-                ),
-
-                catchError(
-                  (
-                    error: HttpErrorResponse,
-                  ) =>
-                    of(
-                      AuthActions.resetEmailFailure({
-                        error:
-                          toApiError(error),
-                      }),
-                    ),
-                ),
-
-              );
-          },
-        ),
-      ),
-    );
-
-
-  // =====================================================
-  // REQUEST PASSWORD RESET
-  // =====================================================
-
-  requestPasswordReset$ =
-    createEffect(() =>
-      this.actions$.pipe(
-
-        ofType(
-          AuthActions.requestPasswordReset,
-        ),
-
-        exhaustMap(({ data }) => {
-
-          /*
-           * data:
-           *
-           * {
-           *   email
-           * }
-           *
-           * Backend tạo sessionId.
-           */
-
-          return this.authService
-            .requestPasswordReset(data)
-            .pipe(
-
-              map((response) =>
-                AuthActions.requestPasswordResetSuccess({
-                  response,
-                }),
-              ),
-
-              catchError(
-                (
-                  error: HttpErrorResponse,
-                ) =>
-                  of(
-                    AuthActions.requestPasswordResetFailure({
-                      error:
-                        toApiError(error),
-                    }),
-                  ),
-              ),
-
-            );
-        }),
-      ),
-    );
-
-
   // =====================================================
   // VERIFY PASSWORD RESET OTP
   // =====================================================
 
-  verifyPasswordResetOtp$ =
-    createEffect(() =>
-      this.actions$.pipe(
+  verifyPasswordResetOtp$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.verifyPasswordResetOtp),
 
-        ofType(
-          AuthActions.verifyPasswordResetOtp,
-        ),
+      exhaustMap(({ data }) =>
+        this.authService
+          .verifyPasswordResetOtp(data)
+          .pipe(
 
-        exhaustMap(({ data }) => {
+            map((response) =>
+              AuthActions.verifyPasswordResetOtpSuccess({
+                response,
+              }),
+            ),
 
-          /*
-           * data:
-           *
-           * {
-           *   email,
-           *   otp,
-           *   sessionId
-           * }
-           *
-           * HttpOnly Cookie được browser
-           * tự gửi nhờ withCredentials: true.
-           */
+            catchError(
+              (error: HttpErrorResponse) =>
+                of(
+                  AuthActions.verifyPasswordResetOtpFailure({
+                    error: toApiError(error),
+                  }),
+                ),
+            ),
 
-          return this.authService
-            .verifyPasswordResetOtp(data)
-            .pipe(
-
-              map((response) =>
-                AuthActions.verifyPasswordResetOtpSuccess({
-                  response,
-                }),
-              ),
-
-              catchError(
-                (
-                  error: HttpErrorResponse,
-                ) =>
-                  of(
-                    AuthActions.verifyPasswordResetOtpFailure({
-                      error:
-                        toApiError(error),
-                    }),
-                  ),
-              ),
-
-            );
-        }),
+          ),
       ),
-    );
-
+    ),
+  );
 
   // =====================================================
   // RESET PASSWORD
   // =====================================================
 
-  resetPassword$ =
-    createEffect(() =>
-      this.actions$.pipe(
+  resetPassword$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.resetPassword),
 
-        ofType(
-          AuthActions.resetPassword,
-        ),
+      exhaustMap(({ data }) =>
+        this.authService
+          .resetPassword(data)
+          .pipe(
 
-        exhaustMap(({ data }) => {
+            map((response) =>
+              AuthActions.resetPasswordSuccess({
+                response,
+              }),
+            ),
 
-          /*
-           * HttpOnly Cookie:
-           *
-           * reset_password_token
-           *
-           * được browser tự gửi nhờ
-           * withCredentials: true.
-           */
+            catchError(
+              (error: HttpErrorResponse) =>
+                of(
+                  AuthActions.resetPasswordFailure({
+                    error: toApiError(error),
+                  }),
+                ),
+            ),
 
-          return this.authService
-            .resetPassword(data)
-            .pipe(
-
-              map((response) =>
-                AuthActions.resetPasswordSuccess({
-                  response,
-                }),
-              ),
-
-              catchError(
-                (
-                  error: HttpErrorResponse,
-                ) =>
-                  of(
-                    AuthActions.resetPasswordFailure({
-                      error:
-                        toApiError(error),
-                    }),
-                  ),
-              ),
-
-            );
-        }),
+          ),
       ),
-    );
-
+    ),
+  );
 
   // =====================================================
   // RESET PASSWORD SUCCESS
   // =====================================================
 
-  resetPasswordSuccess$ =
-    createEffect(
-      () =>
-        this.actions$.pipe(
+  resetPasswordSuccess$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.resetPasswordSuccess),
 
-          ofType(
-            AuthActions.resetPasswordSuccess,
-          ),
-
-          tap(() => {
-            void this.router.navigate([
-              '/login',
-            ]);
-          }),
-
-        ),
-      {
-        dispatch: false,
-      },
-    );
+        tap(() => {
+          void this.router.navigate(['/login']);
+        }),
+      ),
+    {
+      dispatch: false,
+    },
+  );
 
 }

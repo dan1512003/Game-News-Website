@@ -6,13 +6,22 @@ import {
   effect,
   inject,
   signal,
+  PLATFORM_ID,
 } from '@angular/core';
 
-import { CommonModule } from '@angular/common';
+import {
+  isPlatformBrowser,
+  CommonModule,
+} from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 
-import { BlockType, EditorBlock, NewsEditor } from '../../../shared/components/news-editor/news-editor';
+import {
+  BlockType,
+  EditorBlock,
+  NewsEditor,
+} from '../../../shared/components/news-editor/news-editor';
 
 import type {
   NewsData,
@@ -21,18 +30,46 @@ import type {
   NewsQuery,
   NewsNoteDto,
   ScheduleNewsDto,
-  NewsUser,
   NewsContentBlock,
 } from '../../../store/news/models/news.model';
 
 import * as NewsActions from '../../../store/news/news.actions';
 import * as NewsSelectors from '../../../store/news/news.selectors';
+
 import * as AuthSelectors from '../../../store/auth/auth.selectors';
 
 import * as CategoryActions from '../../../store/category/category.actions';
 import * as CategorySelectors from '../../../store/category/category.selectors';
-import { Actions, ofType } from '@ngrx/effects';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import {
+  Actions,
+  ofType,
+} from '@ngrx/effects';
+
+import {
+  takeUntilDestroyed,
+} from '@angular/core/rxjs-interop';
+
+import {
+  filter,
+} from 'rxjs';
+
+// =====================================================
+// API ERROR UTILITY
+// =====================================================
+
+import {
+  ApiPageError,
+  getApiErrorMessage,
+  getApiErrorStatus,
+  getApiErrorStatusName,
+  isApiForbiddenError,
+  toApiPageError,
+} from '../../../shared/utils/api-error.util';
+
+// =====================================================
+// INTERFACES
+// =====================================================
 
 interface TabDef {
   key: NewsFilter;
@@ -55,43 +92,72 @@ type NewsAction =
   | 'return'
   | 'delete';
 
+// =====================================================
+// COMPONENT
+// =====================================================
+
 @Component({
   selector: 'app-news',
   standalone: true,
-  imports: [CommonModule, FormsModule, NewsEditor],
+  imports: [
+    CommonModule,
+    FormsModule,
+    NewsEditor,
+  ],
   templateUrl: './news.html',
   styleUrl: './news.css',
 })
 export class News {
   private readonly store = inject(Store);
-private readonly actions$ = inject(Actions);
-private readonly destroyRef = inject(DestroyRef);
+
+  private readonly actions$ = inject(Actions);
+
+  private readonly destroyRef = inject(DestroyRef);
+
+  // =====================================================
+  // PLATFORM
+  // =====================================================
+
+  private readonly platformId = inject(PLATFORM_ID);
+
+  private readonly isBrowser = isPlatformBrowser(
+    this.platformId,
+  );
+
   readonly PER_PAGE = 10;
+
+  private readonly API_URL = 'http://localhost:3001';
 
   // =====================================================
   // AUTH
   // =====================================================
 
-readonly authUser = this.store.selectSignal(
-  AuthSelectors.selectAuthUser,
-);
+  readonly authUser = this.store.selectSignal(
+    AuthSelectors.selectAuthUser,
+  );
 
-readonly currentUser = computed(() => {
-  const user = this.authUser();
+  readonly authInitialized = this.store.selectSignal(
+    AuthSelectors.selectAuthInitialized,
+  );
 
-  console.log('[AUTH] user thực tế:', user);
-  console.log('[AUTH] userId:', user?.userId);
-  console.log('[AUTH] id:', (user as any)?.id);
-  console.log('[AUTH] user_id:', (user as any)?.user_id);
+  readonly currentUser = computed(() => {
+    const user = this.authUser();
 
-  if (!user) return null;
+    console.log('[AUTH] user thực tế:', user);
+    console.log('[AUTH] userId:', user?.userId);
+    console.log('[AUTH] id:', (user as any)?.id);
+    console.log('[AUTH] user_id:', (user as any)?.user_id);
 
-  return {
-    id: user.userId,
-    name: user.username,
-    role: user.role as NewsRole,
-  };
-});
+    if (!user) {
+      return null;
+    }
+
+    return {
+      id: user.userId,
+      name: user.username,
+      role: user.role as NewsRole,
+    };
+  });
 
   readonly currentUserRole = computed(
     () => this.currentUser()?.role ?? null,
@@ -137,10 +203,10 @@ readonly currentUser = computed(() => {
     NewsSelectors.selectNewsSuccessMessage,
   );
 
-  
-readonly countsByFilter = this.store.selectSignal(
-  NewsSelectors.selectNewsCountsByFilter,
-);
+  readonly countsByFilter = this.store.selectSignal(
+    NewsSelectors.selectNewsCountsByFilter,
+  );
+
   readonly total = computed(
     () => this.pagination().total,
   );
@@ -170,27 +236,230 @@ readonly countsByFilter = this.store.selectSignal(
   );
 
   // =====================================================
+  // NG-RX ACTION TRACKING
+  // =====================================================
+
+  private trackAllActions(): void {
+    this.actions$
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((action) => {
+        console.log(
+          '%c[NgRx ACTION]',
+          'color: #2196f3; font-weight: bold;',
+          action.type,
+          action,
+        );
+      });
+  }
+
+  private trackFailedActions(): void {
+    this.actions$
+      .pipe(
+        filter((action) =>
+          /(failure|failed|error)/i.test(action.type),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((action) => {
+        const payload = action as {
+          error?: unknown;
+          err?: unknown;
+        };
+
+        const error =
+          payload.error ??
+          payload.err ??
+          action;
+
+        // Sử dụng utility chung
+        const status = getApiErrorStatus(error);
+
+        const statusName = getApiErrorStatusName(
+          error,
+          status,
+        );
+
+        const message = getApiErrorMessage(error);
+
+        console.group(
+          `%c[NgRx ACTION FAILED] ${action.type}`,
+          'color: #ff4444; font-weight: bold; font-size: 13px;',
+        );
+
+        console.error(
+          'Action thất bại:',
+          action.type,
+        );
+
+        console.error(
+          'Action payload:',
+          action,
+        );
+
+        console.error(
+          'Error:',
+          error,
+        );
+
+        console.error(
+          'HTTP Status:',
+          status,
+        );
+
+        console.error(
+          'HTTP Status Name:',
+          statusName,
+        );
+
+        console.error(
+          'Error Message:',
+          message,
+        );
+
+        console.groupEnd();
+      });
+  }
+
+  private initializeActionTracking(): void {
+    this.trackAllActions();
+    this.trackFailedActions();
+  }
+
+  // =====================================================
+  // GLOBAL PAGE STATE
+  // =====================================================
+
+  private readonly hasLoadedNews = signal(false);
+
+  // =====================================================
+  // PAGE LOADING
+  // =====================================================
+
+  readonly pageLoading = computed(() => {
+    return (
+      !this.authInitialized() ||
+      !this.hasLoadedNews() ||
+      this.categoriesLoading()
+    );
+  });
+
+  // =====================================================
+  // PAGE ERROR
+  // =====================================================
+
+  private readonly currentPageError = computed(() => {
+    return (
+      this.error() ??
+      this.categoriesError() ??
+      null
+    );
+  });
+
+  // =====================================================
+  // FORBIDDEN ERROR
+  // =====================================================
+
+  readonly forbiddenError = computed(() => {
+    return isApiForbiddenError(
+      this.currentPageError(),
+    );
+  });
+
+  // =====================================================
+  // NORMAL API ERROR
+  // =====================================================
+
+  readonly pageError = computed<ApiPageError | null>(() => {
+    const error = this.currentPageError();
+
+    // Không có lỗi
+    if (!error) {
+      return null;
+    }
+
+    // 403 sử dụng modal riêng
+    if (isApiForbiddenError(error)) {
+      return null;
+    }
+
+    // Chuẩn hóa lỗi bằng utility chung
+    return toApiPageError(error);
+  });
+
+  // =====================================================
   // TABS
   // =====================================================
 
   readonly adminTabs: TabDef[] = [
-    { key: 'published', label: 'Tất cả bài đã đăng', icon: '✅' },
-    { key: 'mine', label: 'Bài của tôi', icon: '👤' },
-    { key: 'submitted', label: 'Chờ duyệt', icon: '⏳' },
-    { key: 'processing', label: 'Bài xử lý', icon: '⚙️' },
-    { key: 'scheduled', label: 'Lên lịch', icon: '📅' },
-    { key: 'draft', label: 'Nháp', icon: '📝' },
-    { key: 'returned', label: 'Trả về', icon: '↩' },
-    { key: 'required', label: 'Yêu cầu', icon: '⚠️' },
+    {
+      key: 'published',
+      label: 'Tất cả bài đã đăng',
+      icon: '✅',
+    },
+    {
+      key: 'mine',
+      label: 'Bài của tôi',
+      icon: '👤',
+    },
+    {
+      key: 'submitted',
+      label: 'Chờ duyệt',
+      icon: '⏳',
+    },
+    {
+      key: 'processing',
+      label: 'Bài xử lý',
+      icon: '⚙️',
+    },
+    {
+      key: 'scheduled',
+      label: 'Lên lịch',
+      icon: '📅',
+    },
+    {
+      key: 'draft',
+      label: 'Nháp',
+      icon: '📝',
+    },
+    {
+      key: 'returned',
+      label: 'Trả về',
+      icon: '↩',
+    },
+    {
+      key: 'required',
+      label: 'Yêu cầu',
+      icon: '⚠️',
+    },
   ];
 
-  readonly editorTabs: TabDef[] = [...this.adminTabs];
+  readonly editorTabs: TabDef[] = [
+    ...this.adminTabs,
+  ];
 
   readonly authorTabs: TabDef[] = [
-    { key: 'published', label: 'Tất cả bài đã đăng', icon: '✅' },
-    { key: 'mine', label: 'Bài của tôi', icon: '👤' },
-    { key: 'draft', label: 'Nháp', icon: '📝' },
-    { key: 'returned', label: 'Trả về', icon: '↩' },
+    {
+      key: 'published',
+      label: 'Tất cả bài đã đăng',
+      icon: '✅',
+    },
+    {
+      key: 'mine',
+      label: 'Bài của tôi',
+      icon: '👤',
+    },
+    {
+      key: 'draft',
+      label: 'Nháp',
+      icon: '📝',
+    },
+    {
+      key: 'returned',
+      label: 'Trả về',
+      icon: '↩',
+    },
   ];
 
   readonly currentTabs = computed(() => {
@@ -212,18 +481,19 @@ readonly countsByFilter = this.store.selectSignal(
   // =====================================================
 
   readonly search = signal('');
+
   readonly catFilter = signal('');
+
   readonly roleFilter = signal<NewsFilter>('published');
-readonly  pagedNews = computed<NewsData[]>(() => {
-  const items = this.news();
 
-  // Thêm logic lọc hiện tại của bạn tại đây.
-  return items;
-});
-
+  readonly pagedNews = computed<NewsData[]>(() => {
+    return this.news();
+  });
 
   readonly recordStart = computed(() => {
-    if (this.total() === 0) return 0;
+    if (this.total() === 0) {
+      return 0;
+    }
 
     return (
       (this.currentPage() - 1) * this.pagination().limit + 1
@@ -240,7 +510,7 @@ readonly  pagedNews = computed<NewsData[]>(() => {
   readonly paginationItems = computed<
     (number | 'dots')[]
   >(() => {
-    const total = this.totalPages();
+    const total = this.total();
     const current = this.currentPage();
 
     if (total <= 6) {
@@ -251,7 +521,15 @@ readonly  pagedNews = computed<NewsData[]>(() => {
     }
 
     if (current <= 3) {
-      return [1, 2, 3, 4, 'dots', total - 1, total];
+      return [
+        1,
+        2,
+        3,
+        4,
+        'dots',
+        total - 1,
+        total,
+      ];
     }
 
     if (current >= total - 2) {
@@ -283,64 +561,95 @@ readonly  pagedNews = computed<NewsData[]>(() => {
   // =====================================================
 
   editorOpen = false;
+
   editorViewOnly = false;
 
   editingNews: NewsData | null = null;
 
   returnItem: NewsData | null = null;
+
   returnNote = '';
 
   requiredItem: NewsData | null = null;
+
   requiredNote = '';
 
   removeItem: NewsData | null = null;
 
   scheduleItem: NewsData | null = null;
+
   scheduleDate = '';
+
   scheduleTime = '08:00';
 
   // =====================================================
   // INIT
   // =====================================================
 
-private readonly API_URL = 'http://localhost:3001';
+  constructor() {
+    this.initializeActionTracking();
 
-
-constructor() {
-  this.store.dispatch(
-    CategoryActions.loadCategoryOptions(),
-  );
-
-  // Tải lại danh sách khi workflow thành công
-  this.actions$
-    .pipe(
-      ofType(
-        NewsActions.newsWorkflowSuccess,
-        NewsActions.deleteNewsSuccess,
-        NewsActions.createNewsSuccess,
-        NewsActions.updateNewsSuccess,
-      ),
-      takeUntilDestroyed(this.destroyRef),
-    )
-    .subscribe(() => {
-      console.log(
-        '[NEWS] Thao tác thành công, tải lại danh sách.',
-      );
-
-      this.fetchNews();
-    });
-
-  // Tải danh sách khi người dùng đăng nhập
-  effect(() => {
-    const user = this.authUser();
-
-    if (!user || !user.role) {
+    if (!this.isBrowser) {
       return;
     }
 
-    this.fetchNews();
-  });
-}
+    // Theo dõi News tải thành công hoặc thất bại lần đầu
+    this.actions$
+      .pipe(
+        ofType(
+          NewsActions.loadNewsSuccess,
+          NewsActions.loadNewsFailure,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        this.hasLoadedNews.set(true);
+      });
+
+    // Chỉ tải Category tại component cha
+    this.store.dispatch(
+      CategoryActions.loadCategoryOptions(),
+    );
+
+    this.actions$
+      .pipe(
+        ofType(
+          NewsActions.newsWorkflowSuccess,
+          NewsActions.deleteNewsSuccess,
+          NewsActions.createNewsSuccess,
+          NewsActions.updateNewsSuccess,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((action) => {
+        console.log(
+          '[NEWS] Thao tác thành công:',
+          action.type,
+        );
+
+        this.fetchNews();
+      });
+
+    effect(() => {
+      const initialized = this.authInitialized();
+      const user = this.authUser();
+
+      // Chờ AuthInitializer hoàn tất
+      if (!initialized) {
+        return;
+      }
+
+      // Đã khởi tạo nhưng không có user
+      if (!user || !user.role) {
+        this.hasLoadedNews.set(true);
+        return;
+      }
+
+      // Có user thì tải News
+      this.fetchNews();
+    });
+  }
+
   // =====================================================
   // BUILD NEWS QUERY
   // =====================================================
@@ -371,43 +680,93 @@ constructor() {
   // LOAD NEWS
   // =====================================================
 
-fetchNews(): void {
-  console.log('========== FETCH NEWS ==========');
+  fetchNews(): void {
+    if (!this.isBrowser) {
+      return;
+    }
 
-  console.log('[FETCH NEWS] currentUser:', this.currentUser());
-  console.log('[FETCH NEWS] authUser:', this.authUser());
-  console.log('[FETCH NEWS] currentUserRole:', this.currentUserRole());
+    console.log('========== FETCH NEWS ==========');
 
-  if (!this.currentUser()) {
-    console.warn('[FETCH NEWS] Chưa có người dùng đăng nhập.');
-    return;
+    console.log(
+      '[FETCH NEWS] currentUser:',
+      this.currentUser(),
+    );
+
+    console.log(
+      '[FETCH NEWS] authUser:',
+      this.authUser(),
+    );
+
+    console.log(
+      '[FETCH NEWS] currentUserRole:',
+      this.currentUserRole(),
+    );
+
+    if (!this.currentUser()) {
+      console.warn(
+        '[FETCH NEWS] Chưa có người dùng đăng nhập.',
+      );
+
+      return;
+    }
+
+    if (this.forbiddenError()) {
+      return;
+    }
+
+    console.log(
+      '[FETCH NEWS] currentPage:',
+      this.currentPage(),
+    );
+
+    this.fetchPage(this.currentPage() || 1);
   }
 
-  console.log('[FETCH NEWS] currentPage:', this.currentPage());
+  private fetchPage(page: number): void {
+    if (!this.isBrowser) {
+      return;
+    }
 
-  this.fetchPage(this.currentPage() || 1);
-}
+    console.log('========== FETCH PAGE ==========');
 
-private fetchPage(page: number): void {
-  console.log('========== FETCH PAGE ==========');
+    console.log(
+      '[FETCH PAGE] currentUser:',
+      this.currentUser(),
+    );
 
-  console.log('[FETCH PAGE] currentUser:', this.currentUser());
-  console.log('[FETCH PAGE] page:', page);
-  console.log('[FETCH PAGE] query:', this.buildQuery(page));
+    console.log(
+      '[FETCH PAGE] page:',
+      page,
+    );
 
-  if (!this.currentUser()) {
-    console.warn('[FETCH PAGE] Không tải tin vì currentUser rỗng.');
-    return;
+    console.log(
+      '[FETCH PAGE] query:',
+      this.buildQuery(page),
+    );
+
+    if (!this.currentUser()) {
+      console.warn(
+        '[FETCH PAGE] Không tải tin vì currentUser rỗng.',
+      );
+
+      return;
+    }
+
+    if (this.forbiddenError()) {
+      return;
+    }
+
+    this.store.dispatch(
+      NewsActions.loadNews({
+        query: this.buildQuery(page),
+      }),
+    );
+
+    console.log(
+      '[FETCH PAGE] Đã dispatch:',
+      NewsActions.loadNews.type,
+    );
   }
-
-  this.store.dispatch(
-    NewsActions.loadNews({
-      query: this.buildQuery(page),
-    }),
-  );
-
-  console.log('[FETCH PAGE] Đã dispatch loadNews.');
-}
 
   // =====================================================
   // FILTERS / PAGINATION
@@ -429,7 +788,10 @@ private fetchPage(page: number): void {
   }
 
   changePage(page: number): void {
-    if (page < 1 || page > this.totalPages()) {
+    if (
+      page < 1 ||
+      page > this.totalPages()
+    ) {
       return;
     }
 
@@ -440,38 +802,38 @@ private fetchPage(page: number): void {
   // DISPLAY HELPERS
   // =====================================================
 
-getUserName(
-  userId: number | string | null | undefined,
-): string {
-  if (userId == null) {
-    return '—';
+  getUserName(
+    userId: number | string | null | undefined,
+  ): string {
+    if (userId == null) {
+      return '—';
+    }
+
+    const user = this.news()
+      .flatMap((item) => [
+        item.author,
+        item.reviewer,
+      ])
+      .find(
+        (candidate) =>
+          String(candidate?.user_id) === String(userId),
+      );
+
+    if (user?.username) {
+      return user.username;
+    }
+
+    const currentUser = this.currentUser();
+
+    if (
+      currentUser &&
+      String(currentUser.id) === String(userId)
+    ) {
+      return currentUser.name;
+    }
+
+    return 'Người dùng';
   }
-
-  const user = this.news()
-    .flatMap((item) => [
-      item.author,
-      item.reviewer,
-    ])
-    .find(
-      (candidate) =>
-        String(candidate?.user_id) === String(userId),
-    );
-
-  if (user?.username) {
-    return user.username;
-  }
-
-  const currentUser = this.currentUser();
-
-  if (
-    currentUser &&
-    String(currentUser.id) === String(userId)
-  ) {
-    return currentUser.name;
-  }
-
-  return 'Người dùng';
-}
 
   getCategoryName(item: NewsData): string {
     return item.category?.name ?? 'Chưa phân loại';
@@ -498,7 +860,9 @@ getUserName(
   formatDate(
     value: Date | string | null,
   ): string {
-    if (!value) return '—';
+    if (!value) {
+      return '—';
+    }
 
     const date = new Date(value);
 
@@ -509,10 +873,9 @@ getUserName(
     return date.toLocaleString('vi-VN');
   }
 
- 
-tabCount(tab: TabDef): number {
-  return this.countsByFilter()[tab.key] ?? 0;
-}
+  tabCount(tab: TabDef): number {
+    return this.countsByFilter()[tab.key] ?? 0;
+  }
 
   categoryCount(categoryId: string): number {
     return this.news().filter(
@@ -529,178 +892,147 @@ tabCount(tab: TabDef): number {
   // ACTIONS BY STATUS / ROLE
   // =====================================================
 
+  getActions(row: NewsData): NewsAction[] {
+    const actions: NewsAction[] = [];
 
-getActions(row: NewsData): NewsAction[] {
-  const actions: NewsAction[] = [];
+    const role = this.currentUserRole();
 
-  const role = this.currentUserRole();
-  const userId = this.currentUser()?.id;
+    const userId = this.currentUser()?.id;
 
-  if (!role || userId == null) {
-    return ['view'];
-  }
-
-  const isAdmin =
-    role === 'admin' ||
-    role === 'super_admin';
-
-  const isEditor = role === 'editor';
-
-  const isAuthor =
-    String(row.author_id) === String(userId);
-
-  const isReviewer =
-    row.reviewer_id != null &&
-    String(row.reviewer_id) === String(userId);
-
-  const hasRequirement =
-    !!row.requirement_note?.trim();
-
-  // =====================================================
-  // PUBLISHED - ĐÃ XUẤT BẢN
-  // =====================================================
-  if (row.status === 'published') {
-    actions.push('view');
-
-    // Admin / Super Admin / Editor được gỡ bài
-    if (isAdmin || isEditor) {
-      actions.push('unpublish');
+    if (!role || userId == null) {
+      return ['view'];
     }
 
-    // Chỉ tác giả có role author mới được gửi / hủy yêu cầu
-    if (role === 'author' && isAuthor) {
-      actions.push(
-        hasRequirement ? 'unrequire' : 'require',
-      );
-    }
-  }
+    const isAdmin =
+      role === 'admin' ||
+      role === 'super_admin';
 
-  // =====================================================
-  // SUBMITTED - CHỜ DUYỆT
-  // =====================================================
-  else if (row.status === 'submitted') {
-    actions.push('view');
+    const isEditor = role === 'editor';
 
-    // Admin / Super Admin / Editor nhận xử lý
-    if (isAdmin || isEditor) {
-      actions.push('apply');
-    }
+    const isAuthor =
+      String(row.author_id) === String(userId);
 
-    // Author là tác giả được hủy gửi duyệt
-    if (role === 'author' && isAuthor) {
-      actions.push('unsubmitted');
-    }
-  }
-
-  // =====================================================
-  // PROCESSING - ĐANG XỬ LÝ
-  // =====================================================
-  else if (row.status === 'processing') {
-    actions.push('view');
-
-    // Tác giả được gửi / hủy yêu cầu nếu bài do người khác xử lý
-    if (
-      isAuthor &&
+    const isReviewer =
       row.reviewer_id != null &&
-      !isReviewer
-    ) {
-      actions.push(
-        hasRequirement ? 'unrequire' : 'require',
-      );
+      String(row.reviewer_id) === String(userId);
+
+    const hasRequirement =
+      !!row.requirement_note?.trim();
+
+    if (row.status === 'published') {
+      actions.push('view');
+
+      if (isAdmin || isEditor) {
+        actions.push('unpublish');
+      }
+
+      if (role === 'author' && isAuthor) {
+        actions.push(
+          hasRequirement ? 'unrequire' : 'require',
+        );
+      }
     }
 
-    // Admin / Super Admin / Editor đang xử lý bài
-    if (
-      (isAdmin || isEditor) &&
-      isReviewer
-    ) {
-      actions.push(
-        'edit',
-        'publish',
-        'schedule',
-        'return',
-        'delete'
-      );
+    else if (row.status === 'submitted') {
+      actions.push('view');
+
+      if (isAdmin || isEditor) {
+        actions.push('apply');
+      }
+
+      if (role === 'author' && isAuthor) {
+        actions.push('unsubmitted');
+      }
     }
+
+    else if (row.status === 'processing') {
+      actions.push('view');
+
+      if (
+        isAuthor &&
+        row.reviewer_id != null &&
+        !isReviewer
+      ) {
+        actions.push(
+          hasRequirement ? 'unrequire' : 'require',
+        );
+      }
+
+      if (
+        (isAdmin || isEditor) &&
+        isReviewer
+      ) {
+        actions.push(
+          'edit',
+          'publish',
+          'schedule',
+          'return',
+          'delete',
+        );
+      }
+    }
+
+    else if (row.status === 'scheduled') {
+      actions.push('view');
+
+      if (isAdmin || isEditor) {
+        actions.push(
+          'publish',
+          'unschedule',
+        );
+      }
+
+      if (role === 'author' && isAuthor) {
+        actions.push(
+          hasRequirement ? 'unrequire' : 'require',
+        );
+      }
+    }
+
+    else if (row.status === 'draft') {
+      actions.push('view');
+
+      if (role === 'author' && isAuthor) {
+        actions.push(
+          'edit',
+          'submitted',
+          'delete',
+        );
+      }
+
+      if (isAdmin || isEditor) {
+        actions.push(
+          'edit',
+          'publish',
+          'schedule',
+        );
+      }
+
+      actions.push('delete');
+    }
+
+    else if (row.status === 'returned') {
+      actions.push('view');
+
+      if (role === 'author' && isAuthor) {
+        actions.push(
+          'edit',
+          'submitted',
+          'delete',
+        );
+      }
+
+      if (isAdmin || isEditor) {
+        actions.push(
+          'edit',
+          'publish',
+          'schedule',
+        );
+      }
+    }
+
+    return [...new Set(actions)];
   }
-
-  // =====================================================
-  // SCHEDULED - ĐÃ LÊN LỊCH
-  // =====================================================
-  else if (row.status === 'scheduled') {
-    actions.push('view');
-
-    // Admin / Super Admin / Editor được xuất bản hoặc hủy lịch
-    if (isAdmin || isEditor) {
-      actions.push(
-        'publish',
-        'unschedule',
-      );
-    }
-
-    // Chỉ author là tác giả mới được gửi / hủy yêu cầu
-    if (role === 'author' && isAuthor) {
-      actions.push(
-        hasRequirement ? 'unrequire' : 'require',
-      );
-    }
-  }
-
-  // =====================================================
-  // DRAFT - BẢN NHÁP
-  // =====================================================
-  else if (row.status === 'draft') {
-    actions.push('view');
-
-    // Author là tác giả
-    if (role === 'author' && isAuthor) {
-      actions.push(
-        'edit',
-        'submitted',
-        'delete',
-      );
-    }
-
-    // Admin / Super Admin / Editor
-    if (isAdmin || isEditor) {
-      actions.push(
-        'edit',
-        'publish',
-        'schedule',
-      );
-    }
-    actions.push('delete')
-  }
-
-  // =====================================================
-  // RETURNED - BỊ TRẢ LẠI
-  // =====================================================
-  else if (row.status === 'returned') {
-    actions.push('view');
-
-    // Author là tác giả
-    if (role === 'author' && isAuthor) {
-      actions.push(
-        'edit',
-        'submitted',
-        'delete',
-      );
-    }
-
-    // Admin / Super Admin / Editor
-    if (isAdmin || isEditor) {
-      actions.push(
-        'edit',
-        'publish',
-        'schedule',
-      );
-    }
-  }
-
-  return [...new Set(actions)];
-}
-
-
 
   // =====================================================
   // WORKFLOW
@@ -752,9 +1084,12 @@ getActions(row: NewsData): NewsAction[] {
 
   confirmReturn(): void {
     const item = this.returnItem;
+
     const note = this.returnNote.trim();
 
-    if (!item || !note) return;
+    if (!item || !note) {
+      return;
+    }
 
     const dto: NewsNoteDto = { note };
 
@@ -780,9 +1115,12 @@ getActions(row: NewsData): NewsAction[] {
 
   confirmRequire(): void {
     const item = this.requiredItem;
+
     const note = this.requiredNote.trim();
 
-    if (!item || !note) return;
+    if (!item || !note) {
+      return;
+    }
 
     const dto: NewsNoteDto = { note };
 
@@ -810,11 +1148,17 @@ getActions(row: NewsData): NewsAction[] {
   // =====================================================
 
   deleteNews(row: NewsData): void {
+    if (!this.isBrowser) {
+      return;
+    }
+
     const confirmed = window.confirm(
       `Bạn có chắc muốn xóa bài "${row.title}" không?`,
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     this.store.dispatch(
       NewsActions.deleteNews({
@@ -831,9 +1175,13 @@ getActions(row: NewsData): NewsAction[] {
     this.scheduleItem = row;
 
     const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    tomorrow.setDate(
+      tomorrow.getDate() + 1,
+    );
 
     const year = tomorrow.getFullYear();
+
     const month = String(
       tomorrow.getMonth() + 1,
     ).padStart(2, '0');
@@ -843,6 +1191,7 @@ getActions(row: NewsData): NewsAction[] {
     ).padStart(2, '0');
 
     this.scheduleDate = `${year}-${month}-${day}`;
+
     this.scheduleTime = '08:00';
   }
 
@@ -914,6 +1263,10 @@ getActions(row: NewsData): NewsAction[] {
     this.fetchNews();
   }
 
+  // =====================================================
+  // HELPERS
+  // =====================================================
+
   sameId(
     first: number | string | null | undefined,
     second: number | string | null | undefined,
@@ -924,38 +1277,52 @@ getActions(row: NewsData): NewsAction[] {
 
     return String(first) === String(second);
   }
-  getThumbnailUrl(thumbnail: string | null | undefined): string {
-  if (!thumbnail) return '';
 
-  // Nếu backend đã trả URL đầy đủ.
-  if (/^https?:\/\//i.test(thumbnail)) {
-    return thumbnail;
+  getThumbnailUrl(
+    thumbnail: string | null | undefined,
+  ): string {
+    if (!thumbnail) {
+      return '';
+    }
+
+    if (/^https?:\/\//i.test(thumbnail)) {
+      return thumbnail;
+    }
+
+    return `${this.API_URL}/${thumbnail.replace(/^\/+/, '')}`;
   }
 
-  // Nếu backend trả đường dẫn /uploads/news/abc.jpg.
-  return `${this.API_URL}/${thumbnail.replace(/^\/+/, '')}`;
-}
+  onImageError(
+    event: Event,
+    thumbnail: string | null | undefined,
+  ): void {
+    console.error(
+      'Không tải được ảnh:',
+      thumbnail,
+    );
 
-onImageError(event: Event, thumbnail: string | null | undefined): void {
-  console.error('Không tải được ảnh:', thumbnail);
-  console.error(
-    'URL ảnh:',
-    (event.target as HTMLImageElement).src,
-  );
-}
-toEditorBlocks(
-  blocks: NewsContentBlock[] | null | undefined,
-): EditorBlock[] {
-  return (blocks ?? []).map((block, index) => ({
-    id: index + 1,
-    type: block.type as BlockType,
-    content: block.content ?? '',
-    imageFile: null,
-  }));
-}
-toInitialTagIds(
-  newsTags: NewsData['news_tags'] | null | undefined,
-): Array<number | string> {
-  return (newsTags ?? []).map((item) => item.tag_id);
-}
+    console.error(
+      'URL ảnh:',
+      (event.target as HTMLImageElement).src,
+    );
+  }
+
+  toEditorBlocks(
+    blocks: NewsContentBlock[] | null | undefined,
+  ): EditorBlock[] {
+    return (blocks ?? []).map((block, index) => ({
+      id: index + 1,
+      type: block.type as BlockType,
+      content: block.content ?? '',
+      imageFile: null,
+    }));
+  }
+
+  toInitialTagIds(
+    newsTags: NewsData['news_tags'] | null | undefined,
+  ): Array<number | string> {
+    return (newsTags ?? []).map(
+      (item) => item.tag_id,
+    );
+  }
 }

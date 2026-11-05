@@ -170,10 +170,9 @@ export class Users implements OnInit {
     return this.deletingSignal();
   }
 
-  get error(): string | null {
-    return this.errorSignal();
-  }
-
+ get error(): string | null {
+  return this.errorSignal()?.message ?? null;
+}
   get successMessage(): string | null {
     return this.successMessageSignal();
   }

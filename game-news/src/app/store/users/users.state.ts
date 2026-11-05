@@ -1,3 +1,4 @@
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
 import {
   User,
   UserCounts,
@@ -26,7 +27,7 @@ export interface UserState {
   submitting: boolean;
   deleting: boolean;
 
-  error: string | null;
+error: ApiErrorResponse | null;
   successMessage: string | null;
 }
 

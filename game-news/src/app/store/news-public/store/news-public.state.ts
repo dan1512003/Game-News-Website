@@ -1,3 +1,6 @@
+
+
+import { ApiErrorResponse } from '../../../shared/models/auth/auth.model';
 import {
   PublicNewsDetail,
   PublicNewsListItem,
@@ -7,32 +10,42 @@ import {
 
 export interface NewsPublicState {
   breakingNews: PublicNewsListItem[];
-breakingNewsLoading: boolean;
+  breakingNewsLoading: boolean;
+
   listing: PublicNewsListResponse<PublicNewsListItem> | null;
   searchResults: PublicNewsListResponse<PublicNewsListItem> | null;
+
   trending: PublicNewsListItem[];
   selectedNews: PublicNewsDetail | null;
   related: PublicNewsRelatedResponse | null;
+
+  // Loading
   listingLoading: boolean;
   searchLoading: boolean;
   trendingLoading: boolean;
   detailLoading: boolean;
   relatedLoading: boolean;
-  error: string | null;
+
+  // Error
+  error: ApiErrorResponse | null;
 }
 
 export const initialNewsPublicState: NewsPublicState = {
   breakingNews: [],
-breakingNewsLoading: false,
+  breakingNewsLoading: false,
+
   listing: null,
   searchResults: null,
+
   trending: [],
   selectedNews: null,
   related: null,
+
   listingLoading: false,
   searchLoading: false,
   trendingLoading: false,
   detailLoading: false,
   relatedLoading: false,
+
   error: null,
 };

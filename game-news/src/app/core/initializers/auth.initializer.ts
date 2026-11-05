@@ -1,4 +1,3 @@
-
 import {
   inject,
   PLATFORM_ID,
@@ -24,10 +23,6 @@ import { Store } from '@ngrx/store';
 
 import * as AuthActions
   from '../../store/auth/auth.actions';
-
-import {
-  getSavedUser,
-} from '../../store/auth/auth.state';
 
 import { UserLogin } from '../../shared/models/auth/auth.model';
 
@@ -60,10 +55,12 @@ function toApiError(error: unknown): ApiErrorResponse {
 
   return {
     statusCode: httpError.status || 500,
+
     message:
       httpError.error?.message ||
       httpError.message ||
       'Không thể khôi phục phiên đăng nhập.',
+
     timestamp: new Date().toISOString(),
     path: '',
   };
@@ -82,8 +79,9 @@ export const authInitializer = async () => {
   const isServer = isPlatformServer(platformId);
   const isBrowser = isPlatformBrowser(platformId);
 
- 
-  // SERVER: lấy user từ refresh cookie
+  // =====================================================
+  // SERVER: LẤY USER TỪ REFRESH COOKIE
+  // =====================================================
 
   if (isServer) {
     const cookie = request?.headers.get('cookie');
@@ -134,15 +132,12 @@ export const authInitializer = async () => {
     return;
   }
 
- 
-  // BROWSER: khôi phục user và chờ refresh
+  // =====================================================
+  // BROWSER: KHÔI PHỤC USER TỪ TRANSFER STATE
+  // =====================================================
 
   if (isBrowser) {
-    const hasSSRUser = transferState.hasKey(
-      SSR_AUTH_USER_KEY,
-    );
-
-    if (hasSSRUser) {
+    if (transferState.hasKey(SSR_AUTH_USER_KEY)) {
       user = transferState.get(
         SSR_AUTH_USER_KEY,
         null,
@@ -150,12 +145,16 @@ export const authInitializer = async () => {
 
       transferState.remove(SSR_AUTH_USER_KEY);
     } else {
-      user = getSavedUser();
+      user = null;
     }
 
     store.dispatch(
       AuthActions.restoreUser({ user }),
     );
+
+    // =================================================
+    // REFRESH ACCESS TOKEN
+    // =================================================
 
     try {
       console.log(
@@ -163,7 +162,7 @@ export const authInitializer = async () => {
       );
 
       const response = await firstValueFrom(
-        authService.refresh(),
+        authService.refreshOnce(),
       );
 
       console.log(
@@ -188,7 +187,6 @@ export const authInitializer = async () => {
       );
     }
 
-    
     store.dispatch(
       AuthActions.authInitialized(),
     );

@@ -1,4 +1,8 @@
+
 import { createAction, props } from '@ngrx/store';
+
+
+
 import {
   CommentSort,
   CreateCommentDto,
@@ -6,33 +10,50 @@ import {
   PublicComment,
   ToggleCommentLikeResponse,
 } from '../models/comments-public.model';
+import { ApiErrorResponse } from '../../../shared/models/auth/auth.model';
 
+// Load comments
 export const loadComments = createAction(
   '[Comments Public] Load',
   props<{ newsId: string; sortBy?: CommentSort }>(),
 );
+
 export const loadCommentsSuccess = createAction(
   '[Comments Public] Load Success',
-  props<{ newsId: string; comments: PublicComment[] }>(),
+  props<{
+    newsId: string;
+    comments: PublicComment[];
+  }>(),
 );
+
 export const loadCommentsFailure = createAction(
   '[Comments Public] Load Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
+// Create comment
 export const createComment = createAction(
   '[Comments Public] Create',
-  props<{ newsId: string; dto: CreateCommentDto }>(),
-);
-export const createCommentSuccess = createAction(
-  '[Comments Public] Create Success',
-  props<{ newsId: string; response: CreateCommentResponse }>(),
-);
-export const createCommentFailure = createAction(
-  '[Comments Public] Create Failure',
-  props<{ error: string }>(),
+  props<{
+    newsId: string;
+    dto: CreateCommentDto;
+  }>(),
 );
 
+export const createCommentSuccess = createAction(
+  '[Comments Public] Create Success',
+  props<{
+    newsId: string;
+    response: CreateCommentResponse;
+  }>(),
+);
+
+export const createCommentFailure = createAction(
+  '[Comments Public] Create Failure',
+  props<{ error: ApiErrorResponse }>(),
+);
+
+// Toggle like
 export const toggleCommentLike = createAction(
   '[Comments Public] Toggle Like',
   props<{
@@ -41,15 +62,21 @@ export const toggleCommentLike = createAction(
     sortBy?: CommentSort;
   }>(),
 );
+
 export const toggleCommentLikeSuccess = createAction(
   '[Comments Public] Toggle Like Success',
-  props<{ newsId: string; response: ToggleCommentLikeResponse }>(),
-);
-export const toggleCommentLikeFailure = createAction(
-  '[Comments Public] Toggle Like Failure',
-  props<{ error: string }>(),
+  props<{
+    newsId: string;
+    response: ToggleCommentLikeResponse;
+  }>(),
 );
 
+export const toggleCommentLikeFailure = createAction(
+  '[Comments Public] Toggle Like Failure',
+  props<{ error: ApiErrorResponse }>(),
+);
+
+// Clear
 export const clearComments = createAction(
   '[Comments Public] Clear',
 );

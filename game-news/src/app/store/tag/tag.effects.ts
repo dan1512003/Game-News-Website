@@ -14,24 +14,67 @@ import {
   map,
   of,
   switchMap,
-  tap,
 } from 'rxjs';
 
 import { TagService } from './services/tag.service';
 import * as TagActions from './tag.actions';
 
-function getErrorMessage(error: unknown): string {
-  if (error instanceof HttpErrorResponse) {
-    const message = error.error?.message;
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
 
-    return Array.isArray(message)
-      ? message.join(', ')
-      : message ?? error.message ?? 'Đã xảy ra lỗi khi gọi API';
+// Chuyển lỗi API thành ApiErrorResponse
+function toApiError(error: unknown): ApiErrorResponse {
+  if (error instanceof HttpErrorResponse) {
+    // Backend tắt hoặc không thể kết nối
+    if (error.status === 0) {
+      return {
+        statusCode: 0,
+        message: 'Không thể kết nối đến máy chủ.',
+        timestamp: new Date().toISOString(),
+        path: '',
+      };
+    }
+
+    const body = error.error;
+    const message = body?.message;
+
+    return {
+      statusCode:
+        typeof body?.statusCode === 'number'
+          ? body.statusCode
+          : error.status,
+
+      message: Array.isArray(message)
+        ? message.join(', ')
+        : typeof message === 'string'
+          ? message
+          : error.message || 'Đã xảy ra lỗi khi gọi API.',
+
+      errors: Array.isArray(body?.errors)
+        ? body.errors
+        : undefined,
+
+      timestamp:
+        typeof body?.timestamp === 'string'
+          ? body.timestamp
+          : new Date().toISOString(),
+
+      path:
+        typeof body?.path === 'string'
+          ? body.path
+          : '',
+    };
   }
 
-  return error instanceof Error
-    ? error.message
-    : 'Đã xảy ra lỗi không xác định';
+  return {
+    statusCode: 500,
+    message:
+      error instanceof Error
+        ? error.message
+        : 'Đã xảy ra lỗi không xác định.',
+
+    timestamp: new Date().toISOString(),
+    path: '',
+  };
 }
 
 @Injectable()
@@ -43,15 +86,17 @@ export class TagEffects {
   loadTagOptions$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TagActions.loadTagOptions),
+
       switchMap(() =>
         this.tagService.getOptions().pipe(
           map((options) =>
             TagActions.loadTagOptionsSuccess({ options }),
           ),
+
           catchError((error: unknown) =>
             of(
               TagActions.loadTagOptionsFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -64,15 +109,17 @@ export class TagEffects {
   loadTags$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TagActions.loadTags),
+
       switchMap(({ query }) =>
         this.tagService.getAll(query).pipe(
           map((response) =>
             TagActions.loadTagsSuccess({ response }),
           ),
+
           catchError((error: unknown) =>
             of(
               TagActions.loadTagsFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -85,15 +132,17 @@ export class TagEffects {
   loadTagById$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TagActions.loadTagById),
+
       switchMap(({ id }) =>
         this.tagService.getById(id).pipe(
           map((tag) =>
             TagActions.loadTagByIdSuccess({ tag }),
           ),
+
           catchError((error: unknown) =>
             of(
               TagActions.loadTagByIdFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -106,13 +155,17 @@ export class TagEffects {
   createTag$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TagActions.createTag),
+
       exhaustMap(({ dto }) =>
         this.tagService.create(dto).pipe(
-          map((tag) => TagActions.createTagSuccess({ tag })),
+          map((tag) =>
+            TagActions.createTagSuccess({ tag }),
+          ),
+
           catchError((error: unknown) =>
             of(
               TagActions.createTagFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -125,13 +178,17 @@ export class TagEffects {
   updateTag$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TagActions.updateTag),
+
       exhaustMap(({ id, dto }) =>
         this.tagService.update(id, dto).pipe(
-          map((tag) => TagActions.updateTagSuccess({ tag })),
+          map((tag) =>
+            TagActions.updateTagSuccess({ tag }),
+          ),
+
           catchError((error: unknown) =>
             of(
               TagActions.updateTagFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -144,15 +201,17 @@ export class TagEffects {
   deleteTag$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TagActions.deleteTag),
+
       exhaustMap(({ id }) =>
         this.tagService.delete(id).pipe(
           map((response) =>
             TagActions.deleteTagSuccess({ response }),
           ),
+
           catchError((error: unknown) =>
             of(
               TagActions.deleteTagFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -160,24 +219,29 @@ export class TagEffects {
       ),
     ),
   );
-  
-loadTagDashboardStats$ = createEffect(() =>
-  this.actions$.pipe(
-    ofType(TagActions.loadTagDashboardStats),
-    switchMap(() =>
-      this.tagService.getDashboardStats().pipe(
-        map((stats) =>
-          TagActions.loadTagDashboardStatsSuccess({ stats }),
-        ),
-        catchError((error: unknown) =>
-          of(
-            TagActions.loadTagDashboardStatsFailure({
-              error: getErrorMessage(error),
+
+  // Dashboard stats
+  loadTagDashboardStats$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TagActions.loadTagDashboardStats),
+
+      switchMap(() =>
+        this.tagService.getDashboardStats().pipe(
+          map((stats) =>
+            TagActions.loadTagDashboardStatsSuccess({
+              stats,
             }),
+          ),
+
+          catchError((error: unknown) =>
+            of(
+              TagActions.loadTagDashboardStatsFailure({
+                error: toApiError(error),
+              }),
+            ),
           ),
         ),
       ),
     ),
-  ),
-);
+  );
 }

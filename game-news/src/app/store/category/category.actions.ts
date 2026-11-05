@@ -1,6 +1,8 @@
 
 import { createAction, props } from '@ngrx/store';
 
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
+
 import {
   Category,
   CategoryDashboardStats,
@@ -11,6 +13,7 @@ import {
   UpdateCategoryDto,
 } from './models/category.model';
 
+// Dashboard stats
 export const loadCategoryDashboardStats = createAction(
   '[Category] Load Dashboard Stats',
 );
@@ -22,7 +25,7 @@ export const loadCategoryDashboardStatsSuccess = createAction(
 
 export const loadCategoryDashboardStatsFailure = createAction(
   '[Category] Load Dashboard Stats Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Danh sách
@@ -38,7 +41,7 @@ export const loadCategoriesSuccess = createAction(
 
 export const loadCategoriesFailure = createAction(
   '[Category] Load Categories Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Options
@@ -53,7 +56,7 @@ export const loadCategoryOptionsSuccess = createAction(
 
 export const loadCategoryOptionsFailure = createAction(
   '[Category] Load Category Options Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Chi tiết
@@ -103,9 +106,10 @@ export const deleteCategorySuccess = createAction(
 // Lỗi và thông báo chung
 export const categoryOperationFailure = createAction(
   '[Category] Operation Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
+// Xóa thông báo
 export const clearCategoryMessages = createAction(
   '[Category] Clear Messages',
 );

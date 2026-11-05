@@ -1,4 +1,6 @@
 
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
+
 import {
   CommentData,
   CommentDetail,
@@ -14,16 +16,24 @@ export interface CommentState {
   selectedParent: CommentParentDetail | null;
   meta: CommentMeta;
   counts: CommentCounts;
+
+  // Loading
   loading: boolean;
   loadingDetail: boolean;
   loadingParent: boolean;
+
+  // Operations
   submitting: boolean;
   deleting: boolean;
-  error: string | null;
+
+  // Errors and messages
+  error: ApiErrorResponse | null;
   successMessage: string | null;
+
+  // Dashboard
   dashboardStats: CommentDashboardStats | null;
-dashboardStatsLoading: boolean;
-dashboardStatsError: string | null;
+  dashboardStatsLoading: boolean;
+  dashboardStatsError: ApiErrorResponse | null;
 }
 
 export const initialCommentState: CommentState = {
@@ -50,12 +60,14 @@ export const initialCommentState: CommentState = {
   loading: false,
   loadingDetail: false,
   loadingParent: false,
+
   submitting: false,
   deleting: false,
+
   error: null,
   successMessage: null,
-  dashboardStats: null,
-dashboardStatsLoading: false,
-dashboardStatsError: null,
-};
 
+  dashboardStats: null,
+  dashboardStatsLoading: false,
+  dashboardStatsError: null,
+};

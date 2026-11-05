@@ -1,4 +1,3 @@
-
 import { inject } from '@angular/core';
 
 import {
@@ -10,9 +9,9 @@ import { Store } from '@ngrx/store';
 
 import {
   catchError,
-  finalize,
-  shareReplay,
+  map,
   switchMap,
+  tap,
   throwError,
 } from 'rxjs';
 
@@ -28,9 +27,6 @@ import { AuthService } from '../services/auth/auth.service';
 
 import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
 
-let refreshRequest$:
-  ReturnType<AuthService['refresh']> | null = null;
-
 export const authInterceptor: HttpInterceptorFn = (
   req,
   next,
@@ -38,10 +34,12 @@ export const authInterceptor: HttpInterceptorFn = (
   const store = inject(Store<AppState>);
   const authService = inject(AuthService);
 
-  console.log('[AuthInterceptor] Request:', req.method, req.url);
+  console.log(
+    '[AuthInterceptor] Request:',
+    req.method,
+    req.url,
+  );
 
-  // Không gắn access token vào các endpoint xác thực
-  // và các endpoint tin tức công khai.
   if (isAuthEndpoint(req.url)) {
     return next(req);
   }
@@ -50,7 +48,6 @@ export const authInterceptor: HttpInterceptorFn = (
     AuthSelectors.selectAccessToken,
   )();
 
-  // Gửi request với token nếu đang có token.
   const authReq = accessToken
     ? req.clone({
         setHeaders: {
@@ -59,20 +56,13 @@ export const authInterceptor: HttpInterceptorFn = (
       })
     : req;
 
-  if (!accessToken) {
-    console.warn(
-      '[AuthInterceptor] Chưa có access token:',
-      req.url,
-    );
-  }
-
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status !== 401) {
         return throwError(() => error);
       }
 
-      // Request đã retry mà vẫn 401 thì không refresh lần nữa.
+      // Request đã retry mà vẫn 401.
       if (req.headers.has('X-Retry')) {
         store.dispatch(
           AuthActions.refreshFailure({
@@ -83,53 +73,33 @@ export const authInterceptor: HttpInterceptorFn = (
         return throwError(() => error);
       }
 
-      // Các request cùng sử dụng một HTTP refresh request.
-      if (!refreshRequest$) {
-        console.log('[AuthInterceptor] Bắt đầu refresh');
+      console.log(
+        '[AuthInterceptor] Sử dụng refreshOnce()',
+      );
 
-        refreshRequest$ = authService.refresh().pipe(
-          finalize(() => {
-            refreshRequest$ = null;
-
-            console.log(
-              '[AuthInterceptor] Đã reset refreshRequest$',
-            );
-          }),
-          shareReplay({
-            bufferSize: 1,
-            refCount: false,
-          }),
-        );
-      } else {
-        console.log(
-          '[AuthInterceptor] Dùng chung refresh request',
-        );
-      }
-
-      const sharedRefresh$ = refreshRequest$;
-
-      return sharedRefresh$.pipe(
-        switchMap((response) => {
-          const newAccessToken =
-            response.data.accessToken;
-
-          if (!newAccessToken) {
-            return throwError(
-              () => new Error(
-                'Refresh thành công nhưng không có access token.',
-              ),
+      return authService.refreshOnce().pipe(
+        map((response) => {
+          if (!response.data.accessToken) {
+            throw new Error(
+              'Refresh thành công nhưng không có access token.',
             );
           }
 
+          return response;
+        }),
+
+        tap((response) => {
           store.dispatch(
             AuthActions.refreshSuccess({
               response,
             }),
           );
+        }),
 
+        switchMap((response) => {
           const retryReq = req.clone({
             setHeaders: {
-              Authorization: `Bearer ${newAccessToken}`,
+              Authorization: `Bearer ${response.data.accessToken}`,
               'X-Retry': 'true',
             },
           });
@@ -142,9 +112,16 @@ export const authInterceptor: HttpInterceptorFn = (
           return next(retryReq);
         }),
 
-        catchError((refreshError: HttpErrorResponse) => {
+        catchError((refreshError: unknown) => {
           const apiError =
-            refreshError.error as ApiErrorResponse;
+            refreshError instanceof HttpErrorResponse
+              ? refreshError.error as ApiErrorResponse
+              : {
+                  message:
+                    refreshError instanceof Error
+                      ? refreshError.message
+                      : 'Refresh token thất bại.',
+                } as ApiErrorResponse;
 
           store.dispatch(
             AuthActions.refreshFailure({

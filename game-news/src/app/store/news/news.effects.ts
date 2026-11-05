@@ -1,6 +1,8 @@
 
 import { Injectable, inject } from '@angular/core';
 
+import { HttpErrorResponse } from '@angular/common/http';
+
 import {
   Actions,
   createEffect,
@@ -16,8 +18,6 @@ import {
   switchMap,
 } from 'rxjs';
 
-import { HttpErrorResponse } from '@angular/common/http';
-
 import { NewsService } from './services/news.service';
 import * as NewsActions from './news.actions';
 
@@ -26,32 +26,65 @@ import {
   NewsActionResponse,
 } from './models/news.model';
 
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
+
 // ============================================================
 // ERROR HANDLER
 // ============================================================
 
-function getErrorMessage(error: unknown): string {
+function toApiError(error: unknown): ApiErrorResponse {
   if (error instanceof HttpErrorResponse) {
-    const body = error.error as {
-      message?: string | string[];
-    } | null;
-
-    if (Array.isArray(body?.message)) {
-      return body.message.join(', ');
+    // Backend tắt hoặc mất kết nối
+    if (error.status === 0) {
+      return {
+        statusCode: 0,
+        message: 'Không thể kết nối đến máy chủ.',
+        timestamp: new Date().toISOString(),
+        path: '',
+      };
     }
 
-    return (
-      body?.message ??
-      error.message ??
-      'Đã xảy ra lỗi khi gọi API'
-    );
+    const body = error.error;
+    const message = body?.message;
+
+    return {
+      statusCode:
+        typeof body?.statusCode === 'number'
+          ? body.statusCode
+          : error.status,
+
+      message: Array.isArray(message)
+        ? message.join(', ')
+        : typeof message === 'string'
+          ? message
+          : error.message || 'Đã xảy ra lỗi khi gọi API.',
+
+      errors: Array.isArray(body?.errors)
+        ? body.errors
+        : undefined,
+
+      timestamp:
+        typeof body?.timestamp === 'string'
+          ? body.timestamp
+          : new Date().toISOString(),
+
+      path:
+        typeof body?.path === 'string'
+          ? body.path
+          : '',
+    };
   }
 
-  if (error instanceof Error) {
-    return error.message;
-  }
+  return {
+    statusCode: 500,
+    message:
+      error instanceof Error
+        ? error.message
+        : 'Đã xảy ra lỗi không xác định.',
 
-  return 'Đã xảy ra lỗi không xác định';
+    timestamp: new Date().toISOString(),
+    path: '',
+  };
 }
 
 @Injectable()
@@ -78,7 +111,7 @@ export class NewsEffects {
           catchError((error: unknown) =>
             of(
               NewsActions.loadNewsDashboardStatsFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -106,7 +139,7 @@ export class NewsEffects {
           catchError((error: unknown) =>
             of(
               NewsActions.loadNewsFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -134,7 +167,7 @@ export class NewsEffects {
           catchError((error: unknown) =>
             of(
               NewsActions.loadNewsByIdFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -164,7 +197,7 @@ export class NewsEffects {
             catchError((error: unknown) =>
               of(
                 NewsActions.createNewsFailure({
-                  error: getErrorMessage(error),
+                  error: toApiError(error),
                 }),
               ),
             ),
@@ -194,7 +227,7 @@ export class NewsEffects {
             catchError((error: unknown) =>
               of(
                 NewsActions.updateNewsFailure({
-                  error: getErrorMessage(error),
+                  error: toApiError(error),
                 }),
               ),
             ),
@@ -223,7 +256,7 @@ export class NewsEffects {
           catchError((error: unknown) =>
             of(
               NewsActions.deleteNewsFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -255,42 +288,27 @@ export class NewsEffects {
         let request;
 
         switch (action.type) {
-          // ----------------------------------------------------
           // APPLY
-          // ----------------------------------------------------
-
           case NewsActions.applyNews.type:
             request = this.newsService.apply(action.id);
             break;
 
-          // ----------------------------------------------------
           // PUBLISH
-          // ----------------------------------------------------
-
           case NewsActions.publishNews.type:
             request = this.newsService.publish(action.id);
             break;
 
-          // ----------------------------------------------------
           // SUBMIT
-          // ----------------------------------------------------
-
           case NewsActions.submitNews.type:
             request = this.newsService.submit(action.id);
             break;
 
-          // ----------------------------------------------------
           // UNSUBMIT
-          // ----------------------------------------------------
-
           case NewsActions.unsubmitNews.type:
             request = this.newsService.unsubmit(action.id);
             break;
 
-          // ----------------------------------------------------
           // RETURN TO AUTHOR
-          // ----------------------------------------------------
-
           case NewsActions.returnNewsToAuthor.type: {
             const a = action as ReturnType<
               typeof NewsActions.returnNewsToAuthor
@@ -303,10 +321,7 @@ export class NewsEffects {
             break;
           }
 
-          // ----------------------------------------------------
           // REQUIRE EDIT
-          // ----------------------------------------------------
-
           case NewsActions.requireNewsEdit.type: {
             const a = action as ReturnType<
               typeof NewsActions.requireNewsEdit
@@ -319,18 +334,12 @@ export class NewsEffects {
             break;
           }
 
-          // ----------------------------------------------------
           // UNREQUIRE EDIT
-          // ----------------------------------------------------
-
           case NewsActions.unrequireNewsEdit.type:
             request = this.newsService.unrequire(action.id);
             break;
 
-          // ----------------------------------------------------
           // SCHEDULE
-          // ----------------------------------------------------
-
           case NewsActions.scheduleNews.type: {
             const a = action as ReturnType<
               typeof NewsActions.scheduleNews
@@ -343,38 +352,31 @@ export class NewsEffects {
             break;
           }
 
-          // ----------------------------------------------------
           // UNSCHEDULE
-          // ----------------------------------------------------
-
           case NewsActions.unscheduleNews.type:
             request = this.newsService.unschedule(action.id);
             break;
 
-          // ----------------------------------------------------
           // UNPUBLISH
-          // ----------------------------------------------------
-
           case NewsActions.unpublishNews.type:
             request = this.newsService.unpublish(action.id);
             break;
 
-          // ----------------------------------------------------
           // INVALID ACTION
-          // ----------------------------------------------------
-
           default:
             return of(
               NewsActions.newsWorkflowFailure({
-                error: 'Thao tác bài viết không hợp lệ',
+                error: {
+                  statusCode: 400,
+                  message: 'Thao tác bài viết không hợp lệ.',
+                  timestamp: new Date().toISOString(),
+                  path: '',
+                },
               }),
             );
         }
 
-        // ------------------------------------------------------
         // EXECUTE WORKFLOW REQUEST
-        // ------------------------------------------------------
-
         return request.pipe(
           map((news: NewsData) =>
             NewsActions.newsWorkflowSuccess({
@@ -386,7 +388,7 @@ export class NewsEffects {
           catchError((error: unknown) =>
             of(
               NewsActions.newsWorkflowFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -395,4 +397,3 @@ export class NewsEffects {
     ),
   );
 }
-

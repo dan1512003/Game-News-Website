@@ -1,4 +1,7 @@
+
 import { createAction, props } from '@ngrx/store';
+
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
 
 import {
   CommentDashboardStats,
@@ -23,7 +26,7 @@ export const loadCommentsSuccess = createAction(
 
 export const loadCommentsFailure = createAction(
   '[Comments] Load Comments Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Chi tiết
@@ -39,7 +42,7 @@ export const loadCommentByIdSuccess = createAction(
 
 export const loadCommentByIdFailure = createAction(
   '[Comments] Load Comment By Id Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Bình luận cha
@@ -55,7 +58,7 @@ export const loadCommentParentSuccess = createAction(
 
 export const loadCommentParentFailure = createAction(
   '[Comments] Load Comment Parent Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Duyệt
@@ -71,7 +74,7 @@ export const approveCommentSuccess = createAction(
 
 export const approveCommentFailure = createAction(
   '[Comments] Approve Comment Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Từ chối
@@ -87,7 +90,7 @@ export const rejectCommentSuccess = createAction(
 
 export const rejectCommentFailure = createAction(
   '[Comments] Reject Comment Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Xóa
@@ -103,13 +106,15 @@ export const deleteCommentSuccess = createAction(
 
 export const deleteCommentFailure = createAction(
   '[Comments] Delete Comment Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );
 
 // Xóa thông báo
 export const clearCommentMessages = createAction(
   '[Comments] Clear Messages',
 );
+
+// Dashboard
 export const loadCommentDashboardStats = createAction(
   '[Comments] Load Dashboard Stats',
 );
@@ -121,5 +126,5 @@ export const loadCommentDashboardStatsSuccess = createAction(
 
 export const loadCommentDashboardStatsFailure = createAction(
   '[Comments] Load Dashboard Stats Failure',
-  props<{ error: string }>(),
+  props<{ error: ApiErrorResponse }>(),
 );

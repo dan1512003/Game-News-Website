@@ -1,3 +1,4 @@
+
 import { inject, Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -19,18 +20,63 @@ import {
 import { UserService } from './services/users.service';
 import * as UserActions from './users.actions';
 
-function getErrorMessage(error: unknown): string {
-  if (error instanceof HttpErrorResponse) {
-    const message = error.error?.message;
+import { ApiErrorResponse } from '../../shared/models/auth/auth.model';
 
-    return Array.isArray(message)
-      ? message.join(', ')
-      : message ?? error.message ?? 'Đã xảy ra lỗi khi gọi API';
+// Chuyển lỗi API thành ApiErrorResponse
+function toApiError(error: unknown): ApiErrorResponse {
+  if (error instanceof HttpErrorResponse) {
+    // Backend không hoạt động hoặc mất kết nối
+    if (error.status === 0) {
+      return {
+        statusCode: 0,
+        message: 'Không thể kết nối đến máy chủ.',
+        timestamp: new Date().toISOString(),
+        path: '',
+      };
+    }
+
+    const body = error.error;
+
+    const message = body?.message;
+
+    return {
+      statusCode:
+        typeof body?.statusCode === 'number'
+          ? body.statusCode
+          : error.status,
+
+      message: Array.isArray(message)
+        ? message.join(', ')
+        : typeof message === 'string'
+          ? message
+          : error.message || 'Đã xảy ra lỗi khi gọi API.',
+
+      errors: Array.isArray(body?.errors)
+        ? body.errors
+        : undefined,
+
+      timestamp:
+        typeof body?.timestamp === 'string'
+          ? body.timestamp
+          : new Date().toISOString(),
+
+      path:
+        typeof body?.path === 'string'
+          ? body.path
+          : '',
+    };
   }
 
-  return error instanceof Error
-    ? error.message
-    : 'Đã xảy ra lỗi không xác định';
+  return {
+    statusCode: 500,
+    message:
+      error instanceof Error
+        ? error.message
+        : 'Đã xảy ra lỗi không xác định.',
+
+    timestamp: new Date().toISOString(),
+    path: '',
+  };
 }
 
 @Injectable()
@@ -42,15 +88,19 @@ export class UserEffects {
   loadUserDashboardStats$ = createEffect(() =>
     this.actions$.pipe(
       ofType(UserActions.loadUserDashboardStats),
+
       exhaustMap(() =>
         this.userService.getDashboardStats().pipe(
           map((stats) =>
-            UserActions.loadUserDashboardStatsSuccess({ stats }),
+            UserActions.loadUserDashboardStatsSuccess({
+              stats,
+            }),
           ),
+
           catchError((error: unknown) =>
             of(
               UserActions.loadUserDashboardStatsFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -63,15 +113,19 @@ export class UserEffects {
   loadUsers$ = createEffect(() =>
     this.actions$.pipe(
       ofType(UserActions.loadUsers),
+
       switchMap(({ query }) =>
         this.userService.getAll(query).pipe(
           map((response) =>
-            UserActions.loadUsersSuccess({ response }),
+            UserActions.loadUsersSuccess({
+              response,
+            }),
           ),
+
           catchError((error: unknown) =>
             of(
               UserActions.loadUsersFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -84,15 +138,19 @@ export class UserEffects {
   loadUserById$ = createEffect(() =>
     this.actions$.pipe(
       ofType(UserActions.loadUserById),
+
       mergeMap(({ id }) =>
         this.userService.getById(id).pipe(
           map((user) =>
-            UserActions.loadUserByIdSuccess({ user }),
+            UserActions.loadUserByIdSuccess({
+              user,
+            }),
           ),
+
           catchError((error: unknown) =>
             of(
               UserActions.loadUserByIdFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -105,15 +163,19 @@ export class UserEffects {
   updateUser$ = createEffect(() =>
     this.actions$.pipe(
       ofType(UserActions.updateUser),
+
       exhaustMap(({ id, dto }) =>
         this.userService.update(id, dto).pipe(
           map((user) =>
-            UserActions.updateUserSuccess({ user }),
+            UserActions.updateUserSuccess({
+              user,
+            }),
           ),
+
           catchError((error: unknown) =>
             of(
               UserActions.updateUserFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),
@@ -126,15 +188,19 @@ export class UserEffects {
   deleteUser$ = createEffect(() =>
     this.actions$.pipe(
       ofType(UserActions.deleteUser),
+
       exhaustMap(({ id }) =>
         this.userService.delete(id).pipe(
           map((response) =>
-            UserActions.deleteUserSuccess({ response }),
+            UserActions.deleteUserSuccess({
+              response,
+            }),
           ),
+
           catchError((error: unknown) =>
             of(
               UserActions.deleteUserFailure({
-                error: getErrorMessage(error),
+                error: toApiError(error),
               }),
             ),
           ),

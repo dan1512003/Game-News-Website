@@ -1,6 +1,6 @@
 import {
 
-  afterNextRender,
+
 
   ChangeDetectorRef,
 
@@ -722,11 +722,11 @@ ngOnInit(): void {
 
 
 
-  this.store.dispatch(
+  // this.store.dispatch(
 
-    CategoryActions.loadCategoryOptions(),
+  //   CategoryActions.loadCategoryOptions(),
 
-  );
+  // );
 
 
 
@@ -1856,6 +1856,12 @@ const reviewScore =
     : Number(this.form.review_score);
 
 
+    console.log('========== ANGULAR REVIEW SCORE ==========');
+console.log('[ANGULAR] form.review_score:', this.form.review_score);
+console.log('[ANGULAR] typeof:', typeof this.form.review_score);
+console.log('[ANGULAR] Is null:', this.form.review_score === null);
+console.log('[ANGULAR] Is undefined:', this.form.review_score === undefined);
+console.log('[ANGULAR] Calculated reviewScore:', reviewScore);
   // 14. Xác định ID bài viết
 
   const newsId = String(this.form.news_id ?? '').trim();
@@ -2194,9 +2200,6 @@ const reviewScore =
         break;
 
       }
-
-
-
       case 'unsubmitted':
 
         this.saveArticle('draft');

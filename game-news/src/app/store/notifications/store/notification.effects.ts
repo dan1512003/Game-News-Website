@@ -4,6 +4,8 @@ import {
   inject,
 } from '@angular/core';
 
+import { HttpErrorResponse } from '@angular/common/http';
+
 import {
   Actions,
   createEffect,
@@ -23,6 +25,69 @@ import * as NotificationActions from './notification.actions';
 import {
   NotificationService,
 } from '../services/notifications.service';
+import { ApiErrorResponse } from '../../../shared/models/auth/auth.model';
+
+
+
+// =====================================================
+// CHUYỂN LỖI API THÀNH ApiErrorResponse
+// =====================================================
+
+function toApiError(error: unknown): ApiErrorResponse {
+  if (error instanceof HttpErrorResponse) {
+
+    // Backend tắt hoặc mất kết nối
+    if (error.status === 0) {
+      return {
+        statusCode: 0,
+        message: 'Không thể kết nối đến máy chủ.',
+        timestamp: new Date().toISOString(),
+        path: '',
+      };
+    }
+
+    const body = error.error;
+    const message = body?.message;
+
+    return {
+      statusCode:
+        typeof body?.statusCode === 'number'
+          ? body.statusCode
+          : error.status,
+
+      message: Array.isArray(message)
+        ? message.join(', ')
+        : typeof message === 'string'
+          ? message
+          : error.message || 'Đã xảy ra lỗi khi gọi API.',
+
+      errors: Array.isArray(body?.errors)
+        ? body.errors
+        : undefined,
+
+      timestamp:
+        typeof body?.timestamp === 'string'
+          ? body.timestamp
+          : new Date().toISOString(),
+
+      path:
+        typeof body?.path === 'string'
+          ? body.path
+          : '',
+    };
+  }
+
+  return {
+    statusCode: 500,
+    message:
+      error instanceof Error
+        ? error.message
+        : 'Đã xảy ra lỗi không xác định.',
+
+    timestamp: new Date().toISOString(),
+    path: '',
+  };
+}
 
 @Injectable()
 export class NotificationEffects {
@@ -69,15 +134,17 @@ export class NotificationEffects {
               });
             }),
 
-            catchError(error => {
+            catchError((error: unknown) => {
               console.error('[LOAD ACTIVITIES] API ERROR:', error);
-              console.error('[LOAD ACTIVITIES] Error message:', error.error?.message);
+
+              const apiError = toApiError(error);
+
+              console.error('[LOAD ACTIVITIES] Status:', apiError.statusCode);
+              console.error('[LOAD ACTIVITIES] Message:', apiError.message);
 
               return of(
                 NotificationActions.loadActivitiesFailure({
-                  error:
-                    error.error?.message ??
-                    'Không thể tải danh sách hoạt động',
+                  error: apiError,
                 }),
               );
             }),
@@ -117,6 +184,7 @@ export class NotificationEffects {
 
               console.log('[LOAD DAILY VIEWS] Dữ liệu sau xử lý:', dailyViews);
               console.log('[LOAD DAILY VIEWS] Tổng số ngày:', dailyViews.length);
+
               console.log(
                 '[LOAD DAILY VIEWS] Tổng lượt xem:',
                 dailyViews.reduce(
@@ -131,15 +199,17 @@ export class NotificationEffects {
               });
             }),
 
-            catchError(error => {
+            catchError((error: unknown) => {
               console.error('[LOAD DAILY VIEWS] API ERROR:', error);
-              console.error('[LOAD DAILY VIEWS] Error message:', error.error?.message);
+
+              const apiError = toApiError(error);
+
+              console.error('[LOAD DAILY VIEWS] Status:', apiError.statusCode);
+              console.error('[LOAD DAILY VIEWS] Message:', apiError.message);
 
               return of(
                 NotificationActions.loadDailyViewsFailure({
-                  error:
-                    error.error?.message ??
-                    'Không thể tải thống kê lượt xem',
+                  error: apiError,
                 }),
               );
             }),
@@ -161,6 +231,7 @@ export class NotificationEffects {
           console.log('====================================');
           console.log('[WEBSOCKET] Nhận action connectNotifications');
           console.log('[WEBSOCKET] Bắt đầu kết nối');
+
           this.notificationService.connect();
         }),
       ),
@@ -182,6 +253,7 @@ export class NotificationEffects {
           console.log('====================================');
           console.log('[WEBSOCKET] Nhận action disconnectNotifications');
           console.log('[WEBSOCKET] Bắt đầu ngắt kết nối');
+
           this.notificationService.disconnect();
         }),
       ),
@@ -203,6 +275,7 @@ export class NotificationEffects {
 
       map(activity => {
         console.log('[WEBSOCKET] Dispatch addActivity');
+
         return NotificationActions.addActivity({
           activity,
         });
@@ -219,6 +292,7 @@ export class NotificationEffects {
       tap(dailyViews => {
         console.log('====================================');
         console.log('[WEBSOCKET] Nhận thống kê lượt xem:', dailyViews);
+
         console.log(
           '[WEBSOCKET] Kiểu dữ liệu:',
           Array.isArray(dailyViews) ? 'Array' : typeof dailyViews,

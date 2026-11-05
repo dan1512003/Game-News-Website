@@ -1,3 +1,4 @@
+
 import {
   createAction,
   props,
@@ -7,6 +8,9 @@ import {
   DashboardActivity,
   DailyViews,
 } from '../models/notification.model';
+import { ApiErrorResponse } from '../../../shared/models/auth/auth.model';
+
+
 
 // =====================================================
 // LOAD ACTIVITIES
@@ -26,7 +30,7 @@ export const loadActivitiesSuccess = createAction(
 export const loadActivitiesFailure = createAction(
   '[Notifications] Load Activities Failure',
   props<{
-    error: string;
+    error: ApiErrorResponse;
   }>(),
 );
 
@@ -48,7 +52,7 @@ export const loadDailyViewsSuccess = createAction(
 export const loadDailyViewsFailure = createAction(
   '[Notifications] Load Daily Views Failure',
   props<{
-    error: string;
+    error: ApiErrorResponse;
   }>(),
 );
 

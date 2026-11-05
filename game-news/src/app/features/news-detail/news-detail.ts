@@ -109,14 +109,55 @@ export class NewsDetail implements OnInit {
     return this.mapNewsToArticle(item);
   });
 
-  get user(): UserLogin | null { return this.authUser(); }
-  get isArticleLoading(): boolean { return Boolean(this.currentNewsId()) && (this.publicNewsDetailLoading() || (!this.article() && !this.publicNewsError() && !this.routeArticleError())); }
-  get articleError(): string | null { return this.routeArticleError() ?? this.publicNewsError() ?? null; }
-  get isCommentsLoading(): boolean { return this.publicCommentsLoading(); }
-  get isCommentSubmitting(): boolean { return this.publicCommentSubmitting(); }
-  get commentError(): string | null { return this.localCommentError() ?? this.publicCommentsError() ?? null; }
-  get commentSuccessMessage(): string | null { return this.localCommentSuccess() ?? this.publicCommentsSuccessMessage() ?? null; }
+ get user(): UserLogin | null {
+  return this.authUser();
+}
 
+get isArticleLoading(): boolean {
+  return (
+    Boolean(this.currentNewsId()) &&
+    (
+      this.publicNewsDetailLoading() ||
+      (
+        !this.article() &&
+        !this.publicNewsError() &&
+        !this.routeArticleError()
+      )
+    )
+  );
+}
+
+get articleError(): string | null {
+  return (
+    this.routeArticleError() ??
+    this.publicNewsError()?.message ??
+    null
+  );
+}
+
+get isCommentsLoading(): boolean {
+  return this.publicCommentsLoading();
+}
+
+get isCommentSubmitting(): boolean {
+  return this.publicCommentSubmitting();
+}
+
+get commentError(): string | null {
+  return (
+    this.localCommentError() ??
+    this.publicCommentsError()?.message ??
+    null
+  );
+}
+
+get commentSuccessMessage(): string | null {
+  return (
+    this.localCommentSuccess() ??
+    this.publicCommentsSuccessMessage() ??
+    null
+  );
+}
   private get relatedItems(): PublicRelatedNewsItem[] {
     return this.relatedNewsResponse()?.items ?? [];
   }
